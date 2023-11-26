@@ -10,16 +10,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<template #empty><span>{{ i18n.ts.noCustomEmojis }}</span></template>
 			<template #default="{items}">
 				<div class="ldhfsamy">
-					<vue-excel-editor v-model="proEmojis">
-						<vue-excel-column><img :src="`/assets/misskey.svg`"/></vue-excel-column>
-						<vue-excel-column field="id" label="id" :readonly="true" type="string"/>
-						<vue-excel-column field="name" label="Name" type="string" width="150px"/>
-						<vue-excel-column field="category" label="カテゴリ" type="string" width="150px"/>
-						<vue-excel-column field="aliases" label="読みがな" type="string" width="150px"/>
-						<vue-excel-column field="license" label="ライセンス" type="string" width="150px"/>
-						<vue-excel-column field="localOnly" label="連合なし" type="checkTF" width="150px"/>
-						<vue-excel-column field="isSensitive" label="センシティブ" type="checkTF" width="150px"/>
-						<vue-excel-column field="roleIdsThatCanBeUsedThisEmojiAsReaction" label="このリアクションが使える限定ロール" type="string" width="150px"/>
+					<vue-excel-editor v-model="proEmojis" @update="update">
+						<vue-excel-column type="string" field="id" label="id" :readonly="true" keyField invisible/>
+						<vue-excel-column type="img" field="url" label="emoji" :readonly="true"/>
+						<vue-excel-column type="string" field="name" label="Name" width="150px"/>
+						<vue-excel-column type="string" field="category" label="カテゴリ" width="150px"/>
+						<vue-excel-column type="string" field="aliases" label="読みがな" width="150px"/>
+						<vue-excel-column type="string" field="license" label="ライセンス" width="150px"/>
+						<vue-excel-column type="checkTF" field="localOnly" label="連合なし" width="150px"/>
+						<vue-excel-column type="checkTF" field="isSensitive" label="センシティブ" width="150px"/>
+						<vue-excel-column type="string" field="roleIdsThatCanBeUsedThisEmojiAsReaction" label="このリアクションが使える限定ロール" width="150px"/>
 					</vue-excel-editor>
 				</div>
 			</template>
@@ -115,7 +115,27 @@ const host = ref(null);
 const selectMode = ref(false);
 const selectedEmojis = ref<string[]>([]);
 
-let proEmojis = await os.api('admin/emoji/list');
+let proEmojis = (await os.api('admin/emoji/list')).map(e => {
+	return {
+		url: `/emoji/${e.name}.svg`,
+		...e,
+	};
+});
+
+async function update(records) {
+	const emojiMap = {};
+	proEmojis.forEach((e) => {
+		emojiMap[e.id] = e;
+	});
+	const targetEmojis = records[0].keys.map(key => emojiMap[key]);
+	console.warn(targetEmojis);
+
+	targetEmojis.forEach(async newEmoji => {
+		await os.apiWithDialog('admin/emoji/update', {
+			...newEmoji,
+		});
+	});
+}
 
 const pagination = {
 	endpoint: 'admin/emoji/list' as const,
