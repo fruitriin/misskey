@@ -25,7 +25,7 @@ import { deckStore } from '@/ui/deck/deck-store.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { fetchCustomEmojis } from '@/custom-emojis.js';
 import { mainRouter } from '@/router.js';
-
+import VueExcelEditor from "vue3-excel-editor"
 export async function common(createVue: () => App<Element>) {
 	console.info(`Misskey v${version}`);
 
@@ -63,7 +63,7 @@ export async function common(createVue: () => App<Element>) {
 	}
 
 	const splash = document.getElementById('splash');
-	// 念のためnullチェック(HTMLが古い場合があるため(そのうち消す))
+	// 念のため null チェック (HTML が古い場合があるため (そのうち消す))
 	if (splash) splash.addEventListener('transitionend', () => {
 		splash.remove();
 	});
@@ -78,7 +78,7 @@ export async function common(createVue: () => App<Element>) {
 		// テーマリビルドするため
 		miLocalStorage.removeItem('theme');
 
-		try { // 変なバージョン文字列来るとcompareVersionsでエラーになるため
+		try { // 変なバージョン文字列来ると compareVersions でエラーになるため
 			if (lastVersion != null && compareVersions(version, lastVersion) === 1) {
 				isClientUpdated = true;
 			}
@@ -102,7 +102,7 @@ export async function common(createVue: () => App<Element>) {
 	}
 	//#endregion
 
-	// タッチデバイスでCSSの:hoverを機能させる
+	// タッチデバイスで CSS の:hover を機能させる
 	document.addEventListener('touchend', () => {}, { passive: true });
 
 	// 一斉リロード
@@ -150,7 +150,7 @@ export async function common(createVue: () => App<Element>) {
 	}
 	//#endregion
 
-	// NOTE: この処理は必ずクライアント更新チェック処理より後に来ること(テーマ再構築のため)
+	// NOTE: この処理は必ずクライアント更新チェック処理より後に来ること (テーマ再構築のため)
 	watch(defaultStore.reactiveState.darkMode, (darkMode) => {
 		applyTheme(darkMode ? ColdDeviceStorage.get('darkTheme') : ColdDeviceStorage.get('lightTheme'));
 	}, { immediate: miLocalStorage.getItem('theme') == null });
@@ -245,7 +245,7 @@ export async function common(createVue: () => App<Element>) {
 	components(app);
 
 	// https://github.com/misskey-dev/misskey/pull/8575#issuecomment-1114239210
-	// なぜか2回実行されることがあるため、mountするdivを1つに制限する
+	// なぜか 2 回実行されることがあるため、mount する div を 1 つに制限する
 	const rootEl = ((): HTMLElement => {
 		const MISSKEY_MOUNT_DIV_ID = 'misskey_app';
 
@@ -262,9 +262,11 @@ export async function common(createVue: () => App<Element>) {
 		return root;
 	})();
 
+
+	app.use(VueExcelEditor)
 	app.mount(rootEl);
 
-	// boot.jsのやつを解除
+	// boot.js のやつを解除
 	window.onerror = null;
 	window.onunhandledrejection = null;
 

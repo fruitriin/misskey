@@ -5,6 +5,27 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div>
+	<div>
+		<MkPagination :pagination="pagination">
+			<template #empty><span>{{ i18n.ts.noCustomEmojis }}</span></template>
+			<template #default="{items}">
+				<div class="ldhfsamy">
+					<vue-excel-editor v-model="proEmojis">
+						<vue-excel-column><img :src="`/assets/misskey.svg`"/></vue-excel-column>
+						<vue-excel-column field="id" label="id" :readonly="true" type="string"/>
+						<vue-excel-column field="name" label="Name" type="string" width="150px"/>
+						<vue-excel-column field="category" label="カテゴリ" type="string" width="150px"/>
+						<vue-excel-column field="aliases" label="読みがな" type="string" width="150px"/>
+						<vue-excel-column field="license" label="ライセンス" type="string" width="150px"/>
+						<vue-excel-column field="localOnly" label="連合なし" type="checkTF" width="150px"/>
+						<vue-excel-column field="isSensitive" label="センシティブ" type="checkTF" width="150px"/>
+						<vue-excel-column field="roleIdsThatCanBeUsedThisEmojiAsReaction" label="このリアクションが使える限定ロール" type="string" width="150px"/>
+					</vue-excel-editor>
+				</div>
+			</template>
+		</MkPagination>
+	</div>
+
 	<MkStickyContainer>
 		<template #header><MkPageHeader v-model:tab="tab" :actions="headerActions" :tabs="headerTabs"/></template>
 		<MkSpacer :contentMax="900">
@@ -93,6 +114,8 @@ const queryRemote = ref(null);
 const host = ref(null);
 const selectMode = ref(false);
 const selectedEmojis = ref<string[]>([]);
+
+let proEmojis = await os.api('admin/emoji/list');
 
 const pagination = {
 	endpoint: 'admin/emoji/list' as const,
