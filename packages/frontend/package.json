@@ -76,7 +76,7 @@
 		"vanilla-tilt": "1.8.1",
 		"vite": "4.5.0",
 		"vue": "3.3.8",
-		"vue3-excel-editor": "../vue3-excel-editor",
+		"vue3-excel-editor": "https://github.com/fruitriin/vue3-excel-editor",
 		"vuedraggable": "next"
 	},
 	"devDependencies": {
