@@ -1,6 +1,5 @@
 {
 	"compilerOptions": {
-
 		"allowJs": true,
 		"allowImportingTsExtensions": true,
 		"noEmitOnError": true,
@@ -11,8 +10,8 @@
 		"noFallthroughCasesInSwitch": true,
 		"declaration": false,
 		"sourceMap": false,
-		"target": "ES2022",
-		"module": "nodenext",
+		"target": "es2020",
+		"module": "ES2022",
 		"moduleResolution": "nodenext",
 		"allowSyntheticDefaultImports": true,
 		"removeComments": false,

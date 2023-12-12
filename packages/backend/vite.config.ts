@@ -3,16 +3,6 @@ import { VitePluginNode } from 'vite-plugin-node';
 import * as path from "path";
 
 export default defineConfig({
-	build: {
-		target: "ES2022"
-	},
-	// esbuild: {
-	// 	tsconfigRaw: {
-	// 		compilerOptions: {
-	// 			experimentalDecorators: true
-	// 		}
-	// 	}
-	// },
 	plugins: [
 		// https://blog.logrocket.com/getting-started-with-nestjs-vite-esbuild/#installing-configuring-nestjs-app
 		...VitePluginNode({
@@ -34,29 +24,34 @@ export default defineConfig({
 			tsCompiler: 'swc',
 		})
 	],
+	server: {
+		port: 3000,
+	},
 	optimizeDeps: {
 		// Vite does not work well with optionnal dependencies,
 		// mark them as ignored for now
 		exclude: [
-			'@nestjs/microservices',
-			'@nestjs/websockets',
-			'cache-manager',
-			'class-transformer',
-			'class-validator',
-			'fastify-swagger',
+			// '@nestjs/microservices',
+			// '@nestjs/websockets',
+			// 'cache-manager',
+			// 'class-transformer',
+			// 'class-validator',
+			// 'fastify-swagger',
+			"re2",
+			"sharp",
+			"fsevents",
+			"@mapbox",
+			"slacc",
+			"pkce-challenge",
 			"aws-sdk",
 			"mock-aws-s3",
 			"fluent-ffmpeg"
 		],
+		// デコレーターが動かないViteのバグがある
+		// Workaround https://github.com/vitejs/vite/issues/13736#issuecomment-1633959286
 		esbuildOptions: {
-			tsconfigRaw: {
-
-				compilerOptions: {
-					target: "ES2022",
-					experimentalDecorators: true
-				}
-			}
-		}
+			tsconfig: 'tsconfig.json'
+		},
 	},
 	resolve: {
 		alias: {

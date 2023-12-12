@@ -6,9 +6,6 @@
 /**
  * Misskey Entry Point!
  */
-console.log("here")
-
-
 import cluster from 'node:cluster';
 import { EventEmitter } from 'node:events';
 import chalk from 'chalk';
