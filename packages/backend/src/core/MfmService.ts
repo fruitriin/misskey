@@ -5,17 +5,17 @@
 
 import { URL } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
-import { parseFragment } from 'parse5';
+import { parseFragment, defaultTreeAdapter } from 'parse5';
 import { Window } from 'happy-dom';
 import { DI } from '@/di-symbols.ts';
 import type { Config } from '@/config.ts';
 import { intersperse } from '@/misc/prelude/array.ts';
 import type { IMentionedRemoteUsers } from '@/models/Note.ts';
 import { bindThis } from '@/decorators.ts';
-import * as TreeAdapter from '../../node_modules/parse5/dist/tree-adapters/default.ts';
+import type * as TreeAdapter from '../../node_modules/parse5/dist/tree-adapters/default.d.ts';
 import type * as mfm from 'mfm-js';
 
-const treeAdapter = TreeAdapter.defaultTreeAdapter;
+const treeAdapter = defaultTreeAdapter;
 
 const urlRegex = /^https?:\/\/[\w\/:%#@$&?!()\[\]~.,=+\-]+/;
 const urlRegexFull = /^https?:\/\/[\w\/:%#@$&?!()\[\]~.,=+\-]+$/;

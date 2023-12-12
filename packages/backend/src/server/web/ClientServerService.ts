@@ -8,7 +8,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
 import { createBullBoard } from '@bull-board/api';
-import type { BullMQAdapter } from "@bull-board/api/bullMQAdapter.d.ts";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter.js";
 import { FastifyAdapter } from '@bull-board/fastify';
 import ms from 'ms';
 import sharp from 'sharp';
