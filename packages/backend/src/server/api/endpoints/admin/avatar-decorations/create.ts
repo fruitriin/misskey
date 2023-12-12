@@ -4,8 +4,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { AvatarDecorationService } from '@/core/AvatarDecorationService.ts';
 
 export const meta = {
 	tags: ['admin'],

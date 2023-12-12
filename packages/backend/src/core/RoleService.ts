@@ -6,21 +6,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
-import type { MiRole, MiRoleAssignment, RoleAssignmentsRepository, RolesRepository, UsersRepository } from '@/models/_.js';
-import { MemoryKVCache, MemorySingleCache } from '@/misc/cache.js';
-import type { MiUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { MetaService } from '@/core/MetaService.js';
-import { CacheService } from '@/core/CacheService.js';
-import type { RoleCondFormulaValue } from '@/models/Role.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
+import type { MiRole, MiRoleAssignment, RoleAssignmentsRepository, RolesRepository, UsersRepository } from '@/models/_.ts';
+import { MemoryKVCache, MemorySingleCache } from '@/misc/cache.ts';
+import type { MiUser } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import type { RoleCondFormulaValue } from '@/models/Role.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { FanoutTimelineService } from '@/core/FanoutTimelineService.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 export type RolePolicies = {

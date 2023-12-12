@@ -5,10 +5,10 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
-import { RoleService } from '@/core/RoleService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
+import { AvatarDecorationService } from '@/core/AvatarDecorationService.ts';
+import { RoleService } from '@/core/RoleService.ts';
 
 export const meta = {
 	tags: ['users'],

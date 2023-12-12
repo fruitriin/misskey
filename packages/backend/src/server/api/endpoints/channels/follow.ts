@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { ChannelsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { ChannelFollowingService } from '@/core/ChannelFollowingService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { ChannelsRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { ChannelFollowingService } from '@/core/ChannelFollowingService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['channels'],

@@ -5,12 +5,12 @@
 
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { MiUser } from '@/models/User.js';
-import type { UserKeypairsRepository } from '@/models/_.js';
-import { RedisKVCache } from '@/misc/cache.js';
-import type { MiUserKeypair } from '@/models/UserKeypair.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
+import type { MiUser } from '@/models/User.ts';
+import type { UserKeypairsRepository } from '@/models/_.ts';
+import { RedisKVCache } from '@/misc/cache.ts';
+import type { MiUserKeypair } from '@/models/UserKeypair.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class UserKeypairService implements OnApplicationShutdown {

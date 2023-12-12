@@ -5,13 +5,13 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { AppLockService } from '@/core/AppLockService.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import Chart from '../core.js';
-import { ChartLoggerService } from '../ChartLoggerService.js';
-import { name, schema } from './entities/ap-request.js';
-import type { KVs } from '../core.js';
+import { AppLockService } from '@/core/AppLockService.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import Chart from '../core.ts';
+import { ChartLoggerService } from '../ChartLoggerService.ts';
+import { name, schema } from './entities/ap-request.ts';
+import type { KVs } from '../core.ts';
 
 /**
  * Chart about ActivityPub requests

@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository } from '@/models/_.js';
-import type { MiLocalUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { MetaService } from '@/core/MetaService.js';
-import { bindThis } from '@/decorators.js';
+import type { UsersRepository } from '@/models/_.ts';
+import type { MiLocalUser } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class ProxyAccountService {

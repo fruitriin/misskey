@@ -5,12 +5,12 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull, MoreThan, Not } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { MiDriveFile, DriveFilesRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { DriveService } from '@/core/DriveService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiDriveFile, DriveFilesRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
 
 @Injectable()

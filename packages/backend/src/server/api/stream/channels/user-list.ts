@@ -4,14 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { MiUserListMembership, UserListMembershipsRepository, UserListsRepository } from '@/models/_.js';
-import { isUserRelated } from '@/misc/is-user-related.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { isInstanceMuted } from '@/misc/is-instance-muted.js';
-import Channel from '../channel.js';
+import type { MiUserListMembership, UserListMembershipsRepository, UserListsRepository } from '@/models/_.ts';
+import { isUserRelated } from '@/misc/is-user-related.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { isInstanceMuted } from '@/misc/is-instance-muted.ts';
+import Channel from '../channel.ts';
 
 class UserListChannel extends Channel {
 	public readonly chName = 'userList';

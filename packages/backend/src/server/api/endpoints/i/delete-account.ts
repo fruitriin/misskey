@@ -5,11 +5,11 @@
 
 import bcrypt from 'bcryptjs';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DeleteAccountService } from '@/core/DeleteAccountService.js';
-import { DI } from '@/di-symbols.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import type { UsersRepository, UserProfilesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DeleteAccountService } from '@/core/DeleteAccountService.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserAuthService } from '@/core/UserAuthService.ts';
 
 export const meta = {
 	requireCredential: true,

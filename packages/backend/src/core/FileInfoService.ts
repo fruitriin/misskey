@@ -16,9 +16,9 @@ import probeImageSize from 'probe-image-size';
 import { type predictionType } from 'nsfwjs';
 import sharp from 'sharp';
 import { encode } from 'blurhash';
-import { createTempDir } from '@/misc/create-temp.js';
-import { AiService } from '@/core/AiService.js';
-import { bindThis } from '@/decorators.js';
+import { createTempDir } from '@/misc/create-temp.ts';
+import { AiService } from '@/core/AiService.ts';
+import { bindThis } from '@/decorators.ts';
 
 export type FileInfo = {
 	size: number;

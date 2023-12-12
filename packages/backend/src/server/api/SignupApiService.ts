@@ -6,20 +6,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { IsNull } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { RegistrationTicketsRepository, UsedUsernamesRepository, UserPendingsRepository, UserProfilesRepository, UsersRepository, MiRegistrationTicket } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import { MetaService } from '@/core/MetaService.js';
-import { CaptchaService } from '@/core/CaptchaService.js';
-import { IdService } from '@/core/IdService.js';
-import { SignupService } from '@/core/SignupService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { EmailService } from '@/core/EmailService.js';
-import { MiLocalUser } from '@/models/User.js';
-import { FastifyReplyError } from '@/misc/fastify-reply-error.js';
-import { bindThis } from '@/decorators.js';
-import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
-import { SigninService } from './SigninService.js';
+import { DI } from '@/di-symbols.ts';
+import type { RegistrationTicketsRepository, UsedUsernamesRepository, UserPendingsRepository, UserProfilesRepository, UsersRepository, MiRegistrationTicket } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { CaptchaService } from '@/core/CaptchaService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { SignupService } from '@/core/SignupService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { EmailService } from '@/core/EmailService.ts';
+import { MiLocalUser } from '@/models/User.ts';
+import { FastifyReplyError } from '@/misc/fastify-reply-error.ts';
+import { bindThis } from '@/decorators.ts';
+import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.ts';
+import { SigninService } from './SigninService.ts';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 @Injectable()

@@ -5,16 +5,16 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import { Not, IsNull, DataSource } from 'typeorm';
-import type { MiUser } from '@/models/User.js';
-import { AppLockService } from '@/core/AppLockService.js';
-import { DI } from '@/di-symbols.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import type { UsersRepository } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
-import Chart from '../core.js';
-import { ChartLoggerService } from '../ChartLoggerService.js';
-import { name, schema } from './entities/users.js';
-import type { KVs } from '../core.js';
+import type { MiUser } from '@/models/User.ts';
+import { AppLockService } from '@/core/AppLockService.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import type { UsersRepository } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
+import Chart from '../core.ts';
+import { ChartLoggerService } from '../ChartLoggerService.ts';
+import { name, schema } from './entities/users.ts';
+import type { KVs } from '../core.ts';
 
 /**
  * ユーザー数に関するチャート

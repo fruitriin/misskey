@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AppsRepository, AccessTokensRepository, AuthSessionsRepository } from '@/models/_.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AppsRepository, AccessTokensRepository, AuthSessionsRepository } from '@/models/_.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['auth'],

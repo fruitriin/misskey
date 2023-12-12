@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { notificationTypes } from '@/types.js';
-import { MiUser } from './User.js';
-import { MiNote } from './Note.js';
-import { MiFollowRequest } from './FollowRequest.js';
-import { MiAccessToken } from './AccessToken.js';
+import { notificationTypes } from '@/types.ts';
+import { MiUser } from './User.ts';
+import { MiNote } from './Note.ts';
+import { MiFollowRequest } from './FollowRequest.ts';
+import { MiAccessToken } from './AccessToken.ts';
 
 export type MiNotification = {
 	type: 'note';

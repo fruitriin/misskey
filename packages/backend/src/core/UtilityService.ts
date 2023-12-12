@@ -6,9 +6,9 @@
 import { URL } from 'node:url';
 import { toASCII } from 'punycode';
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class UtilityService {

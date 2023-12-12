@@ -4,14 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { ModerationLogsRepository } from '@/models/_.js';
-import { awaitAll } from '@/misc/prelude/await-all.js';
-import type { } from '@/models/Blocking.js';
-import type { MiModerationLog } from '@/models/ModerationLog.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
-import { UserEntityService } from './UserEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { ModerationLogsRepository } from '@/models/_.ts';
+import { awaitAll } from '@/misc/prelude/await-all.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiModerationLog } from '@/models/ModerationLog.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
+import { UserEntityService } from './UserEntityService.ts';
 
 @Injectable()
 export class ModerationLogEntityService {

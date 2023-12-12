@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { MiNote } from '@/models/Note.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiWebhook } from '@/models/Webhook.js';
-import type { IActivity } from '@/core/activitypub/type.js';
+import type { Antenna } from '@/server/api/endpoints/i/import-antennas.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import type { MiNote } from '@/models/Note.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiWebhook } from '@/models/Webhook.ts';
+import type { IActivity } from '@/core/activitypub/type.ts';
 import type httpSignature from '@peertube/http-signature';
 
 export type DeliverJobData = {

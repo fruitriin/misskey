@@ -5,8 +5,8 @@
 
 import Parser from 'rss-parser';
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
 
 const rssParser = new Parser();
 

@@ -4,10 +4,10 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { RoleService } from '@/core/RoleService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { RoleService } from '@/core/RoleService.ts';
 
 export const meta = {
 	tags: ['drive', 'account'],

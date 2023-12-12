@@ -5,11 +5,11 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { AnnouncementService } from '@/core/AnnouncementService.js';
-import { DI } from '@/di-symbols.js';
-import type { AnnouncementReadsRepository, AnnouncementsRepository } from '@/models/_.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { AnnouncementService } from '@/core/AnnouncementService.ts';
+import { DI } from '@/di-symbols.ts';
+import type { AnnouncementReadsRepository, AnnouncementsRepository } from '@/models/_.ts';
 
 export const meta = {
 	tags: ['meta'],

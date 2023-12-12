@@ -4,8 +4,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { bindThis } from '@/decorators.js';
-import Channel from '../channel.js';
+import { bindThis } from '@/decorators.ts';
+import Channel from '../channel.ts';
 
 class AdminChannel extends Channel {
 	public readonly chName = 'admin';

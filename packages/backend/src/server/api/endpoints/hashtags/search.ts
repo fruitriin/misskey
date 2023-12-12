@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { HashtagsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { HashtagsRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { sqlLikeEscape } from '@/misc/sql-like-escape.ts';
 
 export const meta = {
 	tags: ['hashtags'],

@@ -4,17 +4,17 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { NotesRepository, PollsRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import type { IPoll } from '@/models/Poll.js';
-import type Logger from '@/logger.js';
-import { bindThis } from '@/decorators.js';
-import { isQuestion } from '../type.js';
-import { ApLoggerService } from '../ApLoggerService.js';
-import { ApResolverService } from '../ApResolverService.js';
-import type { Resolver } from '../ApResolverService.js';
-import type { IObject, IQuestion } from '../type.js';
+import { DI } from '@/di-symbols.ts';
+import type { NotesRepository, PollsRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import type { IPoll } from '@/models/Poll.ts';
+import type Logger from '@/logger.ts';
+import { bindThis } from '@/decorators.ts';
+import { isQuestion } from '../type.ts';
+import { ApLoggerService } from '../ApLoggerService.ts';
+import { ApResolverService } from '../ApResolverService.ts';
+import type { Resolver } from '../ApResolverService.ts';
+import type { IObject, IQuestion } from '../type.ts';
 
 @Injectable()
 export class ApQuestionService {

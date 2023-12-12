@@ -42,7 +42,7 @@ export const avifDefault: sharp.AvifOptions = {
 	effort: 2,
 };
 
-import { bindThis } from '@/decorators.js';
+import { bindThis } from '@/decorators.ts';
 import { Readable } from 'node:stream';
 
 @Injectable()

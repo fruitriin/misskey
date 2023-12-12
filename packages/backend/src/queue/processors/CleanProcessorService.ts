@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { In, LessThan } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { AntennasRepository, RoleAssignmentsRepository, UserIpsRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
-import type { Config } from '@/config.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { AntennasRepository, RoleAssignmentsRepository, UserIpsRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { Config } from '@/config.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
 
 @Injectable()

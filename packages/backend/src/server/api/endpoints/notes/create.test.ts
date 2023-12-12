@@ -9,8 +9,8 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { describe, test, expect } from '@jest/globals';
-import { getValidator } from '../../../../../test/prelude/get-api-validator.js';
-import { paramDef } from './create.js';
+import { getValidator } from '../../../../../test/prelude/get-api-validator.ts';
+import { paramDef } from './create.ts';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = dirname(_filename);

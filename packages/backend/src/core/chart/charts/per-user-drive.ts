@@ -5,16 +5,16 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import type { DriveFilesRepository } from '@/models/_.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import { AppLockService } from '@/core/AppLockService.js';
-import { DI } from '@/di-symbols.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { bindThis } from '@/decorators.js';
-import Chart from '../core.js';
-import { ChartLoggerService } from '../ChartLoggerService.js';
-import { name, schema } from './entities/per-user-drive.js';
-import type { KVs } from '../core.js';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import { AppLockService } from '@/core/AppLockService.ts';
+import { DI } from '@/di-symbols.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import Chart from '../core.ts';
+import { ChartLoggerService } from '../ChartLoggerService.ts';
+import { name, schema } from './entities/per-user-drive.ts';
+import type { KVs } from '../core.ts';
 
 /**
  * ユーザーごとのドライブに関するチャート

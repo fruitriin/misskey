@@ -5,21 +5,21 @@
 
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { IdService } from '@/core/IdService.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiBlocking } from '@/models/Blocking.js';
-import { QueueService } from '@/core/QueueService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DI } from '@/di-symbols.js';
-import type { FollowRequestsRepository, BlockingsRepository, UserListsRepository, UserListMembershipsRepository } from '@/models/_.js';
-import Logger from '@/logger.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import { WebhookService } from '@/core/WebhookService.js';
-import { bindThis } from '@/decorators.js';
-import { CacheService } from '@/core/CacheService.js';
-import { UserFollowingService } from '@/core/UserFollowingService.js';
+import { IdService } from '@/core/IdService.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiBlocking } from '@/models/Blocking.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DI } from '@/di-symbols.ts';
+import type { FollowRequestsRepository, BlockingsRepository, UserListsRepository, UserListMembershipsRepository } from '@/models/_.ts';
+import Logger from '@/logger.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import { WebhookService } from '@/core/WebhookService.ts';
+import { bindThis } from '@/decorators.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { UserFollowingService } from '@/core/UserFollowingService.ts';
 
 @Injectable()
 export class UserBlockingService implements OnModuleInit {

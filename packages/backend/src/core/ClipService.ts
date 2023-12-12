@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { ClipsRepository, MiNote, MiClip, ClipNotesRepository, NotesRepository } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
-import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
-import { RoleService } from '@/core/RoleService.js';
-import { IdService } from '@/core/IdService.js';
-import type { MiLocalUser } from '@/models/User.js';
+import { DI } from '@/di-symbols.ts';
+import type { ClipsRepository, MiNote, MiClip, ClipNotesRepository, NotesRepository } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
+import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { MiLocalUser } from '@/models/User.ts';
 
 @Injectable()
 export class ClipService {

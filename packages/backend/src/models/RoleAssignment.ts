@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiRole } from './Role.js';
-import { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiRole } from './Role.ts';
+import { MiUser } from './User.ts';
 
 @Entity('role_assignment')
 @Index(['userId', 'roleId'], { unique: true })

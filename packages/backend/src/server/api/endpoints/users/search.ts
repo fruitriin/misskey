@@ -5,12 +5,12 @@
 
 import { Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
+import type { UsersRepository, UserProfilesRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { sqlLikeEscape } from '@/misc/sql-like-escape.ts';
 
 export const meta = {
 	tags: ['users'],

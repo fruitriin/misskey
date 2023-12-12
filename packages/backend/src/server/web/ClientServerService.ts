@@ -8,7 +8,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
 import { createBullBoard } from '@bull-board/api';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js';
+import type { BullMQAdapter } from "@bull-board/api/bullMQAdapter.d.ts";
 import { FastifyAdapter } from '@bull-board/fastify';
 import ms from 'ms';
 import sharp from 'sharp';
@@ -19,27 +19,27 @@ import fastifyView from '@fastify/view';
 import fastifyCookie from '@fastify/cookie';
 import fastifyProxy from '@fastify/http-proxy';
 import vary from 'vary';
-import type { Config } from '@/config.js';
-import { getNoteSummary } from '@/misc/get-note-summary.js';
-import { DI } from '@/di-symbols.js';
-import * as Acct from '@/misc/acct.js';
-import { MetaService } from '@/core/MetaService.js';
-import type { DbQueue, DeliverQueue, EndedPollNotificationQueue, InboxQueue, ObjectStorageQueue, SystemQueue, WebhookDeliverQueue } from '@/core/QueueModule.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { PageEntityService } from '@/core/entities/PageEntityService.js';
-import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.js';
-import { ClipEntityService } from '@/core/entities/ClipEntityService.js';
-import { ChannelEntityService } from '@/core/entities/ChannelEntityService.js';
-import type { ChannelsRepository, ClipsRepository, FlashsRepository, GalleryPostsRepository, MiMeta, NotesRepository, PagesRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { deepClone } from '@/misc/clone.js';
-import { bindThis } from '@/decorators.js';
-import { FlashEntityService } from '@/core/entities/FlashEntityService.js';
-import { RoleService } from '@/core/RoleService.js';
-import { FeedService } from './FeedService.js';
-import { UrlPreviewService } from './UrlPreviewService.js';
-import { ClientLoggerService } from './ClientLoggerService.js';
+import type { Config } from '@/config.ts';
+import { getNoteSummary } from '@/misc/get-note-summary.ts';
+import { DI } from '@/di-symbols.ts';
+import * as Acct from '@/misc/acct.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import type { DbQueue, DeliverQueue, EndedPollNotificationQueue, InboxQueue, ObjectStorageQueue, SystemQueue, WebhookDeliverQueue } from '@/core/QueueModule.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { PageEntityService } from '@/core/entities/PageEntityService.ts';
+import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.ts';
+import { ClipEntityService } from '@/core/entities/ClipEntityService.ts';
+import { ChannelEntityService } from '@/core/entities/ChannelEntityService.ts';
+import type { ChannelsRepository, ClipsRepository, FlashsRepository, GalleryPostsRepository, MiMeta, NotesRepository, PagesRepository, UserProfilesRepository, UsersRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { deepClone } from '@/misc/clone.ts';
+import { bindThis } from '@/decorators.ts';
+import { FlashEntityService } from '@/core/entities/FlashEntityService.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { FeedService } from './FeedService.ts';
+import { UrlPreviewService } from './UrlPreviewService.ts';
+import { ClientLoggerService } from './ClientLoggerService.ts';
 import type { FastifyInstance, FastifyPluginOptions, FastifyReply } from 'fastify';
 
 const _filename = fileURLToPath(import.meta.url);
@@ -368,8 +368,8 @@ export class ClientServerService {
 		});
 
 		// ServiceWorker
-		fastify.get('/sw.js', async (request, reply) => {
-			return await reply.sendFile('/sw.js', swAssets, {
+		fastify.get('/sw.ts', async (request, reply) => {
+			return await reply.sendFile('/sw.ts', swAssets, {
 				maxAge: ms('10 minutes'),
 			});
 		});

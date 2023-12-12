@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { FollowingsRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { FollowingEntityService } from '@/core/entities/FollowingEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { FollowingsRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { FollowingEntityService } from '@/core/entities/FollowingEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['federation'],

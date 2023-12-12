@@ -5,10 +5,10 @@
 
 import ms from 'ms';
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { DriveService } from '@/core/DriveService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { DriveService } from '@/core/DriveService.ts';
 
 export const meta = {
 	tags: ['drive'],

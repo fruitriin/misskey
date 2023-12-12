@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiDriveFolder } from './DriveFolder.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiDriveFolder } from './DriveFolder.ts';
 
 @Entity('drive_file')
 @Index(['userId', 'folderId', 'id'])

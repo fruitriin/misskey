@@ -5,16 +5,16 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { NotesRepository, AntennasRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { NoteReadService } from '@/core/NoteReadService.js';
-import { DI } from '@/di-symbols.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { IdService } from '@/core/IdService.js';
-import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { NotesRepository, AntennasRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { NoteReadService } from '@/core/NoteReadService.ts';
+import { DI } from '@/di-symbols.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { FanoutTimelineService } from '@/core/FanoutTimelineService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['antennas', 'account', 'notes'],

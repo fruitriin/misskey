@@ -4,19 +4,19 @@
  */
 
 import * as WebSocket from 'ws';
-import type { MiUser } from '@/models/User.js';
-import type { MiAccessToken } from '@/models/AccessToken.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { NoteReadService } from '@/core/NoteReadService.js';
-import type { NotificationService } from '@/core/NotificationService.js';
-import { bindThis } from '@/decorators.js';
-import { CacheService } from '@/core/CacheService.js';
-import { MiFollowing, MiUserProfile } from '@/models/_.js';
-import type { StreamEventEmitter, GlobalEvents } from '@/core/GlobalEventService.js';
-import { ChannelFollowingService } from '@/core/ChannelFollowingService.js';
-import type { ChannelsService } from './ChannelsService.js';
+import type { MiUser } from '@/models/User.ts';
+import type { MiAccessToken } from '@/models/AccessToken.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { NoteReadService } from '@/core/NoteReadService.ts';
+import type { NotificationService } from '@/core/NotificationService.ts';
+import { bindThis } from '@/decorators.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { MiFollowing, MiUserProfile } from '@/models/_.ts';
+import type { StreamEventEmitter, GlobalEvents } from '@/core/GlobalEventService.ts';
+import { ChannelFollowingService } from '@/core/ChannelFollowingService.ts';
+import type { ChannelsService } from './ChannelsService.ts';
 import type { EventEmitter } from 'events';
-import type Channel from './channel.js';
+import type Channel from './channel.ts';
 
 /**
  * Main stream connection

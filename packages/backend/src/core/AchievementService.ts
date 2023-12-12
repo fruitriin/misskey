@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserProfilesRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { NotificationService } from '@/core/NotificationService.js';
+import type { UserProfilesRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { NotificationService } from '@/core/NotificationService.ts';
 
 export const ACHIEVEMENT_TYPES = [
 	'notes1',

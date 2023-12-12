@@ -4,8 +4,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import endpoints from '../endpoints.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import endpoints from '../endpoints.ts';
 
 export const meta = {
 	requireCredential: false,

@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UserListFavoritesRepository, UserListsRepository } from '@/models/_.js';
-import { ApiError } from '@/server/api/error.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UserListFavoritesRepository, UserListsRepository } from '@/models/_.ts';
+import { ApiError } from '@/server/api/error.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	requireCredential: true,

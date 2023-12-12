@@ -5,14 +5,14 @@
 
 import { URL } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
-import * as parse5 from 'parse5';
+import { parseFragment } from 'parse5';
 import { Window } from 'happy-dom';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { intersperse } from '@/misc/prelude/array.js';
-import type { IMentionedRemoteUsers } from '@/models/Note.js';
-import { bindThis } from '@/decorators.js';
-import * as TreeAdapter from '../../node_modules/parse5/dist/tree-adapters/default.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { intersperse } from '@/misc/prelude/array.ts';
+import type { IMentionedRemoteUsers } from '@/models/Note.ts';
+import { bindThis } from '@/decorators.ts';
+import * as TreeAdapter from '../../node_modules/parse5/dist/tree-adapters/default.ts';
 import type * as mfm from 'mfm-js';
 
 const treeAdapter = TreeAdapter.defaultTreeAdapter;
@@ -33,7 +33,7 @@ export class MfmService {
 		// some AP servers like Pixelfed use br tags as well as newlines
 		html = html.replace(/<br\s?\/?>\r?\n/gi, '\n');
 
-		const dom = parse5.parseFragment(html);
+		const dom = parseFragment(html);
 
 		let text = '';
 

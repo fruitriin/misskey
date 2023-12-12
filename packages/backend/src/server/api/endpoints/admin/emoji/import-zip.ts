@@ -4,8 +4,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueueService } from '@/core/QueueService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueueService } from '@/core/QueueService.ts';
 
 export const meta = {
 	secure: true,

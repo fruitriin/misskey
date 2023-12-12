@@ -5,13 +5,13 @@
 
 import ms from 'ms';
 import { Injectable } from '@nestjs/common';
-import { DB_MAX_IMAGE_COMMENT_LENGTH } from '@/const.js';
-import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { MetaService } from '@/core/MetaService.js';
-import { DriveService } from '@/core/DriveService.js';
-import { ApiError } from '../../../error.js';
+import { DB_MAX_IMAGE_COMMENT_LENGTH } from '@/const.ts';
+import { IdentifiableError } from '@/misc/identifiable-error.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['drive'],

@@ -5,13 +5,13 @@
 
 import { Injectable } from '@nestjs/common';
 import promiseLimit from 'promise-limit';
-import type { MiUser } from '@/models/_.js';
-import { toArray, unique } from '@/misc/prelude/array.js';
-import { bindThis } from '@/decorators.js';
-import { isMention } from '../type.js';
-import { Resolver } from '../ApResolverService.js';
-import { ApPersonService } from './ApPersonService.js';
-import type { IObject, IApMention } from '../type.js';
+import type { MiUser } from '@/models/_.ts';
+import { toArray, unique } from '@/misc/prelude/array.ts';
+import { bindThis } from '@/decorators.ts';
+import { isMention } from '../type.ts';
+import { Resolver } from '../ApResolverService.ts';
+import { ApPersonService } from './ApPersonService.ts';
+import type { IObject, IApMention } from '../type.ts';
 
 @Injectable()
 export class ApMentionService {

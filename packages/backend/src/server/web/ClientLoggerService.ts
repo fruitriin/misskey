@@ -4,8 +4,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type Logger from '@/logger.js';
-import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
 
 @Injectable()
 export class ClientLoggerService {

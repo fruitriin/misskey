@@ -5,20 +5,20 @@
 
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { UserListMembershipsRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiUserList } from '@/models/UserList.js';
-import type { MiUserListMembership } from '@/models/UserListMembership.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DI } from '@/di-symbols.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { ProxyAccountService } from '@/core/ProxyAccountService.js';
-import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
-import { QueueService } from '@/core/QueueService.js';
-import { RedisKVCache } from '@/misc/cache.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import type { UserListMembershipsRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiUserList } from '@/models/UserList.ts';
+import type { MiUserListMembership } from '@/models/UserListMembership.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { ProxyAccountService } from '@/core/ProxyAccountService.ts';
+import { bindThis } from '@/decorators.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { RedisKVCache } from '@/misc/cache.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
 
 @Injectable()
 export class UserListService implements OnApplicationShutdown {

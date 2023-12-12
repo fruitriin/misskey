@@ -5,11 +5,11 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsedUsernamesRepository, UsersRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { localUsernameSchema } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { MetaService } from '@/core/MetaService.js';
+import type { UsedUsernamesRepository, UsersRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { localUsernameSchema } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { MetaService } from '@/core/MetaService.ts';
 
 export const meta = {
 	tags: ['users'],

@@ -5,22 +5,22 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
-import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
-import { InstanceActorService } from '@/core/InstanceActorService.js';
-import type { NotesRepository, PollsRepository, NoteReactionsRepository, UsersRepository, FollowRequestsRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import { MetaService } from '@/core/MetaService.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { DI } from '@/di-symbols.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { bindThis } from '@/decorators.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import type Logger from '@/logger.js';
-import { isCollectionOrOrderedCollection } from './type.js';
-import { ApDbResolverService } from './ApDbResolverService.js';
-import { ApRendererService } from './ApRendererService.js';
-import { ApRequestService } from './ApRequestService.js';
-import type { IObject, ICollection, IOrderedCollection } from './type.js';
+import type { MiLocalUser, MiRemoteUser } from '@/models/User.ts';
+import { InstanceActorService } from '@/core/InstanceActorService.ts';
+import type { NotesRepository, PollsRepository, NoteReactionsRepository, UsersRepository, FollowRequestsRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { DI } from '@/di-symbols.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import type Logger from '@/logger.ts';
+import { isCollectionOrOrderedCollection } from './type.ts';
+import { ApDbResolverService } from './ApDbResolverService.ts';
+import { ApRendererService } from './ApRendererService.ts';
+import { ApRequestService } from './ApRequestService.ts';
+import type { IObject, ICollection, IOrderedCollection } from './type.ts';
 
 export class Resolver {
 	private history: Set<string>;

@@ -4,8 +4,8 @@
  */
 
 import { Entity, Column, Index, OneToOne, JoinColumn, PrimaryColumn } from 'typeorm';
-import { id } from './util/id.js';
-import { MiDriveFile } from './DriveFile.js';
+import { id } from './util/id.ts';
+import { MiDriveFile } from './DriveFile.ts';
 
 @Entity('user')
 @Index(['usernameLower', 'host'], { unique: true })

@@ -6,11 +6,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import { MiMeta } from '@/models/Meta.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { bindThis } from '@/decorators.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import { DI } from '@/di-symbols.ts';
+import { MiMeta } from '@/models/Meta.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { bindThis } from '@/decorators.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 @Injectable()

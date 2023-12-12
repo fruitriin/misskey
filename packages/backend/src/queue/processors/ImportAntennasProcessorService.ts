@@ -5,14 +5,14 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import _Ajv from 'ajv';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import Logger from '@/logger.js';
-import type { AntennasRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
-import { DBAntennaImportJobData } from '../types.js';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import Logger from '@/logger.ts';
+import type { AntennasRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
+import { DBAntennaImportJobData } from '../types.ts';
 import type * as Bull from 'bullmq';
 
 const Ajv = _Ajv.default;

@@ -5,13 +5,13 @@
 
 import { Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { NotesRepository } from '@/models/_.js';
-import { safeForSql } from '@/misc/safe-for-sql.js';
-import { normalizeForSearch } from '@/misc/normalize-for-search.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { DI } from '@/di-symbols.js';
+import type { NotesRepository } from '@/models/_.ts';
+import { safeForSql } from '@/misc/safe-for-sql.ts';
+import { normalizeForSearch } from '@/misc/normalize-for-search.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['notes', 'hashtags'],

@@ -5,11 +5,11 @@
 
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
-import type { FlashsRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import { FlashEntityService } from '@/core/entities/FlashEntityService.js';
+import type { FlashsRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
+import { FlashEntityService } from '@/core/entities/FlashEntityService.ts';
 
 export const meta = {
 	tags: ['flash'],

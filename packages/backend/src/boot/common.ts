@@ -4,14 +4,14 @@
  */
 
 import { NestFactory } from '@nestjs/core';
-import { ChartManagementService } from '@/core/chart/ChartManagementService.js';
-import { QueueProcessorService } from '@/queue/QueueProcessorService.js';
-import { NestLogger } from '@/NestLogger.js';
-import { QueueProcessorModule } from '@/queue/QueueProcessorModule.js';
-import { QueueStatsService } from '@/daemons/QueueStatsService.js';
-import { ServerStatsService } from '@/daemons/ServerStatsService.js';
-import { ServerService } from '@/server/ServerService.js';
-import { MainModule } from '@/MainModule.js';
+import { ChartManagementService } from '@/core/chart/ChartManagementService.ts';
+import { QueueProcessorService } from '@/queue/QueueProcessorService.ts';
+import { NestLogger } from '@/NestLogger.ts';
+import { QueueProcessorModule } from '@/queue/QueueProcessorModule.ts';
+import { QueueStatsService } from '@/daemons/QueueStatsService.ts';
+import { ServerStatsService } from '@/daemons/ServerStatsService.ts';
+import { ServerService } from '@/server/ServerService.ts';
+import { MainModule } from '@/MainModule.ts';
 
 export async function server() {
 	const app = await NestFactory.createApplicationContext(MainModule, {

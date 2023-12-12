@@ -4,11 +4,11 @@
  */
 
 import { Entity, Index, JoinColumn, Column, PrimaryColumn, ManyToOne } from 'typeorm';
-import { noteVisibilities } from '@/types.js';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiChannel } from './Channel.js';
-import type { MiDriveFile } from './DriveFile.js';
+import { noteVisibilities } from '@/types.ts';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiChannel } from './Channel.ts';
+import type { MiDriveFile } from './DriveFile.ts';
 
 @Entity('note')
 @Index('IDX_NOTE_TAGS', { synchronize: false })

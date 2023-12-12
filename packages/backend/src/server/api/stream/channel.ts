@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { bindThis } from '@/decorators.js';
-import type Connection from './Connection.js';
+import { bindThis } from '@/decorators.ts';
+import type Connection from './Connection.ts';
 
 /**
  * Stream channel

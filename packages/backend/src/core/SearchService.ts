@@ -5,17 +5,17 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { bindThis } from '@/decorators.js';
-import { MiNote } from '@/models/Note.js';
-import { MiUser } from '@/models/_.js';
-import type { NotesRepository } from '@/models/_.js';
-import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
-import { isUserRelated } from '@/misc/is-user-related.js';
-import { CacheService } from '@/core/CacheService.js';
-import { QueryService } from '@/core/QueryService.js';
-import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { bindThis } from '@/decorators.ts';
+import { MiNote } from '@/models/Note.ts';
+import { MiUser } from '@/models/_.ts';
+import type { NotesRepository } from '@/models/_.ts';
+import { sqlLikeEscape } from '@/misc/sql-like-escape.ts';
+import { isUserRelated } from '@/misc/is-user-related.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { IdService } from '@/core/IdService.ts';
 import type { Index, MeiliSearch } from 'meilisearch';
 
 type K = string;

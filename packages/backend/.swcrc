@@ -13,9 +13,9 @@
 		"experimental": {
 			"keepImportAttributes": true
 		},
-		"baseUrl": "src",
+		"baseUrl": "./",
 		"paths": {
-			"@/*": ["*"]
+			"/*": ["./src/*"]
 		},
 		"target": "es2022"
 	},

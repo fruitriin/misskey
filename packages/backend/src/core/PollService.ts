@@ -4,17 +4,17 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { NotesRepository, UsersRepository, PollsRepository, PollVotesRepository, MiUser } from '@/models/_.js';
-import type { MiNote } from '@/models/Note.js';
-import { RelayService } from '@/core/RelayService.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { bindThis } from '@/decorators.js';
-import { UserBlockingService } from '@/core/UserBlockingService.js';
+import { DI } from '@/di-symbols.ts';
+import type { NotesRepository, UsersRepository, PollsRepository, PollVotesRepository, MiUser } from '@/models/_.ts';
+import type { MiNote } from '@/models/Note.ts';
+import { RelayService } from '@/core/RelayService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.ts';
+import { bindThis } from '@/decorators.ts';
+import { UserBlockingService } from '@/core/UserBlockingService.ts';
 
 @Injectable()
 export class PollService {

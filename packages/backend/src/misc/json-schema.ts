@@ -11,33 +11,33 @@ import {
 	packedMeDetailedSchema,
 	packedUserDetailedSchema,
 	packedUserSchema,
-} from '@/models/json-schema/user.js';
-import { packedNoteSchema } from '@/models/json-schema/note.js';
-import { packedUserListSchema } from '@/models/json-schema/user-list.js';
-import { packedAppSchema } from '@/models/json-schema/app.js';
-import { packedNotificationSchema } from '@/models/json-schema/notification.js';
-import { packedDriveFileSchema } from '@/models/json-schema/drive-file.js';
-import { packedDriveFolderSchema } from '@/models/json-schema/drive-folder.js';
-import { packedFollowingSchema } from '@/models/json-schema/following.js';
-import { packedMutingSchema } from '@/models/json-schema/muting.js';
-import { packedRenoteMutingSchema } from '@/models/json-schema/renote-muting.js';
-import { packedBlockingSchema } from '@/models/json-schema/blocking.js';
-import { packedNoteReactionSchema } from '@/models/json-schema/note-reaction.js';
-import { packedHashtagSchema } from '@/models/json-schema/hashtag.js';
-import { packedInviteCodeSchema } from '@/models/json-schema/invite-code.js';
-import { packedPageSchema } from '@/models/json-schema/page.js';
-import { packedNoteFavoriteSchema } from '@/models/json-schema/note-favorite.js';
-import { packedChannelSchema } from '@/models/json-schema/channel.js';
-import { packedAntennaSchema } from '@/models/json-schema/antenna.js';
-import { packedClipSchema } from '@/models/json-schema/clip.js';
-import { packedFederationInstanceSchema } from '@/models/json-schema/federation-instance.js';
-import { packedQueueCountSchema } from '@/models/json-schema/queue.js';
-import { packedGalleryPostSchema } from '@/models/json-schema/gallery-post.js';
-import { packedEmojiDetailedSchema, packedEmojiSimpleSchema } from '@/models/json-schema/emoji.js';
-import { packedFlashSchema } from '@/models/json-schema/flash.js';
-import { packedAnnouncementSchema } from '@/models/json-schema/announcement.js';
-import { packedSigninSchema } from '@/models/json-schema/signin.js';
-import { packedRoleLiteSchema, packedRoleSchema } from '@/models/json-schema/role.js';
+} from '@/models/json-schema/user.ts';
+import { packedNoteSchema } from '@/models/json-schema/note.ts';
+import { packedUserListSchema } from '@/models/json-schema/user-list.ts';
+import { packedAppSchema } from '@/models/json-schema/app.ts';
+import { packedNotificationSchema } from '@/models/json-schema/notification.ts';
+import { packedDriveFileSchema } from '@/models/json-schema/drive-file.ts';
+import { packedDriveFolderSchema } from '@/models/json-schema/drive-folder.ts';
+import { packedFollowingSchema } from '@/models/json-schema/following.ts';
+import { packedMutingSchema } from '@/models/json-schema/muting.ts';
+import { packedRenoteMutingSchema } from '@/models/json-schema/renote-muting.ts';
+import { packedBlockingSchema } from '@/models/json-schema/blocking.ts';
+import { packedNoteReactionSchema } from '@/models/json-schema/note-reaction.ts';
+import { packedHashtagSchema } from '@/models/json-schema/hashtag.ts';
+import { packedInviteCodeSchema } from '@/models/json-schema/invite-code.ts';
+import { packedPageSchema } from '@/models/json-schema/page.ts';
+import { packedNoteFavoriteSchema } from '@/models/json-schema/note-favorite.ts';
+import { packedChannelSchema } from '@/models/json-schema/channel.ts';
+import { packedAntennaSchema } from '@/models/json-schema/antenna.ts';
+import { packedClipSchema } from '@/models/json-schema/clip.ts';
+import { packedFederationInstanceSchema } from '@/models/json-schema/federation-instance.ts';
+import { packedQueueCountSchema } from '@/models/json-schema/queue.ts';
+import { packedGalleryPostSchema } from '@/models/json-schema/gallery-post.ts';
+import { packedEmojiDetailedSchema, packedEmojiSimpleSchema } from '@/models/json-schema/emoji.ts';
+import { packedFlashSchema } from '@/models/json-schema/flash.ts';
+import { packedAnnouncementSchema } from '@/models/json-schema/announcement.ts';
+import { packedSigninSchema } from '@/models/json-schema/signin.ts';
+import { packedRoleLiteSchema, packedRoleSchema } from '@/models/json-schema/role.ts';
 
 export const refs = {
 	UserLite: packedUserLiteSchema,

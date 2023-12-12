@@ -5,16 +5,16 @@
 
 import { IsNull, Not } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UsersRepository, FollowingsRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import type { RelationshipJobData } from '@/queue/types.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
-import { UserSuspendService } from '@/core/UserSuspendService.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
-import { QueueService } from '@/core/QueueService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UsersRepository, FollowingsRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { RelationshipJobData } from '@/queue/types.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
+import { UserSuspendService } from '@/core/UserSuspendService.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { QueueService } from '@/core/QueueService.ts';
 
 export const meta = {
 	tags: ['admin'],

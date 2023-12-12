@@ -6,14 +6,14 @@
 import * as crypto from 'node:crypto';
 import { URL } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import type { MiUser } from '@/models/User.js';
-import { UserKeypairService } from '@/core/UserKeypairService.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import { bindThis } from '@/decorators.js';
-import type Logger from '@/logger.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import type { MiUser } from '@/models/User.ts';
+import { UserKeypairService } from '@/core/UserKeypairService.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import { bindThis } from '@/decorators.ts';
+import type Logger from '@/logger.ts';
 
 type Request = {
 	url: string;

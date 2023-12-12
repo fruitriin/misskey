@@ -5,12 +5,12 @@
 
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, NotesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { NoteDeleteService } from '@/core/NoteDeleteService.js';
-import { DI } from '@/di-symbols.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { ApiError } from '../../error.js';
+import type { UsersRepository, NotesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { NoteDeleteService } from '@/core/NoteDeleteService.ts';
+import { DI } from '@/di-symbols.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['notes'],

@@ -5,18 +5,18 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { MiAntenna } from '@/models/Antenna.js';
-import type { MiNote } from '@/models/Note.js';
-import type { MiUser } from '@/models/User.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import * as Acct from '@/misc/acct.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { DI } from '@/di-symbols.js';
-import type { AntennasRepository, UserListMembershipsRepository } from '@/models/_.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { bindThis } from '@/decorators.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
+import type { MiAntenna } from '@/models/Antenna.ts';
+import type { MiNote } from '@/models/Note.ts';
+import type { MiUser } from '@/models/User.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import * as Acct from '@/misc/acct.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { DI } from '@/di-symbols.ts';
+import type { AntennasRepository, UserListMembershipsRepository } from '@/models/_.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { bindThis } from '@/decorators.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
+import { FanoutTimelineService } from '@/core/FanoutTimelineService.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 @Injectable()

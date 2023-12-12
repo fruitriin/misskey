@@ -4,9 +4,9 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { NotesRepository, NoteThreadMutingsRepository, NoteFavoritesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
+import type { NotesRepository, NoteThreadMutingsRepository, NoteFavoritesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['notes'],

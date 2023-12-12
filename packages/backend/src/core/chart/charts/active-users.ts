@@ -5,15 +5,15 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { AppLockService } from '@/core/AppLockService.js';
-import type { MiUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
-import Chart from '../core.js';
-import { ChartLoggerService } from '../ChartLoggerService.js';
-import { name, schema } from './entities/active-users.js';
-import type { KVs } from '../core.js';
+import { AppLockService } from '@/core/AppLockService.ts';
+import type { MiUser } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
+import Chart from '../core.ts';
+import { ChartLoggerService } from '../ChartLoggerService.ts';
+import { name, schema } from './entities/active-users.ts';
+import type { KVs } from '../core.ts';
 
 const week = 1000 * 60 * 60 * 24 * 7;
 const month = 1000 * 60 * 60 * 24 * 30;

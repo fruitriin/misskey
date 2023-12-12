@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { RenoteMutingsRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { RenoteMutingEntityService } from '@/core/entities/RenoteMutingEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { RenoteMutingsRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { RenoteMutingEntityService } from '@/core/entities/RenoteMutingEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['account'],

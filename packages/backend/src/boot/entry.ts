@@ -6,19 +6,22 @@
 /**
  * Misskey Entry Point!
  */
+console.log("here")
+
 
 import cluster from 'node:cluster';
 import { EventEmitter } from 'node:events';
 import chalk from 'chalk';
 import Xev from 'xev';
-import Logger from '@/logger.js';
-import { envOption } from '../env.js';
-import { masterMain } from './master.js';
-import { workerMain } from './worker.js';
+import Logger from '@/logger.ts';
+
+
+import { envOption } from '../env.ts';
+import { masterMain } from './master.ts';
+import { workerMain } from './worker.ts';
 
 import 'reflect-metadata';
 
-process.title = `Misskey (${cluster.isPrimary ? 'master' : 'worker'})`;
 
 Error.stackTraceLimit = Infinity;
 EventEmitter.defaultMaxListeners = 128;
@@ -84,3 +87,7 @@ if (cluster.isWorker || envOption.disableClustering) {
 if (process.send) {
 	process.send('ok');
 }
+
+
+
+

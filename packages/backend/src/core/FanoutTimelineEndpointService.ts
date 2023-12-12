@@ -4,19 +4,19 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiNote } from '@/models/Note.js';
-import { Packed } from '@/misc/json-schema.js';
-import type { NotesRepository } from '@/models/_.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { FanoutTimelineName, FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import { isUserRelated } from '@/misc/is-user-related.js';
-import { isPureRenote } from '@/misc/is-pure-renote.js';
-import { CacheService } from '@/core/CacheService.js';
-import { isReply } from '@/misc/is-reply.js';
-import { isInstanceMuted } from '@/misc/is-instance-muted.js';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiNote } from '@/models/Note.ts';
+import { Packed } from '@/misc/json-schema.ts';
+import type { NotesRepository } from '@/models/_.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { FanoutTimelineName, FanoutTimelineService } from '@/core/FanoutTimelineService.ts';
+import { isUserRelated } from '@/misc/is-user-related.ts';
+import { isPureRenote } from '@/misc/is-pure-renote.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { isReply } from '@/misc/is-reply.ts';
+import { isInstanceMuted } from '@/misc/is-instance-muted.ts';
 
 type TimelineOptions = {
 	untilId: string | null,

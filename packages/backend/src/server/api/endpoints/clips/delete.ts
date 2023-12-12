@@ -4,9 +4,9 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ClipService } from '@/core/ClipService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { ClipService } from '@/core/ClipService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['clips'],

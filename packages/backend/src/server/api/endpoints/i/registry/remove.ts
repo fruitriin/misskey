@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { RegistryItemsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { RegistryApiService } from '@/core/RegistryApiService.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { RegistryItemsRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { RegistryApiService } from '@/core/RegistryApiService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	requireCredential: true,

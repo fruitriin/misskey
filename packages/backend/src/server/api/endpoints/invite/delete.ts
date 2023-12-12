@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { RegistrationTicketsRepository } from '@/models/_.js';
-import { RoleService } from '@/core/RoleService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { RegistrationTicketsRepository } from '@/models/_.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['meta'],

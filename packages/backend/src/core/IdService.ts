@@ -5,15 +5,15 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { ulid } from 'ulid';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { genAid, isSafeAidT, parseAid } from '@/misc/id/aid.js';
-import { genAidx, isSafeAidxT, parseAidx } from '@/misc/id/aidx.js';
-import { genMeid, isSafeMeidT, parseMeid } from '@/misc/id/meid.js';
-import { genMeidg, isSafeMeidgT, parseMeidg } from '@/misc/id/meidg.js';
-import { genObjectId, isSafeObjectIdT, parseObjectId } from '@/misc/id/object-id.js';
-import { bindThis } from '@/decorators.js';
-import { parseUlid } from '@/misc/id/ulid.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { genAid, isSafeAidT, parseAid } from '@/misc/id/aid.ts';
+import { genAidx, isSafeAidxT, parseAidx } from '@/misc/id/aidx.ts';
+import { genMeid, isSafeMeidT, parseMeid } from '@/misc/id/meid.ts';
+import { genMeidg, isSafeMeidgT, parseMeidg } from '@/misc/id/meidg.ts';
+import { genObjectId, isSafeObjectIdT, parseObjectId } from '@/misc/id/object-id.ts';
+import { bindThis } from '@/decorators.ts';
+import { parseUlid } from '@/misc/id/ulid.ts';
 
 @Injectable()
 export class IdService {

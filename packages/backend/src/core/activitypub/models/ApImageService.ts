@@ -4,20 +4,20 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { DriveFilesRepository } from '@/models/_.js';
-import type { MiRemoteUser } from '@/models/User.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import { MetaService } from '@/core/MetaService.js';
-import { truncate } from '@/misc/truncate.js';
-import { DB_MAX_IMAGE_COMMENT_LENGTH } from '@/const.js';
-import { DriveService } from '@/core/DriveService.js';
-import type Logger from '@/logger.js';
-import { bindThis } from '@/decorators.js';
-import { checkHttps } from '@/misc/check-https.js';
-import { ApResolverService } from '../ApResolverService.js';
-import { ApLoggerService } from '../ApLoggerService.js';
-import type { IObject } from '../type.js';
+import { DI } from '@/di-symbols.ts';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import type { MiRemoteUser } from '@/models/User.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { truncate } from '@/misc/truncate.ts';
+import { DB_MAX_IMAGE_COMMENT_LENGTH } from '@/const.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import type Logger from '@/logger.ts';
+import { bindThis } from '@/decorators.ts';
+import { checkHttps } from '@/misc/check-https.ts';
+import { ApResolverService } from '../ApResolverService.ts';
+import { ApLoggerService } from '../ApLoggerService.ts';
+import type { IObject } from '../type.ts';
 
 @Injectable()
 export class ApImageService {

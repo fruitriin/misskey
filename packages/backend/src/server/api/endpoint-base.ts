@@ -5,11 +5,11 @@
 
 import * as fs from 'node:fs';
 import _Ajv from 'ajv';
-import type { Schema, SchemaType } from '@/misc/json-schema.js';
-import type { MiLocalUser } from '@/models/User.js';
-import type { MiAccessToken } from '@/models/AccessToken.js';
-import { ApiError } from './error.js';
-import type { IEndpointMeta } from './endpoints.js';
+import type { Schema, SchemaType } from '@/misc/json-schema.ts';
+import type { MiLocalUser } from '@/models/User.ts';
+import type { MiAccessToken } from '@/models/AccessToken.ts';
+import { ApiError } from './error.ts';
+import type { IEndpointMeta } from './endpoints.ts';
 
 const Ajv = _Ajv.default;
 

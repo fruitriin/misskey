@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { InstancesRepository } from '@/models/_.js';
-import { FetchInstanceMetadataService } from '@/core/FetchInstanceMetadataService.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { InstancesRepository } from '@/models/_.ts';
+import { FetchInstanceMetadataService } from '@/core/FetchInstanceMetadataService.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['admin'],

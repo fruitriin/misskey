@@ -7,9 +7,11 @@ import cluster from 'node:cluster';
 import chalk from 'chalk';
 import { default as convertColor } from 'color-convert';
 import { format as dateFormat } from 'date-fns';
-import { bindThis } from '@/decorators.js';
-import { envOption } from './env.js';
-import type { KEYWORD } from 'color-convert/conversions.js';
+import { bindThis } from '@/decorators.ts';
+
+
+import { envOption } from './env.ts';
+import type { KEYWORD } from 'color-convert/conversions.ts';
 
 type Context = {
 	name: string;
@@ -20,6 +22,7 @@ type Level = 'error' | 'success' | 'warning' | 'debug' | 'info';
 
 // eslint-disable-next-line import/no-default-export
 export default class Logger {
+
 	private context: Context;
 	private parentLogger: Logger | null = null;
 	private store: boolean;
@@ -109,4 +112,6 @@ export default class Logger {
 	public info(message: string, data?: Record<string, any> | null, important = false): void { // それ以外
 		this.log('info', message, data, important);
 	}
+
 }
+

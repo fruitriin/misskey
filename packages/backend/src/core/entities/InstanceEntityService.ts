@@ -4,11 +4,11 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { Packed } from '@/misc/json-schema.js';
-import type { MiInstance } from '@/models/Instance.js';
-import { MetaService } from '@/core/MetaService.js';
-import { bindThis } from '@/decorators.js';
-import { UtilityService } from '../UtilityService.js';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { MiInstance } from '@/models/Instance.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { bindThis } from '@/decorators.ts';
+import { UtilityService } from '../UtilityService.ts';
 
 @Injectable()
 export class InstanceEntityService {

@@ -5,14 +5,14 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import type { MiUser } from '@/models/User.js';
-import { AppLockService } from '@/core/AppLockService.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import Chart from '../core.js';
-import { ChartLoggerService } from '../ChartLoggerService.js';
-import { name, schema } from './entities/per-user-pv.js';
-import type { KVs } from '../core.js';
+import type { MiUser } from '@/models/User.ts';
+import { AppLockService } from '@/core/AppLockService.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import Chart from '../core.ts';
+import { ChartLoggerService } from '../ChartLoggerService.ts';
+import { name, schema } from './entities/per-user-pv.ts';
+import type { KVs } from '../core.ts';
 
 /**
  * ユーザーごとのプロフィール被閲覧数に関するチャート

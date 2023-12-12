@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { MiRegistryItem, RegistryItemsRepository } from '@/models/_.js';
-import { IdentifiableError } from '@/misc/identifiable-error.js';
-import type { MiUser } from '@/models/User.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiRegistryItem, RegistryItemsRepository } from '@/models/_.ts';
+import { IdentifiableError } from '@/misc/identifiable-error.ts';
+import type { MiUser } from '@/models/User.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class RegistryApiService {

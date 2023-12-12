@@ -4,10 +4,10 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { NotePiningService } from '@/core/NotePiningService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { NotePiningService } from '@/core/NotePiningService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['account', 'notes'],

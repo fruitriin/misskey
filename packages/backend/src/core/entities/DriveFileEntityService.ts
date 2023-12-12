@@ -5,23 +5,23 @@
 
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { DriveFilesRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { awaitAll } from '@/misc/prelude/await-all.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import { appendQuery, query } from '@/misc/prelude/url.js';
-import { deepClone } from '@/misc/clone.js';
-import { bindThis } from '@/decorators.js';
-import { isMimeImage } from '@/misc/is-mime-image.js';
-import { isNotNull } from '@/misc/is-not-null.js';
-import { IdService } from '@/core/IdService.js';
-import { UtilityService } from '../UtilityService.js';
-import { VideoProcessingService } from '../VideoProcessingService.js';
-import { UserEntityService } from './UserEntityService.js';
-import { DriveFolderEntityService } from './DriveFolderEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { awaitAll } from '@/misc/prelude/await-all.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import { appendQuery, query } from '@/misc/prelude/url.ts';
+import { deepClone } from '@/misc/clone.ts';
+import { bindThis } from '@/decorators.ts';
+import { isMimeImage } from '@/misc/is-mime-image.ts';
+import { isNotNull } from '@/misc/is-not-null.ts';
+import { IdService } from '@/core/IdService.ts';
+import { UtilityService } from '../UtilityService.ts';
+import { VideoProcessingService } from '../VideoProcessingService.ts';
+import { UserEntityService } from './UserEntityService.ts';
+import { DriveFolderEntityService } from './DriveFolderEntityService.ts';
 
 type PackOptions = {
 	detail?: boolean,

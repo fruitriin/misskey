@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AdsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AdsRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['admin'],

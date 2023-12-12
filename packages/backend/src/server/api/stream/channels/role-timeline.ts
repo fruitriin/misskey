@@ -4,13 +4,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { isUserRelated } from '@/misc/is-user-related.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import Channel from '../channel.js';
+import { isUserRelated } from '@/misc/is-user-related.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
+import Channel from '../channel.ts';
 
 class RoleTimelineChannel extends Channel {
 	public readonly chName = 'roleTimeline';

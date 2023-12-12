@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { DI } from '@/di-symbols.js';
-import type { NoteFavoritesRepository } from '@/models/_.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { DI } from '@/di-symbols.ts';
+import type { NoteFavoritesRepository } from '@/models/_.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['notes', 'favorites'],

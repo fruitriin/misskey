@@ -6,14 +6,14 @@
 import { IsNull, LessThanOrEqual, MoreThan, Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import JSON5 from 'json5';
-import type { AdsRepository, UsersRepository } from '@/models/_.js';
-import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { MetaService } from '@/core/MetaService.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import type { AdsRepository, UsersRepository } from '@/models/_.ts';
+import { MAX_NOTE_TEXT_LENGTH } from '@/const.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import type { Config } from '@/config.ts';
+import { DI } from '@/di-symbols.ts';
+import { DEFAULT_POLICIES } from '@/core/RoleService.ts';
 
 export const meta = {
 	tags: ['meta'],

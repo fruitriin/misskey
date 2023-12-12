@@ -5,9 +5,9 @@
 
 import { URL } from 'node:url';
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { RelayService } from '@/core/RelayService.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { RelayService } from '@/core/RelayService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['admin'],

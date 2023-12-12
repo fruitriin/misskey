@@ -7,17 +7,17 @@ import { URL } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
 import chalk from 'chalk';
 import { IsNull } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { UsersRepository } from '@/models/_.js';
-import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
-import type { Config } from '@/config.js';
-import type Logger from '@/logger.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { ILink, WebfingerService } from '@/core/WebfingerService.js';
-import { RemoteLoggerService } from '@/core/RemoteLoggerService.js';
-import { ApDbResolverService } from '@/core/activitypub/ApDbResolverService.js';
-import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { UsersRepository } from '@/models/_.ts';
+import type { MiLocalUser, MiRemoteUser } from '@/models/User.ts';
+import type { Config } from '@/config.ts';
+import type Logger from '@/logger.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { ILink, WebfingerService } from '@/core/WebfingerService.ts';
+import { RemoteLoggerService } from '@/core/RemoteLoggerService.ts';
+import { ApDbResolverService } from '@/core/activitypub/ApDbResolverService.ts';
+import { ApPersonService } from '@/core/activitypub/models/ApPersonService.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class RemoteUserResolveService {

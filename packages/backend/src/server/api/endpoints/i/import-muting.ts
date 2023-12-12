@@ -5,12 +5,12 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueueService } from '@/core/QueueService.js';
-import { AccountMoveService } from '@/core/AccountMoveService.js';
-import type { DriveFilesRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { AccountMoveService } from '@/core/AccountMoveService.ts';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	secure: true,

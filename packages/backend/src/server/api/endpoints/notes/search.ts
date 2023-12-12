@@ -4,11 +4,11 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { SearchService } from '@/core/SearchService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { SearchService } from '@/core/SearchService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['notes'],

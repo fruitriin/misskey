@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { DriveFilesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { DI } from '@/di-symbols.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { DI } from '@/di-symbols.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
 
 export const meta = {
 	tags: ['admin'],

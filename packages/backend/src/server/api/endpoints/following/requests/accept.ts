@@ -4,10 +4,10 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { UserFollowingService } from '@/core/UserFollowingService.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { UserFollowingService } from '@/core/UserFollowingService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['following', 'account'],

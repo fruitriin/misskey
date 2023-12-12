@@ -5,13 +5,13 @@
 
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { DriveFilesRepository, GalleryPostsRepository } from '@/models/_.js';
-import { MiGalleryPost } from '@/models/GalleryPost.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import { IdService } from '@/core/IdService.js';
-import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { DriveFilesRepository, GalleryPostsRepository } from '@/models/_.ts';
+import { MiGalleryPost } from '@/models/GalleryPost.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['gallery'],

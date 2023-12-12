@@ -4,6 +4,10 @@
 		"module": "commonjs",
 		"allowSyntheticDefaultImports": true
 	},
+	"baseUrl": "src",
+	"paths": {
+		"@/*": ["./*"]
+	},
 	"exclude": [
 		"node_modules",
 		"jspm_packages",

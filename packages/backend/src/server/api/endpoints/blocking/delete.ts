@@ -5,13 +5,13 @@
 
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UsersRepository, BlockingsRepository } from '@/models/_.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { UserBlockingService } from '@/core/UserBlockingService.js';
-import { DI } from '@/di-symbols.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UsersRepository, BlockingsRepository } from '@/models/_.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { UserBlockingService } from '@/core/UserBlockingService.ts';
+import { DI } from '@/di-symbols.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['account'],

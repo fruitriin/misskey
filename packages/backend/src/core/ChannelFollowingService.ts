@@ -1,13 +1,13 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import type { ChannelFollowingsRepository } from '@/models/_.js';
-import { MiChannel } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEvents, GlobalEventService } from '@/core/GlobalEventService.js';
-import { bindThis } from '@/decorators.js';
-import type { MiLocalUser } from '@/models/User.js';
-import { RedisKVCache } from '@/misc/cache.js';
+import { DI } from '@/di-symbols.ts';
+import type { ChannelFollowingsRepository } from '@/models/_.ts';
+import { MiChannel } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEvents, GlobalEventService } from '@/core/GlobalEventService.ts';
+import { bindThis } from '@/decorators.ts';
+import type { MiLocalUser } from '@/models/User.ts';
+import { RedisKVCache } from '@/misc/cache.ts';
 
 @Injectable()
 export class ChannelFollowingService implements OnModuleInit {

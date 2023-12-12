@@ -11,13 +11,13 @@ import {
 	verifyRegistrationResponse,
 } from '@simplewebauthn/server';
 import { AttestationFormat, isoCBOR } from '@simplewebauthn/server/helpers';
-import { DI } from '@/di-symbols.js';
-import type { UserSecurityKeysRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import { bindThis } from '@/decorators.js';
-import { MetaService } from '@/core/MetaService.js';
-import { MiUser } from '@/models/_.js';
-import { IdentifiableError } from '@/misc/identifiable-error.js';
+import { DI } from '@/di-symbols.ts';
+import type { UserSecurityKeysRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import { bindThis } from '@/decorators.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { MiUser } from '@/models/_.ts';
+import { IdentifiableError } from '@/misc/identifiable-error.ts';
 import type {
 	AuthenticationResponseJSON,
 	AuthenticatorTransportFuture,

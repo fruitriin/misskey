@@ -8,15 +8,15 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyCookie from '@fastify/cookie';
 import { ModuleRef } from '@nestjs/core';
-import type { Config } from '@/config.js';
-import type { InstancesRepository, AccessTokensRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { bindThis } from '@/decorators.js';
-import endpoints from './endpoints.js';
-import { ApiCallService } from './ApiCallService.js';
-import { SignupApiService } from './SignupApiService.js';
-import { SigninApiService } from './SigninApiService.js';
+import type { Config } from '@/config.ts';
+import type { InstancesRepository, AccessTokensRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import endpoints from './endpoints.ts';
+import { ApiCallService } from './ApiCallService.ts';
+import { SignupApiService } from './SignupApiService.ts';
+import { SigninApiService } from './SigninApiService.ts';
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 @Injectable()

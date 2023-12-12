@@ -7,20 +7,20 @@ import * as fs from 'node:fs';
 import { Inject, Injectable } from '@nestjs/common';
 import { MoreThan } from 'typeorm';
 import { format as dateFormat } from 'date-fns';
-import { DI } from '@/di-symbols.js';
-import type { NotesRepository, PollsRepository, UsersRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { DriveService } from '@/core/DriveService.js';
-import { createTemp } from '@/misc/create-temp.js';
-import type { MiPoll } from '@/models/Poll.js';
-import type { MiNote } from '@/models/Note.js';
-import { bindThis } from '@/decorators.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { Packed } from '@/misc/json-schema.js';
-import { IdService } from '@/core/IdService.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { NotesRepository, PollsRepository, UsersRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { createTemp } from '@/misc/create-temp.ts';
+import type { MiPoll } from '@/models/Poll.ts';
+import type { MiNote } from '@/models/Note.ts';
+import { bindThis } from '@/decorators.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { Packed } from '@/misc/json-schema.ts';
+import { IdService } from '@/core/IdService.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { DbJobDataWithUser } from '../types.js';
+import type { DbJobDataWithUser } from '../types.ts';
 
 @Injectable()
 export class ExportNotesProcessorService {

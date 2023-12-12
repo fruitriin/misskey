@@ -5,12 +5,12 @@
 
 import bcrypt from 'bcryptjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UserSecurityKeysRepository } from '@/models/_.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UserSecurityKeysRepository } from '@/models/_.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	requireCredential: true,

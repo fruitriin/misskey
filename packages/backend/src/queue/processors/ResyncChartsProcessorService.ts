@@ -4,12 +4,12 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type Logger from '@/logger.js';
-import NotesChart from '@/core/chart/charts/notes.js';
-import UsersChart from '@/core/chart/charts/users.js';
-import DriveChart from '@/core/chart/charts/drive.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import type Logger from '@/logger.ts';
+import NotesChart from '@/core/chart/charts/notes.ts';
+import UsersChart from '@/core/chart/charts/users.ts';
+import DriveChart from '@/core/chart/charts/drive.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
 
 @Injectable()

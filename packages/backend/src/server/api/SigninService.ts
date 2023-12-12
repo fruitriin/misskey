@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { SigninsRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import type { MiLocalUser } from '@/models/User.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { SigninEntityService } from '@/core/entities/SigninEntityService.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { SigninsRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { MiLocalUser } from '@/models/User.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { SigninEntityService } from '@/core/entities/SigninEntityService.ts';
+import { bindThis } from '@/decorators.ts';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 @Injectable()

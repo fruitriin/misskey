@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { FollowingsRepository, UsersRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
+import type { FollowingsRepository, UsersRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class UserService {

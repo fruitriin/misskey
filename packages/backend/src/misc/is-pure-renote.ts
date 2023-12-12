@@ -1,4 +1,4 @@
-import type { MiNote } from '@/models/Note.js';
+import type { MiNote } from '@/models/Note.ts';
 
 export function isPureRenote(note: MiNote): note is MiNote & { renoteId: NonNullable<MiNote['renoteId']> } {
 	if (!note.renoteId) return false;

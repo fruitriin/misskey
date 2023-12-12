@@ -7,15 +7,15 @@ import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { IsNull, DataSource } from 'typeorm';
-import { genRsaKeyPair } from '@/misc/gen-key-pair.js';
-import { MiUser } from '@/models/User.js';
-import { MiUserProfile } from '@/models/UserProfile.js';
-import { IdService } from '@/core/IdService.js';
-import { MiUserKeypair } from '@/models/UserKeypair.js';
-import { MiUsedUsername } from '@/models/UsedUsername.js';
-import { DI } from '@/di-symbols.js';
-import generateNativeUserToken from '@/misc/generate-native-user-token.js';
-import { bindThis } from '@/decorators.js';
+import { genRsaKeyPair } from '@/misc/gen-key-pair.ts';
+import { MiUser } from '@/models/User.ts';
+import { MiUserProfile } from '@/models/UserProfile.ts';
+import { IdService } from '@/core/IdService.ts';
+import { MiUserKeypair } from '@/models/UserKeypair.ts';
+import { MiUsedUsername } from '@/models/UsedUsername.ts';
+import { DI } from '@/di-symbols.ts';
+import generateNativeUserToken from '@/misc/generate-native-user-token.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class CreateSystemUserService {

@@ -5,11 +5,11 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { WebhooksRepository } from '@/models/_.js';
-import type { MiWebhook } from '@/models/Webhook.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import type { WebhooksRepository } from '@/models/_.ts';
+import type { MiWebhook } from '@/models/Webhook.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 @Injectable()

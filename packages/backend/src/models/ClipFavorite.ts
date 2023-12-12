@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiClip } from './Clip.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiClip } from './Clip.ts';
 
 @Entity('clip_favorite')
 @Index(['userId', 'clipId'], { unique: true })

@@ -7,15 +7,15 @@ import { URLSearchParams } from 'node:url';
 import * as nodemailer from 'nodemailer';
 import { Inject, Injectable } from '@nestjs/common';
 import { validate as validateEmail } from 'deep-email-validator';
-import { SubOutputFormat } from 'deep-email-validator/dist/output/output.js';
-import { MetaService } from '@/core/MetaService.js';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import type Logger from '@/logger.js';
-import type { UserProfilesRepository } from '@/models/_.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import { bindThis } from '@/decorators.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
+import { SubOutputFormat } from 'deep-email-validator/dist/output/output.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import type Logger from '@/logger.ts';
+import type { UserProfilesRepository } from '@/models/_.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import { bindThis } from '@/decorators.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
 
 @Injectable()
 export class EmailService {

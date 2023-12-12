@@ -5,21 +5,21 @@
 
 import { Injectable } from '@nestjs/common';
 import ms from 'ms';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { MiNote } from '@/models/Note.js';
-import type { MiLocalUser, MiUser } from '@/models/User.js';
-import { isActor, isPost, getApId } from '@/core/activitypub/type.js';
-import type { SchemaType } from '@/misc/json-schema.js';
-import { ApResolverService } from '@/core/activitypub/ApResolverService.js';
-import { ApDbResolverService } from '@/core/activitypub/ApDbResolverService.js';
-import { MetaService } from '@/core/MetaService.js';
-import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
-import { ApNoteService } from '@/core/activitypub/models/ApNoteService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { bindThis } from '@/decorators.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { MiNote } from '@/models/Note.ts';
+import type { MiLocalUser, MiUser } from '@/models/User.ts';
+import { isActor, isPost, getApId } from '@/core/activitypub/type.ts';
+import type { SchemaType } from '@/misc/json-schema.ts';
+import { ApResolverService } from '@/core/activitypub/ApResolverService.ts';
+import { ApDbResolverService } from '@/core/activitypub/ApDbResolverService.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { ApPersonService } from '@/core/activitypub/models/ApPersonService.ts';
+import { ApNoteService } from '@/core/activitypub/models/ApNoteService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['federation'],

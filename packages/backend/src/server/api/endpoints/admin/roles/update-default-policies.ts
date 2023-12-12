@@ -4,9 +4,9 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { MetaService } from '@/core/MetaService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { MetaService } from '@/core/MetaService.ts';
 
 export const meta = {
 	tags: ['admin', 'role'],

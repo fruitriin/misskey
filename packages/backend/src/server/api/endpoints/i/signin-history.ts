@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { SigninsRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { SigninEntityService } from '@/core/entities/SigninEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { SigninsRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { SigninEntityService } from '@/core/entities/SigninEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	requireCredential: true,

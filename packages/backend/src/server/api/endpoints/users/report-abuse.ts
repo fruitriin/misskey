@@ -5,16 +5,16 @@
 
 import sanitizeHtml from 'sanitize-html';
 import { Inject, Injectable } from '@nestjs/common';
-import type { AbuseUserReportsRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { MetaService } from '@/core/MetaService.js';
-import { EmailService } from '@/core/EmailService.js';
-import { DI } from '@/di-symbols.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
+import type { AbuseUserReportsRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { EmailService } from '@/core/EmailService.ts';
+import { DI } from '@/di-symbols.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['users'],

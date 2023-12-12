@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { NotesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { DI } from '@/di-symbols.js';
+import type { NotesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['notes'],

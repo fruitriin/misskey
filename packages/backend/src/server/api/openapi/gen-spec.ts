@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import type { Config } from '@/config.js';
-import endpoints, { IEndpoint } from '../endpoints.js';
-import { errors as basicErrors } from './errors.js';
-import { schemas, convertSchemaToOpenApiSchema } from './schemas.js';
+import type { Config } from '@/config.ts';
+import endpoints, { IEndpoint } from '../endpoints.ts';
+import { errors as basicErrors } from './errors.ts';
+import { schemas, convertSchemaToOpenApiSchema } from './schemas.ts';
 
 export function genOpenapiSpec(config: Config) {
 	const spec = {

@@ -4,8 +4,8 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
 
 @Entity('renote_muting')
 @Index(['muterId', 'muteeId'], { unique: true })

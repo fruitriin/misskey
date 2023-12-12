@@ -5,8 +5,8 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	requireCredential: true,

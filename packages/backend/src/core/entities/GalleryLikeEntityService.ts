@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { GalleryLikesRepository } from '@/models/_.js';
-import type { } from '@/models/Blocking.js';
-import type { MiGalleryLike } from '@/models/GalleryLike.js';
-import { bindThis } from '@/decorators.js';
-import { GalleryPostEntityService } from './GalleryPostEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { GalleryLikesRepository } from '@/models/_.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiGalleryLike } from '@/models/GalleryLike.ts';
+import { bindThis } from '@/decorators.ts';
+import { GalleryPostEntityService } from './GalleryPostEntityService.ts';
 
 @Injectable()
 export class GalleryLikeEntityService {

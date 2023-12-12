@@ -5,14 +5,14 @@
 
 import bcrypt from 'bcryptjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import type { UserProfilesRepository, UserSecurityKeysRepository } from '@/models/_.js';
-import { WebAuthnService } from '@/core/WebAuthnService.js';
-import { ApiError } from '@/server/api/error.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import type { UserProfilesRepository, UserSecurityKeysRepository } from '@/models/_.ts';
+import { WebAuthnService } from '@/core/WebAuthnService.ts';
+import { ApiError } from '@/server/api/error.ts';
+import { UserAuthService } from '@/core/UserAuthService.ts';
 
 export const meta = {
 	requireCredential: true,

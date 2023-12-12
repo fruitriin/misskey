@@ -5,15 +5,15 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Bull from 'bullmq';
-import { DI } from '@/di-symbols.js';
-import type { WebhooksRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import type Logger from '@/logger.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { StatusError } from '@/misc/status-error.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
-import type { WebhookDeliverJobData } from '../types.js';
+import { DI } from '@/di-symbols.ts';
+import type { WebhooksRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import type Logger from '@/logger.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { StatusError } from '@/misc/status-error.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
+import type { WebhookDeliverJobData } from '../types.ts';
 
 @Injectable()
 export class WebhookDeliverProcessorService {

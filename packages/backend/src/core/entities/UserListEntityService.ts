@@ -4,14 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { MiUserListMembership, UserListMembershipsRepository, UserListsRepository } from '@/models/_.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { } from '@/models/Blocking.js';
-import type { MiUserList } from '@/models/UserList.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
-import { UserEntityService } from './UserEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiUserListMembership, UserListMembershipsRepository, UserListsRepository } from '@/models/_.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiUserList } from '@/models/UserList.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
+import { UserEntityService } from './UserEntityService.ts';
 
 @Injectable()
 export class UserListEntityService {

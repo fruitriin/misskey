@@ -5,19 +5,19 @@
 
 import { Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { NotesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import ActiveUsersChart from '@/core/chart/charts/active-users.js';
-import { DI } from '@/di-symbols.js';
-import { RoleService } from '@/core/RoleService.js';
-import { IdService } from '@/core/IdService.js';
-import { CacheService } from '@/core/CacheService.js';
-import { QueryService } from '@/core/QueryService.js';
-import { MetaService } from '@/core/MetaService.js';
-import { MiLocalUser } from '@/models/User.js';
-import { FanoutTimelineEndpointService } from '@/core/FanoutTimelineEndpointService.js';
-import { ApiError } from '../../error.js';
+import type { NotesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import ActiveUsersChart from '@/core/chart/charts/active-users.ts';
+import { DI } from '@/di-symbols.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { MiLocalUser } from '@/models/User.ts';
+import { FanoutTimelineEndpointService } from '@/core/FanoutTimelineEndpointService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['notes'],

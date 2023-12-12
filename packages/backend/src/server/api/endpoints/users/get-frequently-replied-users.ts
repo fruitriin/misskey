@@ -5,13 +5,13 @@
 
 import { Not, In, IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import { maximum } from '@/misc/prelude/array.js';
-import type { NotesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { ApiError } from '../../error.js';
+import { maximum } from '@/misc/prelude/array.ts';
+import type { NotesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['users'],

@@ -6,8 +6,8 @@
 import * as os from 'node:os';
 import si from 'systeminformation';
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { MetaService } from '@/core/MetaService.ts';
 
 export const meta = {
 	requireCredential: false,

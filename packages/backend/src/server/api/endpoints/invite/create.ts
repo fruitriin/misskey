@@ -5,14 +5,14 @@
 
 import { MoreThan } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { RegistrationTicketsRepository } from '@/models/_.js';
-import { InviteCodeEntityService } from '@/core/entities/InviteCodeEntityService.js';
-import { IdService } from '@/core/IdService.js';
-import { RoleService } from '@/core/RoleService.js';
-import { DI } from '@/di-symbols.js';
-import { generateInviteCode } from '@/misc/generate-invite-code.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { RegistrationTicketsRepository } from '@/models/_.ts';
+import { InviteCodeEntityService } from '@/core/entities/InviteCodeEntityService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { DI } from '@/di-symbols.ts';
+import { generateInviteCode } from '@/misc/generate-invite-code.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['meta'],

@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserListsRepository, UsersRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserListEntityService } from '@/core/entities/UserListEntityService.js';
-import { ApiError } from '@/server/api/error.js';
-import { DI } from '@/di-symbols.js';
+import type { UserListsRepository, UsersRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserListEntityService } from '@/core/entities/UserListEntityService.ts';
+import { ApiError } from '@/server/api/error.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['lists', 'account'],

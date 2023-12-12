@@ -4,10 +4,10 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { isInstanceMuted, isUserFromMutedInstance } from '@/misc/is-instance-muted.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { bindThis } from '@/decorators.js';
-import Channel from '../channel.js';
+import { isInstanceMuted, isUserFromMutedInstance } from '@/misc/is-instance-muted.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import Channel from '../channel.ts';
 
 class MainChannel extends Channel {
 	public readonly chName = 'main';

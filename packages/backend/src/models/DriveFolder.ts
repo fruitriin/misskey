@@ -4,8 +4,8 @@
  */
 
 import { JoinColumn, ManyToOne, Entity, PrimaryColumn, Index, Column } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
 
 @Entity('drive_folder')
 export class MiDriveFolder {

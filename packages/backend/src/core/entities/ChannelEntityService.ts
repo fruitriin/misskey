@@ -4,16 +4,16 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { ChannelFavoritesRepository, ChannelFollowingsRepository, ChannelsRepository, DriveFilesRepository, NotesRepository } from '@/models/_.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { } from '@/models/Blocking.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiChannel } from '@/models/Channel.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
-import { DriveFileEntityService } from './DriveFileEntityService.js';
-import { NoteEntityService } from './NoteEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { ChannelFavoritesRepository, ChannelFollowingsRepository, ChannelsRepository, DriveFilesRepository, NotesRepository } from '@/models/_.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiChannel } from '@/models/Channel.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
+import { DriveFileEntityService } from './DriveFileEntityService.ts';
+import { NoteEntityService } from './NoteEntityService.ts';
 import { In } from 'typeorm';
 
 @Injectable()

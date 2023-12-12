@@ -5,11 +5,11 @@
 
 import { IsNull, MoreThan, Not } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { FollowingsRepository, InstancesRepository } from '@/models/_.js';
-import { awaitAll } from '@/misc/prelude/await-all.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { InstanceEntityService } from '@/core/entities/InstanceEntityService.js';
-import { DI } from '@/di-symbols.js';
+import type { FollowingsRepository, InstancesRepository } from '@/models/_.ts';
+import { awaitAll } from '@/misc/prelude/await-all.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { InstanceEntityService } from '@/core/entities/InstanceEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['federation'],

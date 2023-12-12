@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { DriveFoldersRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { DriveFolderEntityService } from '@/core/entities/DriveFolderEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { DriveFoldersRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { DriveFolderEntityService } from '@/core/entities/DriveFolderEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['drive'],

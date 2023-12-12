@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { MutingsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { UserMutingService } from '@/core/UserMutingService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { MutingsRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { UserMutingService } from '@/core/UserMutingService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['account'],

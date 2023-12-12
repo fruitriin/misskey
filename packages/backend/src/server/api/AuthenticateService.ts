@@ -4,15 +4,15 @@
  */
 
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { AccessTokensRepository, AppsRepository, UsersRepository } from '@/models/_.js';
-import type { MiLocalUser } from '@/models/User.js';
-import type { MiAccessToken } from '@/models/AccessToken.js';
-import { MemoryKVCache } from '@/misc/cache.js';
-import type { MiApp } from '@/models/App.js';
-import { CacheService } from '@/core/CacheService.js';
-import isNativeToken from '@/misc/is-native-token.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { AccessTokensRepository, AppsRepository, UsersRepository } from '@/models/_.ts';
+import type { MiLocalUser } from '@/models/User.ts';
+import type { MiAccessToken } from '@/models/AccessToken.ts';
+import { MemoryKVCache } from '@/misc/cache.ts';
+import type { MiApp } from '@/models/App.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import isNativeToken from '@/misc/is-native-token.ts';
+import { bindThis } from '@/decorators.ts';
 
 export class AuthenticationError extends Error {
 	constructor(message: string) {

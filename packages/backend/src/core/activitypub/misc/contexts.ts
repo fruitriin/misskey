@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import type { JsonLd } from 'jsonld/jsonld-spec.js';
+import type { JsonLd } from 'jsonld/jsonld-spec.ts';
 
 /* eslint:disable:quotemark indent */
 const id_v1 = {

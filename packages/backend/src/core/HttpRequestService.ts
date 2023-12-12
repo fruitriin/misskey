@@ -10,10 +10,10 @@ import CacheableLookup from 'cacheable-lookup';
 import fetch from 'node-fetch';
 import { HttpProxyAgent, HttpsProxyAgent } from 'hpagent';
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { StatusError } from '@/misc/status-error.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { StatusError } from '@/misc/status-error.ts';
+import { bindThis } from '@/decorators.ts';
 import type { Response } from 'node-fetch';
 import type { URL } from 'node:url';
 

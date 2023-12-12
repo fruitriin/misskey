@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { FollowRequestsRepository } from '@/models/_.js';
-import type { } from '@/models/Blocking.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiFollowRequest } from '@/models/FollowRequest.js';
-import { bindThis } from '@/decorators.js';
-import { UserEntityService } from './UserEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { FollowRequestsRepository } from '@/models/_.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiFollowRequest } from '@/models/FollowRequest.ts';
+import { bindThis } from '@/decorators.ts';
+import { UserEntityService } from './UserEntityService.ts';
 
 @Injectable()
 export class FollowRequestEntityService {

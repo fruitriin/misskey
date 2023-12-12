@@ -5,17 +5,17 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull } from 'typeorm';
-import type { MiLocalUser, MiUser } from '@/models/User.js';
-import type { RelaysRepository, UsersRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { MemorySingleCache } from '@/misc/cache.js';
-import type { MiRelay } from '@/models/Relay.js';
-import { QueueService } from '@/core/QueueService.js';
-import { CreateSystemUserService } from '@/core/CreateSystemUserService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { DI } from '@/di-symbols.js';
-import { deepClone } from '@/misc/clone.js';
-import { bindThis } from '@/decorators.js';
+import type { MiLocalUser, MiUser } from '@/models/User.ts';
+import type { RelaysRepository, UsersRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { MemorySingleCache } from '@/misc/cache.ts';
+import type { MiRelay } from '@/models/Relay.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { CreateSystemUserService } from '@/core/CreateSystemUserService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { DI } from '@/di-symbols.ts';
+import { deepClone } from '@/misc/clone.ts';
+import { bindThis } from '@/decorators.ts';
 
 const ACTOR_USERNAME = 'relay.actor' as const;
 

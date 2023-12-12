@@ -6,22 +6,22 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ModuleRef } from '@nestjs/core';
-import { DI } from '@/di-symbols.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { awaitAll } from '@/misc/prelude/await-all.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiNote } from '@/models/Note.js';
-import type { MiNoteReaction } from '@/models/NoteReaction.js';
-import type { UsersRepository, NotesRepository, FollowingsRepository, PollsRepository, PollVotesRepository, NoteReactionsRepository, ChannelsRepository } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
-import { isNotNull } from '@/misc/is-not-null.js';
-import { DebounceLoader } from '@/misc/loader.js';
-import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { awaitAll } from '@/misc/prelude/await-all.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiNote } from '@/models/Note.ts';
+import type { MiNoteReaction } from '@/models/NoteReaction.ts';
+import type { UsersRepository, NotesRepository, FollowingsRepository, PollsRepository, PollVotesRepository, NoteReactionsRepository, ChannelsRepository } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
+import { isNotNull } from '@/misc/is-not-null.ts';
+import { DebounceLoader } from '@/misc/loader.ts';
+import { IdService } from '@/core/IdService.ts';
 import type { OnModuleInit } from '@nestjs/common';
-import type { CustomEmojiService } from '../CustomEmojiService.js';
-import type { ReactionService } from '../ReactionService.js';
-import type { UserEntityService } from './UserEntityService.js';
-import type { DriveFileEntityService } from './DriveFileEntityService.js';
+import type { CustomEmojiService } from '../CustomEmojiService.ts';
+import type { ReactionService } from '../ReactionService.ts';
+import type { UserEntityService } from './UserEntityService.ts';
+import type { DriveFileEntityService } from './DriveFileEntityService.ts';
 
 @Injectable()
 export class NoteEntityService implements OnModuleInit {

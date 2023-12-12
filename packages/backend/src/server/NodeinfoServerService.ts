@@ -4,16 +4,16 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { MetaService } from '@/core/MetaService.js';
-import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
-import { MemorySingleCache } from '@/misc/cache.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { bindThis } from '@/decorators.js';
-import NotesChart from '@/core/chart/charts/notes.js';
-import UsersChart from '@/core/chart/charts/users.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { MAX_NOTE_TEXT_LENGTH } from '@/const.ts';
+import { MemorySingleCache } from '@/misc/cache.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import NotesChart from '@/core/chart/charts/notes.ts';
+import UsersChart from '@/core/chart/charts/users.ts';
+import { DEFAULT_POLICIES } from '@/core/RoleService.ts';
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 const nodeinfo2_1path = '/nodeinfo/2.1';

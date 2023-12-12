@@ -6,13 +6,13 @@
 import ms from 'ms';
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { PasswordResetRequestsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { IdService } from '@/core/IdService.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
-import { EmailService } from '@/core/EmailService.js';
-import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
+import type { PasswordResetRequestsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { Config } from '@/config.ts';
+import { DI } from '@/di-symbols.ts';
+import { EmailService } from '@/core/EmailService.ts';
+import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.ts';
 
 export const meta = {
 	tags: ['reset password'],

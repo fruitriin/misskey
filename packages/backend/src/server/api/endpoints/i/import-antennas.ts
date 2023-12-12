@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueueService } from '@/core/QueueService.js';
-import type { AntennasRepository, DriveFilesRepository, UsersRepository, MiAntenna as _Antenna } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { RoleService } from '@/core/RoleService.js';
-import { DownloadService } from '@/core/DownloadService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import type { AntennasRepository, DriveFilesRepository, UsersRepository, MiAntenna as _Antenna } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { DownloadService } from '@/core/DownloadService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	secure: true,

@@ -4,20 +4,20 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { NotesRepository, UserNotePiningsRepository, UsersRepository } from '@/models/_.js';
-import { IdentifiableError } from '@/misc/identifiable-error.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiNote } from '@/models/Note.js';
-import { IdService } from '@/core/IdService.js';
-import type { MiUserNotePining } from '@/models/UserNotePining.js';
-import { RelayService } from '@/core/RelayService.js';
-import type { Config } from '@/config.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
+import { DI } from '@/di-symbols.ts';
+import type { NotesRepository, UserNotePiningsRepository, UsersRepository } from '@/models/_.ts';
+import { IdentifiableError } from '@/misc/identifiable-error.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiNote } from '@/models/Note.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { MiUserNotePining } from '@/models/UserNotePining.ts';
+import { RelayService } from '@/core/RelayService.ts';
+import type { Config } from '@/config.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { bindThis } from '@/decorators.ts';
+import { RoleService } from '@/core/RoleService.ts';
 
 @Injectable()
 export class NotePiningService {

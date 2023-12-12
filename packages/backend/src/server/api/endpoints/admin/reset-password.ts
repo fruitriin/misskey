@@ -5,11 +5,11 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { secureRndstr } from '@/misc/secure-rndstr.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UsersRepository, UserProfilesRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { secureRndstr } from '@/misc/secure-rndstr.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
 
 export const meta = {
 	tags: ['admin'],

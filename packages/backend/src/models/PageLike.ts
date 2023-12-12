@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiPage } from './Page.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiPage } from './Page.ts';
 
 @Entity('page_like')
 @Index(['userId', 'pageId'], { unique: true })

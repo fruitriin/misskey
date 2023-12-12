@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { GalleryLikesRepository, GalleryPostsRepository } from '@/models/_.js';
-import { FeaturedService, GALLERY_POSTS_RANKING_WINDOW } from '@/core/FeaturedService.js';
-import { IdService } from '@/core/IdService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { GalleryLikesRepository, GalleryPostsRepository } from '@/models/_.ts';
+import { FeaturedService, GALLERY_POSTS_RANKING_WINDOW } from '@/core/FeaturedService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['gallery'],

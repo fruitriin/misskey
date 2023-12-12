@@ -4,21 +4,21 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type Logger from '@/logger.js';
-import FederationChart from '@/core/chart/charts/federation.js';
-import NotesChart from '@/core/chart/charts/notes.js';
-import UsersChart from '@/core/chart/charts/users.js';
-import ActiveUsersChart from '@/core/chart/charts/active-users.js';
-import InstanceChart from '@/core/chart/charts/instance.js';
-import PerUserNotesChart from '@/core/chart/charts/per-user-notes.js';
-import PerUserPvChart from '@/core/chart/charts/per-user-pv.js';
-import DriveChart from '@/core/chart/charts/drive.js';
-import PerUserReactionsChart from '@/core/chart/charts/per-user-reactions.js';
-import PerUserFollowingChart from '@/core/chart/charts/per-user-following.js';
-import PerUserDriveChart from '@/core/chart/charts/per-user-drive.js';
-import ApRequestChart from '@/core/chart/charts/ap-request.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import type Logger from '@/logger.ts';
+import FederationChart from '@/core/chart/charts/federation.ts';
+import NotesChart from '@/core/chart/charts/notes.ts';
+import UsersChart from '@/core/chart/charts/users.ts';
+import ActiveUsersChart from '@/core/chart/charts/active-users.ts';
+import InstanceChart from '@/core/chart/charts/instance.ts';
+import PerUserNotesChart from '@/core/chart/charts/per-user-notes.ts';
+import PerUserPvChart from '@/core/chart/charts/per-user-pv.ts';
+import DriveChart from '@/core/chart/charts/drive.ts';
+import PerUserReactionsChart from '@/core/chart/charts/per-user-reactions.ts';
+import PerUserFollowingChart from '@/core/chart/charts/per-user-following.ts';
+import PerUserDriveChart from '@/core/chart/charts/per-user-drive.ts';
+import ApRequestChart from '@/core/chart/charts/ap-request.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
 
 @Injectable()

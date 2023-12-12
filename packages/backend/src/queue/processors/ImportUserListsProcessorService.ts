@@ -5,19 +5,19 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { UsersRepository, DriveFilesRepository, UserListMembershipsRepository, UserListsRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import * as Acct from '@/misc/acct.js';
-import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
-import { DownloadService } from '@/core/DownloadService.js';
-import { UserListService } from '@/core/UserListService.js';
-import { IdService } from '@/core/IdService.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { UsersRepository, DriveFilesRepository, UserListMembershipsRepository, UserListsRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import * as Acct from '@/misc/acct.ts';
+import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.ts';
+import { DownloadService } from '@/core/DownloadService.ts';
+import { UserListService } from '@/core/UserListService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { DbUserImportJobData } from '../types.js';
+import type { DbUserImportJobData } from '../types.ts';
 
 @Injectable()
 export class ImportUserListsProcessorService {

@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { NotesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { FeaturedService } from '@/core/FeaturedService.js';
-import { CacheService } from '@/core/CacheService.js';
-import { isUserRelated } from '@/misc/is-user-related.js';
+import type { NotesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { FeaturedService } from '@/core/FeaturedService.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { isUserRelated } from '@/misc/is-user-related.ts';
 
 export const meta = {
 	tags: ['notes'],

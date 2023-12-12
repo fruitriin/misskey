@@ -4,7 +4,7 @@
  */
 
 import { LoggerService } from '@nestjs/common';
-import Logger from '@/logger.js';
+import Logger from '@/logger.ts';
 
 const logger = new Logger('core', 'cyan');
 const nestLogger = logger.createSubLogger('nest', 'green', false);

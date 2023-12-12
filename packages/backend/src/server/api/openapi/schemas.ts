@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import type { Schema } from '@/misc/json-schema.js';
-import { refs } from '@/misc/json-schema.js';
+import type { Schema } from '@/misc/json-schema.ts';
+import { refs } from '@/misc/json-schema.ts';
 
 export function convertSchemaToOpenApiSchema(schema: Schema) {
 	// optional, refはスキーマ定義に含まれないので分離しておく

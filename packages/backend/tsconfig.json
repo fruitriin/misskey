@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
+
 		"allowJs": true,
+		"allowImportingTsExtensions": true,
 		"noEmitOnError": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
@@ -20,11 +22,11 @@
 		"strictPropertyInitialization": false,
 		"skipLibCheck": true,
 		"experimentalDecorators": true,
+		"useDefineForClassFields": true,
 		"emitDecoratorMetadata": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"rootDir": "./src",
-		"baseUrl": "./",
+		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"]
 		},
@@ -43,7 +45,7 @@
 	},
 	"compileOnSave": false,
 	"include": [
-		"./src/**/*.ts"
+		"./src/**/*"
 	],
 	"exclude": [
 		"./src/**/*.test.ts"

@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { AuthSessionsRepository } from '@/models/_.js';
-import { awaitAll } from '@/misc/prelude/await-all.js';
-import type { MiAuthSession } from '@/models/AuthSession.js';
-import type { MiUser } from '@/models/User.js';
-import { bindThis } from '@/decorators.js';
-import { AppEntityService } from './AppEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { AuthSessionsRepository } from '@/models/_.ts';
+import { awaitAll } from '@/misc/prelude/await-all.ts';
+import type { MiAuthSession } from '@/models/AuthSession.ts';
+import type { MiUser } from '@/models/User.ts';
+import { bindThis } from '@/decorators.ts';
+import { AppEntityService } from './AppEntityService.ts';
 
 @Injectable()
 export class AuthSessionEntityService {

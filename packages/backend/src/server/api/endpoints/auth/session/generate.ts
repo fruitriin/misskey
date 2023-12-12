@@ -5,12 +5,12 @@
 
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AppsRepository, AuthSessionsRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AppsRepository, AuthSessionsRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { Config } from '@/config.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['auth'],

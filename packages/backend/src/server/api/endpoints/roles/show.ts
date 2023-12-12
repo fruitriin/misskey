@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { RolesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import { RoleEntityService } from '@/core/entities/RoleEntityService.js';
-import { ApiError } from '../../error.js';
+import type { RolesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
+import { RoleEntityService } from '@/core/entities/RoleEntityService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['role', 'users'],

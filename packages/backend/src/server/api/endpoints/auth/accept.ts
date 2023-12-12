@@ -5,12 +5,12 @@
 
 import * as crypto from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AuthSessionsRepository, AppsRepository, AccessTokensRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { secureRndstr } from '@/misc/secure-rndstr.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AuthSessionsRepository, AppsRepository, AccessTokensRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { secureRndstr } from '@/misc/secure-rndstr.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['auth'],

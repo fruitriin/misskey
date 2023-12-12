@@ -4,14 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { PollVotesRepository, NotesRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { NotificationService } from '@/core/NotificationService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { PollVotesRepository, NotesRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { NotificationService } from '@/core/NotificationService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { EndedPollNotificationJobData } from '../types.js';
+import type { EndedPollNotificationJobData } from '../types.ts';
 
 @Injectable()
 export class EndedPollNotificationProcessorService {

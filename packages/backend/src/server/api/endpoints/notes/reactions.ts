@@ -5,12 +5,12 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets, type FindOptionsWhere } from 'typeorm';
-import type { NoteReactionsRepository } from '@/models/_.js';
-import type { MiNoteReaction } from '@/models/NoteReaction.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { NoteReactionEntityService } from '@/core/entities/NoteReactionEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { QueryService } from '@/core/QueryService.js';
+import type { NoteReactionsRepository } from '@/models/_.ts';
+import type { MiNoteReaction } from '@/models/NoteReaction.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { NoteReactionEntityService } from '@/core/entities/NoteReactionEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { QueryService } from '@/core/QueryService.ts';
 
 export const meta = {
 	tags: ['notes', 'reactions'],

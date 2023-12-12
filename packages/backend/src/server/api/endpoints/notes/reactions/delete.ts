@@ -5,10 +5,10 @@
 
 import ms from 'ms';
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { ReactionService } from '@/core/ReactionService.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { ReactionService } from '@/core/ReactionService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['reactions', 'notes'],

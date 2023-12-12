@@ -6,11 +6,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Xev from 'xev';
 import * as Bull from 'bullmq';
-import { QueueService } from '@/core/QueueService.js';
-import { bindThis } from '@/decorators.js';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { QUEUE, baseQueueOptions } from '@/queue/const.js';
+import { QueueService } from '@/core/QueueService.ts';
+import { bindThis } from '@/decorators.ts';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { QUEUE, baseQueueOptions } from '@/queue/const.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 const ev = new Xev();

@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiUserList } from './UserList.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiUserList } from './UserList.ts';
 
 @Entity('user_list_membership')
 @Index(['userId', 'userListId'], { unique: true })

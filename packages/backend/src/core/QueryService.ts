@@ -5,11 +5,11 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets, ObjectLiteral } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { MiUser } from '@/models/User.js';
-import type { UserProfilesRepository, FollowingsRepository, ChannelFollowingsRepository, BlockingsRepository, NoteThreadMutingsRepository, MutingsRepository, RenoteMutingsRepository } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { UserProfilesRepository, FollowingsRepository, ChannelFollowingsRepository, BlockingsRepository, NoteThreadMutingsRepository, MutingsRepository, RenoteMutingsRepository } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
 import type { SelectQueryBuilder } from 'typeorm';
 
 @Injectable()

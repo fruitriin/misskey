@@ -4,10 +4,10 @@
  */
 
 import { Module } from '@nestjs/common';
-import { CoreModule } from '@/core/CoreModule.js';
-import { GlobalModule } from '@/GlobalModule.js';
-import { QueueStatsService } from './QueueStatsService.js';
-import { ServerStatsService } from './ServerStatsService.js';
+import { CoreModule } from '@/core/CoreModule.ts';
+import { GlobalModule } from '@/GlobalModule.ts';
+import { QueueStatsService } from './QueueStatsService.ts';
+import { ServerStatsService } from './ServerStatsService.ts';
 
 @Module({
 	imports: [

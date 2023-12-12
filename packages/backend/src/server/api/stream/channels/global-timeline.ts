@@ -4,15 +4,15 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { checkWordMute } from '@/misc/check-word-mute.js';
-import { isInstanceMuted } from '@/misc/is-instance-muted.js';
-import { isUserRelated } from '@/misc/is-user-related.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { MetaService } from '@/core/MetaService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
-import Channel from '../channel.js';
+import { checkWordMute } from '@/misc/check-word-mute.ts';
+import { isInstanceMuted } from '@/misc/is-instance-muted.ts';
+import { isUserRelated } from '@/misc/is-user-related.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import Channel from '../channel.ts';
 
 class GlobalTimelineChannel extends Channel {
 	public readonly chName = 'globalTimeline';

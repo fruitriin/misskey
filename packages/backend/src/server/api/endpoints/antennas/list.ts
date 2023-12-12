@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AntennasRepository } from '@/models/_.js';
-import { AntennaEntityService } from '@/core/entities/AntennaEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AntennasRepository } from '@/models/_.ts';
+import { AntennaEntityService } from '@/core/entities/AntennaEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['antennas', 'account'],

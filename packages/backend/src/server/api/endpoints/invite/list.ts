@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { RegistrationTicketsRepository } from '@/models/_.js';
-import { InviteCodeEntityService } from '@/core/entities/InviteCodeEntityService.js';
-import { QueryService } from '@/core/QueryService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { RegistrationTicketsRepository } from '@/models/_.ts';
+import { InviteCodeEntityService } from '@/core/entities/InviteCodeEntityService.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['meta'],

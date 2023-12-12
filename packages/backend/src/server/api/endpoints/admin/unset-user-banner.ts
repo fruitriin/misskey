@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
+import type { UsersRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
 
 export const meta = {
 	tags: ['admin'],

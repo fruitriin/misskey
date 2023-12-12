@@ -5,14 +5,14 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import type { NotesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import ActiveUsersChart from '@/core/chart/charts/active-users.js';
-import { DI } from '@/di-symbols.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
+import type { NotesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import ActiveUsersChart from '@/core/chart/charts/active-users.ts';
+import { DI } from '@/di-symbols.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['notes'],

@@ -6,14 +6,14 @@
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import push from 'web-push';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { getNoteSummary } from '@/misc/get-note-summary.js';
-import type { MiSwSubscription, SwSubscriptionsRepository } from '@/models/_.js';
-import { MetaService } from '@/core/MetaService.js';
-import { bindThis } from '@/decorators.js';
-import { RedisKVCache } from '@/misc/cache.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { getNoteSummary } from '@/misc/get-note-summary.ts';
+import type { MiSwSubscription, SwSubscriptionsRepository } from '@/models/_.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { bindThis } from '@/decorators.ts';
+import { RedisKVCache } from '@/misc/cache.ts';
 
 // Defined also packages/sw/types.ts#L13
 type PushNotificationsTypes = {

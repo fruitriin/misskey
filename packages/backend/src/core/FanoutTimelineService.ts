@@ -5,9 +5,9 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
 
 export type FanoutTimelineName =
 	// home timeline

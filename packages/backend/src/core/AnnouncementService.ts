@@ -5,14 +5,14 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { MiUser } from '@/models/User.js';
-import type { AnnouncementReadsRepository, AnnouncementsRepository, MiAnnouncement, MiAnnouncementRead, UsersRepository } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
-import { Packed } from '@/misc/json-schema.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { AnnouncementReadsRepository, AnnouncementsRepository, MiAnnouncement, MiAnnouncementRead, UsersRepository } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
+import { Packed } from '@/misc/json-schema.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
 
 @Injectable()
 export class AnnouncementService {

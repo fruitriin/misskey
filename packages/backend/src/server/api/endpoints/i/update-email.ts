@@ -6,16 +6,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
 import bcrypt from 'bcryptjs';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UserProfilesRepository } from '@/models/_.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { EmailService } from '@/core/EmailService.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UserProfilesRepository } from '@/models/_.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { EmailService } from '@/core/EmailService.ts';
+import type { Config } from '@/config.ts';
+import { DI } from '@/di-symbols.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.ts';
+import { UserAuthService } from '@/core/UserAuthService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	requireCredential: true,

@@ -4,16 +4,16 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserListsRepository, UserListMembershipsRepository, BlockingsRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import type { MiUserList } from '@/models/UserList.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { UserListEntityService } from '@/core/entities/UserListEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '@/server/api/error.js';
-import { RoleService } from '@/core/RoleService.js';
-import { UserListService } from '@/core/UserListService.js';
+import type { UserListsRepository, UserListMembershipsRepository, BlockingsRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { MiUserList } from '@/models/UserList.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { UserListEntityService } from '@/core/entities/UserListEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '@/server/api/error.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { UserListService } from '@/core/UserListService.ts';
 
 export const meta = {
 	requireCredential: true,

@@ -5,14 +5,14 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Not, IsNull } from 'typeorm';
-import type { FollowingsRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import { QueueService } from '@/core/QueueService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DI } from '@/di-symbols.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { bindThis } from '@/decorators.js';
+import type { FollowingsRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class UserSuspendService {

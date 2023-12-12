@@ -4,9 +4,9 @@
  */
 
 import { Entity, PrimaryColumn, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiApp } from './App.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiApp } from './App.ts';
 
 @Entity('auth_session')
 export class MiAuthSession {

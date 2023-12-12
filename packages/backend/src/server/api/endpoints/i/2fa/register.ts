@@ -7,12 +7,12 @@ import bcrypt from 'bcryptjs';
 import * as OTPAuth from 'otpauth';
 import * as QRCode from 'qrcode';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserProfilesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { ApiError } from '@/server/api/error.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import type { UserProfilesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { ApiError } from '@/server/api/error.ts';
+import { UserAuthService } from '@/core/UserAuthService.ts';
 
 export const meta = {
 	requireCredential: true,

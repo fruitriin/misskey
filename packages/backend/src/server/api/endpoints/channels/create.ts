@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { ChannelsRepository, DriveFilesRepository } from '@/models/_.js';
-import type { MiChannel } from '@/models/Channel.js';
-import { IdService } from '@/core/IdService.js';
-import { ChannelEntityService } from '@/core/entities/ChannelEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { ChannelsRepository, DriveFilesRepository } from '@/models/_.ts';
+import type { MiChannel } from '@/models/Channel.ts';
+import { IdService } from '@/core/IdService.ts';
+import { ChannelEntityService } from '@/core/entities/ChannelEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['channels'],

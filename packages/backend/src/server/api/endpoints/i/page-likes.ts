@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { PageLikesRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { PageLikeEntityService } from '@/core/entities/PageLikeEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { PageLikesRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { PageLikeEntityService } from '@/core/entities/PageLikeEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['account', 'pages'],

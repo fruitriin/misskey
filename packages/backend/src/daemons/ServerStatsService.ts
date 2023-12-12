@@ -7,8 +7,8 @@ import { Injectable } from '@nestjs/common';
 import si from 'systeminformation';
 import Xev from 'xev';
 import * as osUtils from 'os-utils';
-import { bindThis } from '@/decorators.js';
-import { MetaService } from '@/core/MetaService.js';
+import { bindThis } from '@/decorators.ts';
+import { MetaService } from '@/core/MetaService.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 const ev = new Xev();

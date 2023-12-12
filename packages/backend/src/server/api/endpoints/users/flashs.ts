@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { FlashEntityService } from '@/core/entities/FlashEntityService.js';
-import type { FlashsRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { FlashEntityService } from '@/core/entities/FlashEntityService.ts';
+import type { FlashsRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['users', 'flashs'],

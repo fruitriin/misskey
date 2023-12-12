@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import type { Config } from '@/config.ts';
+import { DI } from '@/di-symbols.ts';
+import { DEFAULT_POLICIES } from '@/core/RoleService.ts';
 
 export const meta = {
 	tags: ['meta'],

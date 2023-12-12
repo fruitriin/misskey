@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { IdService } from '@/core/IdService.js';
-import type { SwSubscriptionsRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
-import { DI } from '@/di-symbols.js';
+import { IdService } from '@/core/IdService.ts';
+import type { SwSubscriptionsRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['account'],

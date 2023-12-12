@@ -5,10 +5,10 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { DriveFilesRepository } from '@/models/_.js';
-import { DriveService } from '@/core/DriveService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['admin'],

@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { EmojisRepository } from '@/models/_.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { } from '@/models/Blocking.js';
-import type { MiEmoji } from '@/models/Emoji.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { EmojisRepository } from '@/models/_.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiEmoji } from '@/models/Emoji.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class EmojiEntityService {

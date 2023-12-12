@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AppsRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { unique } from '@/misc/prelude/array.js';
-import { secureRndstr } from '@/misc/secure-rndstr.js';
-import { AppEntityService } from '@/core/entities/AppEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AppsRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { unique } from '@/misc/prelude/array.ts';
+import { secureRndstr } from '@/misc/secure-rndstr.ts';
+import { AppEntityService } from '@/core/entities/AppEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['app'],

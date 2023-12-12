@@ -5,13 +5,13 @@
 
 import { Injectable } from '@nestjs/common';
 import promiseLimit from 'promise-limit';
-import type { MiRemoteUser, MiUser } from '@/models/User.js';
-import { concat, unique } from '@/misc/prelude/array.js';
-import { bindThis } from '@/decorators.js';
-import { getApIds } from './type.js';
-import { ApPersonService } from './models/ApPersonService.js';
-import type { ApObject } from './type.js';
-import type { Resolver } from './ApResolverService.js';
+import type { MiRemoteUser, MiUser } from '@/models/User.ts';
+import { concat, unique } from '@/misc/prelude/array.ts';
+import { bindThis } from '@/decorators.ts';
+import { getApIds } from './type.ts';
+import { ApPersonService } from './models/ApPersonService.ts';
+import type { ApObject } from './type.ts';
+import type { Resolver } from './ApResolverService.ts';
 
 type Visibility = 'public' | 'home' | 'followers' | 'specified';
 

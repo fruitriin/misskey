@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { GalleryPostsRepository } from '@/models/_.js';
-import { QueryService } from '@/core/QueryService.js';
-import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { GalleryPostsRepository } from '@/models/_.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['users', 'gallery'],

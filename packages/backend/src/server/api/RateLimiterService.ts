@@ -6,11 +6,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Limiter from 'ratelimiter';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import type Logger from '@/logger.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import { bindThis } from '@/decorators.js';
-import type { IEndpointMeta } from './endpoints.js';
+import { DI } from '@/di-symbols.ts';
+import type Logger from '@/logger.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import { bindThis } from '@/decorators.ts';
+import type { IEndpointMeta } from './endpoints.ts';
 
 @Injectable()
 export class RateLimiterService {

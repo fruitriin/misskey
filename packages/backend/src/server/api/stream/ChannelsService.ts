@@ -4,21 +4,21 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { bindThis } from '@/decorators.js';
-import { HybridTimelineChannelService } from './channels/hybrid-timeline.js';
-import { LocalTimelineChannelService } from './channels/local-timeline.js';
-import { HomeTimelineChannelService } from './channels/home-timeline.js';
-import { GlobalTimelineChannelService } from './channels/global-timeline.js';
-import { MainChannelService } from './channels/main.js';
-import { ChannelChannelService } from './channels/channel.js';
-import { AdminChannelService } from './channels/admin.js';
-import { ServerStatsChannelService } from './channels/server-stats.js';
-import { QueueStatsChannelService } from './channels/queue-stats.js';
-import { UserListChannelService } from './channels/user-list.js';
-import { AntennaChannelService } from './channels/antenna.js';
-import { DriveChannelService } from './channels/drive.js';
-import { HashtagChannelService } from './channels/hashtag.js';
-import { RoleTimelineChannelService } from './channels/role-timeline.js';
+import { bindThis } from '@/decorators.ts';
+import { HybridTimelineChannelService } from './channels/hybrid-timeline.ts';
+import { LocalTimelineChannelService } from './channels/local-timeline.ts';
+import { HomeTimelineChannelService } from './channels/home-timeline.ts';
+import { GlobalTimelineChannelService } from './channels/global-timeline.ts';
+import { MainChannelService } from './channels/main.ts';
+import { ChannelChannelService } from './channels/channel.ts';
+import { AdminChannelService } from './channels/admin.ts';
+import { ServerStatsChannelService } from './channels/server-stats.ts';
+import { QueueStatsChannelService } from './channels/queue-stats.ts';
+import { UserListChannelService } from './channels/user-list.ts';
+import { AntennaChannelService } from './channels/antenna.ts';
+import { DriveChannelService } from './channels/drive.ts';
+import { HashtagChannelService } from './channels/hashtag.ts';
+import { RoleTimelineChannelService } from './channels/role-timeline.ts';
 
 @Injectable()
 export class ChannelsService {

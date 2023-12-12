@@ -4,7 +4,7 @@
  */
 
 import { Entity, Column, PrimaryColumn } from 'typeorm';
-import { id } from './util/id.js';
+import { id } from './util/id.ts';
 
 type CondFormulaValueAnd = {
 	type: 'and';

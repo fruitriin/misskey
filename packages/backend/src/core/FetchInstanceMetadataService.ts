@@ -8,13 +8,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { JSDOM } from 'jsdom';
 import tinycolor from 'tinycolor2';
 import * as Redis from 'ioredis';
-import type { MiInstance } from '@/models/Instance.js';
-import type Logger from '@/logger.js';
-import { DI } from '@/di-symbols.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { bindThis } from '@/decorators.js';
-import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
+import type { MiInstance } from '@/models/Instance.ts';
+import type Logger from '@/logger.ts';
+import { DI } from '@/di-symbols.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { bindThis } from '@/decorators.ts';
+import { FederatedInstanceService } from '@/core/FederatedInstanceService.ts';
 import type { DOMWindow } from 'jsdom';
 
 type NodeInfo = {

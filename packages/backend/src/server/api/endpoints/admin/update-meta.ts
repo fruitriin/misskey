@@ -4,10 +4,10 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { MiMeta } from '@/models/Meta.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
+import type { MiMeta } from '@/models/Meta.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { MetaService } from '@/core/MetaService.ts';
 
 export const meta = {
 	tags: ['admin'],

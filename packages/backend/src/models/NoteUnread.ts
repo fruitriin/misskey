@@ -4,10 +4,10 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiNote } from './Note.js';
-import type { MiChannel } from './Channel.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiNote } from './Note.ts';
+import type { MiChannel } from './Channel.ts';
 
 @Entity('note_unread')
 @Index(['userId', 'noteId'], { unique: true })

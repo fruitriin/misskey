@@ -5,23 +5,23 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Bull from 'bullmq';
-import { DI } from '@/di-symbols.js';
-import type { InstancesRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { MetaService } from '@/core/MetaService.js';
-import { ApRequestService } from '@/core/activitypub/ApRequestService.js';
-import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
-import { FetchInstanceMetadataService } from '@/core/FetchInstanceMetadataService.js';
-import { MemorySingleCache } from '@/misc/cache.js';
-import type { MiInstance } from '@/models/Instance.js';
-import InstanceChart from '@/core/chart/charts/instance.js';
-import ApRequestChart from '@/core/chart/charts/ap-request.js';
-import FederationChart from '@/core/chart/charts/federation.js';
-import { StatusError } from '@/misc/status-error.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
-import type { DeliverJobData } from '../types.js';
+import { DI } from '@/di-symbols.ts';
+import type { InstancesRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { ApRequestService } from '@/core/activitypub/ApRequestService.ts';
+import { FederatedInstanceService } from '@/core/FederatedInstanceService.ts';
+import { FetchInstanceMetadataService } from '@/core/FetchInstanceMetadataService.ts';
+import { MemorySingleCache } from '@/misc/cache.ts';
+import type { MiInstance } from '@/models/Instance.ts';
+import InstanceChart from '@/core/chart/charts/instance.ts';
+import ApRequestChart from '@/core/chart/charts/ap-request.ts';
+import FederationChart from '@/core/chart/charts/federation.ts';
+import { StatusError } from '@/misc/status-error.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
+import type { DeliverJobData } from '../types.ts';
 
 @Injectable()
 export class DeliverProcessorService {

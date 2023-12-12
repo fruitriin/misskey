@@ -5,12 +5,12 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, PagesRepository } from '@/models/_.js';
-import type { MiPage } from '@/models/Page.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { PageEntityService } from '@/core/entities/PageEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import type { UsersRepository, PagesRepository } from '@/models/_.ts';
+import type { MiPage } from '@/models/Page.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { PageEntityService } from '@/core/entities/PageEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['pages'],

@@ -4,16 +4,16 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { MutingsRepository } from '@/models/_.js';
-import { awaitAll } from '@/misc/prelude/await-all.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { } from '@/models/Blocking.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiMuting } from '@/models/Muting.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
-import { UserEntityService } from './UserEntityService.js';
+import { DI } from '@/di-symbols.ts';
+import type { MutingsRepository } from '@/models/_.ts';
+import { awaitAll } from '@/misc/prelude/await-all.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { } from '@/models/Blocking.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiMuting } from '@/models/Muting.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
+import { UserEntityService } from './UserEntityService.ts';
 
 @Injectable()
 export class MutingEntityService {

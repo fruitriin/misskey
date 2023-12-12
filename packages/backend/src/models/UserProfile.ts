@@ -4,11 +4,11 @@
  */
 
 import { Entity, Column, Index, OneToOne, JoinColumn, PrimaryColumn } from 'typeorm';
-import { obsoleteNotificationTypes, ffVisibility, notificationTypes } from '@/types.js';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiPage } from './Page.js';
-import { MiUserList } from './UserList.js';
+import { obsoleteNotificationTypes, ffVisibility, notificationTypes } from '@/types.ts';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiPage } from './Page.ts';
+import { MiUserList } from './UserList.ts';
 
 // TODO: このテーブルで管理している情報すべてレジストリで管理するようにしても良いかも
 //       ただ、「emailVerified が true なユーザーを find する」のようなクエリは書けなくなるからウーン

@@ -5,10 +5,10 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { EmojisRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { EmojiEntityService } from '@/core/entities/EmojiEntityService.js';
-import { DI } from '@/di-symbols.js';
+import type { EmojisRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { EmojiEntityService } from '@/core/entities/EmojiEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['meta'],

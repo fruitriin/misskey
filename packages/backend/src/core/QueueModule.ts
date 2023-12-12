@@ -6,11 +6,11 @@
 import { setTimeout } from 'node:timers/promises';
 import { Inject, Module, OnApplicationShutdown } from '@nestjs/common';
 import * as Bull from 'bullmq';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { QUEUE, baseQueueOptions } from '@/queue/const.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { QUEUE, baseQueueOptions } from '@/queue/const.ts';
 import type { Provider } from '@nestjs/common';
-import type { DeliverJobData, InboxJobData, EndedPollNotificationJobData, WebhookDeliverJobData, RelationshipJobData } from '../queue/types.js';
+import type { DeliverJobData, InboxJobData, EndedPollNotificationJobData, WebhookDeliverJobData, RelationshipJobData } from '../queue/types.ts';
 
 export type SystemQueue = Bull.Queue<Record<string, unknown>>;
 export type EndedPollNotificationQueue = Bull.Queue<EndedPollNotificationJobData>;

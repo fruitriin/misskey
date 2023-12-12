@@ -7,17 +7,17 @@ import * as fs from 'node:fs';
 import { Inject, Injectable } from '@nestjs/common';
 import { In, MoreThan, Not } from 'typeorm';
 import { format as dateFormat } from 'date-fns';
-import { DI } from '@/di-symbols.js';
-import type { UsersRepository, FollowingsRepository, MutingsRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { DriveService } from '@/core/DriveService.js';
-import { createTemp } from '@/misc/create-temp.js';
-import type { MiFollowing } from '@/models/Following.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { UsersRepository, FollowingsRepository, MutingsRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { createTemp } from '@/misc/create-temp.ts';
+import type { MiFollowing } from '@/models/Following.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { DbExportFollowingData } from '../types.js';
+import type { DbExportFollowingData } from '../types.ts';
 
 @Injectable()
 export class ExportFollowingProcessorService {

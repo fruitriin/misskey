@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { DriveFilesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../../error.js';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import type { DriveFilesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['drive'],

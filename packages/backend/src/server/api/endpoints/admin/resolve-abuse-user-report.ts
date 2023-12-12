@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { UsersRepository, AbuseUserReportsRepository } from '@/models/_.js';
-import { InstanceActorService } from '@/core/InstanceActorService.js';
-import { QueueService } from '@/core/QueueService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { DI } from '@/di-symbols.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { UsersRepository, AbuseUserReportsRepository } from '@/models/_.ts';
+import { InstanceActorService } from '@/core/InstanceActorService.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
 
 export const meta = {
 	tags: ['admin'],

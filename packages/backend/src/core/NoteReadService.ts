@@ -6,14 +6,14 @@
 import { setTimeout } from 'node:timers/promises';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { In } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { MiUser } from '@/models/User.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { MiNote } from '@/models/Note.js';
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import type { NoteUnreadsRepository, MutingsRepository, NoteThreadMutingsRepository } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { MiNote } from '@/models/Note.ts';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import type { NoteUnreadsRepository, MutingsRepository, NoteThreadMutingsRepository } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class NoteReadService implements OnApplicationShutdown {

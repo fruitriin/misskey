@@ -9,15 +9,15 @@ import { IsNull } from 'typeorm';
 import { format as dateFormat } from 'date-fns';
 import mime from 'mime-types';
 import archiver from 'archiver';
-import { DI } from '@/di-symbols.js';
-import type { EmojisRepository, UsersRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import type Logger from '@/logger.js';
-import { DriveService } from '@/core/DriveService.js';
-import { createTemp, createTempDir } from '@/misc/create-temp.js';
-import { DownloadService } from '@/core/DownloadService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { EmojisRepository, UsersRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import type Logger from '@/logger.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { createTemp, createTempDir } from '@/misc/create-temp.ts';
+import { DownloadService } from '@/core/DownloadService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
 
 @Injectable()

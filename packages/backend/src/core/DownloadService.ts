@@ -10,15 +10,15 @@ import ipaddr from 'ipaddr.js';
 import chalk from 'chalk';
 import got, * as Got from 'got';
 import { parse } from 'content-disposition';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { createTemp } from '@/misc/create-temp.js';
-import { StatusError } from '@/misc/status-error.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import type Logger from '@/logger.js';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { createTemp } from '@/misc/create-temp.ts';
+import { StatusError } from '@/misc/status-error.ts';
+import { LoggerService } from '@/core/LoggerService.ts';
+import type Logger from '@/logger.ts';
 
-import { bindThis } from '@/decorators.js';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class DownloadService {

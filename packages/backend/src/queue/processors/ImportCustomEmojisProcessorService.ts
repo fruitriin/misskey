@@ -6,17 +6,17 @@
 import * as fs from 'node:fs';
 import { Inject, Injectable } from '@nestjs/common';
 import { ZipReader } from 'slacc';
-import { DI } from '@/di-symbols.js';
-import type { EmojisRepository, DriveFilesRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { CustomEmojiService } from '@/core/CustomEmojiService.js';
-import { createTempDir } from '@/misc/create-temp.js';
-import { DriveService } from '@/core/DriveService.js';
-import { DownloadService } from '@/core/DownloadService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { EmojisRepository, DriveFilesRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { CustomEmojiService } from '@/core/CustomEmojiService.ts';
+import { createTempDir } from '@/misc/create-temp.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { DownloadService } from '@/core/DownloadService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { DbUserImportJobData } from '../types.js';
+import type { DbUserImportJobData } from '../types.ts';
 
 // TODO: 名前衝突時の動作を選べるようにする
 @Injectable()

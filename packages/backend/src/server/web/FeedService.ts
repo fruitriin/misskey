@@ -6,14 +6,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { In, IsNull } from 'typeorm';
 import { Feed } from 'feed';
-import { DI } from '@/di-symbols.js';
-import type { DriveFilesRepository, NotesRepository, UserProfilesRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
-import type { MiUser } from '@/models/User.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.ts';
+import type { DriveFilesRepository, NotesRepository, UserProfilesRepository } from '@/models/_.ts';
+import type { Config } from '@/config.ts';
+import type { MiUser } from '@/models/User.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
 
 @Injectable()
 export class FeedService {

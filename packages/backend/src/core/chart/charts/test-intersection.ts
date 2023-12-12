@@ -5,13 +5,13 @@
 
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { AppLockService } from '@/core/AppLockService.js';
-import { DI } from '@/di-symbols.js';
-import Logger from '@/logger.js';
-import { bindThis } from '@/decorators.js';
-import Chart from '../core.js';
-import { name, schema } from './entities/test-intersection.js';
-import type { KVs } from '../core.js';
+import { AppLockService } from '@/core/AppLockService.ts';
+import { DI } from '@/di-symbols.ts';
+import Logger from '@/logger.ts';
+import { bindThis } from '@/decorators.ts';
+import Chart from '../core.ts';
+import { name, schema } from './entities/test-intersection.ts';
+import type { KVs } from '../core.ts';
 
 /**
  * For testing

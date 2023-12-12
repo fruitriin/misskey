@@ -4,8 +4,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { bindThis } from '@/decorators.js';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { bindThis } from '@/decorators.ts';
 
 type CaptchaResponse = {
 	success: boolean;

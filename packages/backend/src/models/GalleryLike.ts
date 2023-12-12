@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiGalleryPost } from './GalleryPost.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiGalleryPost } from './GalleryPost.ts';
 
 @Entity('gallery_like')
 @Index(['userId', 'postId'], { unique: true })

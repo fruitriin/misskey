@@ -5,10 +5,10 @@
 
 import { MoreThan } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import { USER_ONLINE_THRESHOLD } from '@/const.js';
-import type { UsersRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
+import { USER_ONLINE_THRESHOLD } from '@/const.ts';
+import type { UsersRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['meta'],

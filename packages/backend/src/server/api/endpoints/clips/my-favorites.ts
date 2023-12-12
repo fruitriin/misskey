@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { ClipFavoritesRepository } from '@/models/_.js';
-import { DI } from '@/di-symbols.js';
-import { ClipEntityService } from '@/core/entities/ClipEntityService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { ClipFavoritesRepository } from '@/models/_.ts';
+import { DI } from '@/di-symbols.ts';
+import { ClipEntityService } from '@/core/entities/ClipEntityService.ts';
 
 export const meta = {
 	tags: ['account', 'clip'],

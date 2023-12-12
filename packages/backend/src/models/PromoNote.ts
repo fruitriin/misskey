@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, OneToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiNote } from './Note.js';
-import type { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiNote } from './Note.ts';
+import type { MiUser } from './User.ts';
 
 @Entity('promo_note')
 export class MiPromoNote {

@@ -4,12 +4,12 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type Logger from '@/logger.js';
-import { DriveService } from '@/core/DriveService.js';
-import { bindThis } from '@/decorators.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import type Logger from '@/logger.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { bindThis } from '@/decorators.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { ObjectStorageFileJobData } from '../types.js';
+import type { ObjectStorageFileJobData } from '../types.ts';
 
 @Injectable()
 export class DeleteFileProcessorService {

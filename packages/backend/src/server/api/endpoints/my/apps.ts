@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { AppsRepository } from '@/models/_.js';
-import { AppEntityService } from '@/core/entities/AppEntityService.js';
-import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { AppsRepository } from '@/models/_.ts';
+import { AppEntityService } from '@/core/entities/AppEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['account', 'app'],

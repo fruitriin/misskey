@@ -7,23 +7,23 @@ import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as stream from 'node:stream/promises';
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import { getIpHash } from '@/misc/get-ip-hash.js';
-import type { MiLocalUser, MiUser } from '@/models/User.js';
-import type { MiAccessToken } from '@/models/AccessToken.js';
-import type Logger from '@/logger.js';
-import type { UserIpsRepository } from '@/models/_.js';
-import { MetaService } from '@/core/MetaService.js';
-import { createTemp } from '@/misc/create-temp.js';
-import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from './error.js';
-import { RateLimiterService } from './RateLimiterService.js';
-import { ApiLoggerService } from './ApiLoggerService.js';
-import { AuthenticateService, AuthenticationError } from './AuthenticateService.js';
+import { DI } from '@/di-symbols.ts';
+import { getIpHash } from '@/misc/get-ip-hash.ts';
+import type { MiLocalUser, MiUser } from '@/models/User.ts';
+import type { MiAccessToken } from '@/models/AccessToken.ts';
+import type Logger from '@/logger.ts';
+import type { UserIpsRepository } from '@/models/_.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { createTemp } from '@/misc/create-temp.ts';
+import { bindThis } from '@/decorators.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from './error.ts';
+import { RateLimiterService } from './RateLimiterService.ts';
+import { ApiLoggerService } from './ApiLoggerService.ts';
+import { AuthenticateService, AuthenticationError } from './AuthenticateService.ts';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { OnApplicationShutdown } from '@nestjs/common';
-import type { IEndpointMeta, IEndpoint } from './endpoints.js';
+import type { IEndpointMeta, IEndpoint } from './endpoints.ts';
 
 const accessDenied = {
 	message: 'Access denied.',

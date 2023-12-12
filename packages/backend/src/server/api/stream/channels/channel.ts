@@ -4,11 +4,11 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { isUserRelated } from '@/misc/is-user-related.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { bindThis } from '@/decorators.js';
-import Channel from '../channel.js';
+import { isUserRelated } from '@/misc/is-user-related.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import Channel from '../channel.ts';
 
 class ChannelChannel extends Channel {
 	public readonly chName = 'channel';

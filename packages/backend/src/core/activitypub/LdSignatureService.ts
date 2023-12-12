@@ -5,11 +5,11 @@
 
 import * as crypto from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { bindThis } from '@/decorators.js';
-import { CONTEXTS } from './misc/contexts.js';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { bindThis } from '@/decorators.ts';
+import { CONTEXTS } from './misc/contexts.ts';
 import type { JsonLdDocument } from 'jsonld';
-import type { JsonLd, RemoteDocument } from 'jsonld/jsonld-spec.js';
+import type { JsonLd, RemoteDocument } from 'jsonld/jsonld-spec.ts';
 
 // RsaSignature2017 based from https://github.com/transmute-industries/RsaSignature2017
 

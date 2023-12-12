@@ -5,12 +5,12 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import type { ChannelsRepository } from '@/models/_.js';
-import { ChannelEntityService } from '@/core/entities/ChannelEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import type { ChannelsRepository } from '@/models/_.ts';
+import { ChannelEntityService } from '@/core/entities/ChannelEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { sqlLikeEscape } from '@/misc/sql-like-escape.ts';
 
 export const meta = {
 	tags: ['channels'],

@@ -7,8 +7,8 @@ import { promisify } from 'node:util';
 import { Inject, Injectable } from '@nestjs/common';
 import redisLock from 'redis-lock';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
 
 /**
  * Retry delay (ms) for lock acquisition

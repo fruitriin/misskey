@@ -4,8 +4,8 @@
  */
 
 import cluster from 'node:cluster';
-import { envOption } from '@/env.js';
-import { jobQueue, server } from './common.js';
+import { envOption } from '@/env.ts';
+import { jobQueue, server } from './common.ts';
 
 /**
  * Init worker process

@@ -4,8 +4,8 @@
  */
 
 import { PrimaryColumn, Entity, JoinColumn, Column, ManyToOne, Index } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
 
 @Entity('user_security_key')
 export class MiUserSecurityKey {

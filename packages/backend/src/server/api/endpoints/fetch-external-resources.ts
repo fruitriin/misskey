@@ -6,9 +6,9 @@
 import { createHash } from 'crypto';
 import ms from 'ms';
 import { Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { HttpRequestService } from '@/core/HttpRequestService.js';
-import { ApiError } from '../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { HttpRequestService } from '@/core/HttpRequestService.ts';
+import { ApiError } from '../error.ts';
 
 export const meta = {
 	tags: ['meta'],

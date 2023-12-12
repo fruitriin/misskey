@@ -6,26 +6,26 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull, In, MoreThan, Not } from 'typeorm';
 
-import { bindThis } from '@/decorators.js';
-import { DI } from '@/di-symbols.js';
-import type { MiLocalUser, MiRemoteUser, MiUser } from '@/models/User.js';
-import type { BlockingsRepository, FollowingsRepository, InstancesRepository, MutingsRepository, UserListMembershipsRepository, UsersRepository } from '@/models/_.js';
-import type { RelationshipJobData, ThinUser } from '@/queue/types.js';
+import { bindThis } from '@/decorators.ts';
+import { DI } from '@/di-symbols.ts';
+import type { MiLocalUser, MiRemoteUser, MiUser } from '@/models/User.ts';
+import type { BlockingsRepository, FollowingsRepository, InstancesRepository, MutingsRepository, UserListMembershipsRepository, UsersRepository } from '@/models/_.ts';
+import type { RelationshipJobData, ThinUser } from '@/queue/types.ts';
 
-import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { QueueService } from '@/core/QueueService.js';
-import { RelayService } from '@/core/RelayService.js';
-import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
-import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { CacheService } from '@/core/CacheService.js';
-import { ProxyAccountService } from '@/core/ProxyAccountService.js';
-import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
-import { MetaService } from '@/core/MetaService.js';
-import InstanceChart from '@/core/chart/charts/instance.js';
-import PerUserFollowingChart from '@/core/chart/charts/per-user-following.js';
+import { IdService } from '@/core/IdService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { RelayService } from '@/core/RelayService.ts';
+import { ApPersonService } from '@/core/activitypub/models/ApPersonService.ts';
+import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import { ProxyAccountService } from '@/core/ProxyAccountService.ts';
+import { FederatedInstanceService } from '@/core/FederatedInstanceService.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import InstanceChart from '@/core/chart/charts/instance.ts';
+import PerUserFollowingChart from '@/core/chart/charts/per-user-following.ts';
 
 @Injectable()
 export class AccountMoveService {

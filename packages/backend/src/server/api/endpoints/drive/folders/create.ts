@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { DriveFoldersRepository } from '@/models/_.js';
-import { IdService } from '@/core/IdService.js';
-import { DriveFolderEntityService } from '@/core/entities/DriveFolderEntityService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { DriveFoldersRepository } from '@/models/_.ts';
+import { IdService } from '@/core/IdService.ts';
+import { DriveFolderEntityService } from '@/core/entities/DriveFolderEntityService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['drive'],

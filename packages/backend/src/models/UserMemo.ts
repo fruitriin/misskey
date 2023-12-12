@@ -4,8 +4,8 @@
  */
 
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
 
 @Entity('user_memo')
 @Index(['userId', 'targetUserId'], { unique: true })

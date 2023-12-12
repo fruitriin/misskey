@@ -4,18 +4,18 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, PollsRepository, PollVotesRepository } from '@/models/_.js';
-import type { MiRemoteUser } from '@/models/User.js';
-import { IdService } from '@/core/IdService.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { QueueService } from '@/core/QueueService.js';
-import { PollService } from '@/core/PollService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { DI } from '@/di-symbols.js';
-import { UserBlockingService } from '@/core/UserBlockingService.js';
-import { ApiError } from '../../../error.js';
+import type { UsersRepository, PollsRepository, PollVotesRepository } from '@/models/_.ts';
+import type { MiRemoteUser } from '@/models/User.ts';
+import { IdService } from '@/core/IdService.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { QueueService } from '@/core/QueueService.ts';
+import { PollService } from '@/core/PollService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserBlockingService } from '@/core/UserBlockingService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['notes'],

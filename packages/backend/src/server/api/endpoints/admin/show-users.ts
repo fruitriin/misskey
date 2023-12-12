@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
-import { RoleService } from '@/core/RoleService.js';
+import type { UsersRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { sqlLikeEscape } from '@/misc/sql-like-escape.ts';
+import { RoleService } from '@/core/RoleService.ts';
 
 export const meta = {
 	tags: ['admin'],

@@ -5,13 +5,13 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, FollowingsRepository, UserProfilesRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { FollowingEntityService } from '@/core/entities/FollowingEntityService.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import type { UsersRepository, FollowingsRepository, UserProfilesRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { FollowingEntityService } from '@/core/entities/FollowingEntityService.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['users'],

@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiFlash } from './Flash.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiFlash } from './Flash.ts';
 
 @Entity('flash_like')
 @Index(['userId', 'flashId'], { unique: true })

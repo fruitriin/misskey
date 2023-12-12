@@ -6,19 +6,19 @@
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { In, IsNull } from 'typeorm';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import { IdService } from '@/core/IdService.js';
-import { EmojiEntityService } from '@/core/entities/EmojiEntityService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { MiEmoji } from '@/models/Emoji.js';
-import type { EmojisRepository, MiRole, MiUser } from '@/models/_.js';
-import { bindThis } from '@/decorators.js';
-import { MemoryKVCache, RedisSingleCache } from '@/misc/cache.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { query } from '@/misc/prelude/url.js';
-import type { Serialized } from '@/types.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { DI } from '@/di-symbols.ts';
+import { IdService } from '@/core/IdService.ts';
+import { EmojiEntityService } from '@/core/entities/EmojiEntityService.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import type { MiEmoji } from '@/models/Emoji.ts';
+import type { EmojisRepository, MiRole, MiUser } from '@/models/_.ts';
+import { bindThis } from '@/decorators.ts';
+import { MemoryKVCache, RedisSingleCache } from '@/misc/cache.ts';
+import { UtilityService } from '@/core/UtilityService.ts';
+import { query } from '@/misc/prelude/url.ts';
+import type { Serialized } from '@/types.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
 
 const parseEmojiStrRegexp = /^(\w+)(?:@([\w.-]+))?$/;
 

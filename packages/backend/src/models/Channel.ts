@@ -4,9 +4,9 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import { MiDriveFile } from './DriveFile.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import { MiDriveFile } from './DriveFile.ts';
 
 @Entity('channel')
 export class MiChannel {

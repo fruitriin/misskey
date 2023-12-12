@@ -5,12 +5,12 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull } from 'typeorm';
-import type { MiLocalUser } from '@/models/User.js';
-import type { UsersRepository } from '@/models/_.js';
-import { MemorySingleCache } from '@/misc/cache.js';
-import { DI } from '@/di-symbols.js';
-import { CreateSystemUserService } from '@/core/CreateSystemUserService.js';
-import { bindThis } from '@/decorators.js';
+import type { MiLocalUser } from '@/models/User.ts';
+import type { UsersRepository } from '@/models/_.ts';
+import { MemorySingleCache } from '@/misc/cache.ts';
+import { DI } from '@/di-symbols.ts';
+import { CreateSystemUserService } from '@/core/CreateSystemUserService.ts';
+import { bindThis } from '@/decorators.ts';
 
 const ACTOR_USERNAME = 'instance.actor' as const;
 

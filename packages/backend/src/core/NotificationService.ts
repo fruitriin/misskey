@@ -7,19 +7,19 @@ import { setTimeout } from 'node:timers/promises';
 import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { In } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { UsersRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiNotification } from '@/models/Notification.js';
-import { bindThis } from '@/decorators.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { PushNotificationService } from '@/core/PushNotificationService.js';
-import { NotificationEntityService } from '@/core/entities/NotificationEntityService.js';
-import { IdService } from '@/core/IdService.js';
-import { CacheService } from '@/core/CacheService.js';
-import type { Config } from '@/config.js';
-import { UserListService } from '@/core/UserListService.js';
-import type { FilterUnionByProperty } from '@/types.js';
+import { DI } from '@/di-symbols.ts';
+import type { UsersRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import type { MiNotification } from '@/models/Notification.ts';
+import { bindThis } from '@/decorators.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { PushNotificationService } from '@/core/PushNotificationService.ts';
+import { NotificationEntityService } from '@/core/entities/NotificationEntityService.ts';
+import { IdService } from '@/core/IdService.ts';
+import { CacheService } from '@/core/CacheService.ts';
+import type { Config } from '@/config.ts';
+import { UserListService } from '@/core/UserListService.ts';
+import type { FilterUnionByProperty } from '@/types.ts';
 
 @Injectable()
 export class NotificationService implements OnApplicationShutdown {
@@ -164,7 +164,7 @@ export class NotificationService implements OnApplicationShutdown {
 	}
 
 	// TODO
-	//const locales = await import('../../../../locales/index.js');
+	//const locales = await import('../../../../locales/index.ts');
 
 	// TODO: locale ファイルをクライアント用とサーバー用で分けたい
 

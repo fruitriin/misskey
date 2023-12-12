@@ -4,8 +4,8 @@
  */
 
 import { PrimaryColumn, Entity, Index, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
 
 @Entity('registration_ticket')
 export class MiRegistrationTicket {

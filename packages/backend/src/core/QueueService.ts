@@ -5,15 +5,15 @@
 
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import type { IActivity } from '@/core/activitypub/type.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { MiWebhook, webhookEventTypes } from '@/models/Webhook.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
-import type { DbQueue, DeliverQueue, EndedPollNotificationQueue, InboxQueue, ObjectStorageQueue, RelationshipQueue, SystemQueue, WebhookDeliverQueue } from './QueueModule.js';
-import type { DbJobData, DeliverJobData, RelationshipJobData, ThinUser } from '../queue/types.js';
+import type { IActivity } from '@/core/activitypub/type.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import type { MiWebhook, webhookEventTypes } from '@/models/Webhook.ts';
+import type { Config } from '@/config.ts';
+import { DI } from '@/di-symbols.ts';
+import { bindThis } from '@/decorators.ts';
+import type { Antenna } from '@/server/api/endpoints/i/import-antennas.ts';
+import type { DbQueue, DeliverQueue, EndedPollNotificationQueue, InboxQueue, ObjectStorageQueue, RelationshipQueue, SystemQueue, WebhookDeliverQueue } from './QueueModule.ts';
+import type { DbJobData, DeliverJobData, RelationshipJobData, ThinUser } from '../queue/types.ts';
 import type httpSignature from '@peertube/http-signature';
 import type * as Bull from 'bullmq';
 

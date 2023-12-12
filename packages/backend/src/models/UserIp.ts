@@ -4,8 +4,8 @@
  */
 
 import { Entity, Index, Column, PrimaryGeneratedColumn } from 'typeorm';
-import { id } from './util/id.js';
-import type { MiUser } from './User.js';
+import { id } from './util/id.ts';
+import type { MiUser } from './User.ts';
 
 @Entity('user_ip')
 @Index(['userId', 'ip'], { unique: true })

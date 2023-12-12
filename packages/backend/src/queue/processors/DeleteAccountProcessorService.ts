@@ -5,18 +5,18 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { MoreThan } from 'typeorm';
-import { DI } from '@/di-symbols.js';
-import type { DriveFilesRepository, NotesRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
-import type Logger from '@/logger.js';
-import { DriveService } from '@/core/DriveService.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { MiNote } from '@/models/Note.js';
-import { EmailService } from '@/core/EmailService.js';
-import { bindThis } from '@/decorators.js';
-import { SearchService } from '@/core/SearchService.js';
-import { QueueLoggerService } from '../QueueLoggerService.js';
+import { DI } from '@/di-symbols.ts';
+import type { DriveFilesRepository, NotesRepository, UserProfilesRepository, UsersRepository } from '@/models/_.ts';
+import type Logger from '@/logger.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import type { MiNote } from '@/models/Note.ts';
+import { EmailService } from '@/core/EmailService.ts';
+import { bindThis } from '@/decorators.ts';
+import { SearchService } from '@/core/SearchService.ts';
+import { QueueLoggerService } from '../QueueLoggerService.ts';
 import type * as Bull from 'bullmq';
-import type { DbUserDeleteJobData } from '../types.js';
+import type { DbUserDeleteJobData } from '../types.ts';
 
 @Injectable()
 export class DeleteAccountProcessorService {

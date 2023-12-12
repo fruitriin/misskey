@@ -4,11 +4,11 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { MiClip } from '@/models/_.js';
-import { ClipEntityService } from '@/core/entities/ClipEntityService.js';
-import { ApiError } from '@/server/api/error.js';
-import { ClipService } from '@/core/ClipService.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { MiClip } from '@/models/_.ts';
+import { ClipEntityService } from '@/core/entities/ClipEntityService.ts';
+import { ApiError } from '@/server/api/error.ts';
+import { ClipService } from '@/core/ClipService.ts';
 
 export const meta = {
 	tags: ['clips'],

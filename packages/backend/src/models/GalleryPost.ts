@@ -4,9 +4,9 @@
  */
 
 import { Entity, Index, JoinColumn, Column, PrimaryColumn, ManyToOne } from 'typeorm';
-import { id } from './util/id.js';
-import { MiUser } from './User.js';
-import type { MiDriveFile } from './DriveFile.js';
+import { id } from './util/id.ts';
+import { MiUser } from './User.ts';
+import type { MiDriveFile } from './DriveFile.ts';
 
 @Entity('gallery_post')
 export class MiGalleryPost {

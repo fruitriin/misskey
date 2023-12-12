@@ -4,14 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { EmojisRepository } from '@/models/_.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import { DI } from '@/di-symbols.js';
-import { DriveService } from '@/core/DriveService.js';
-import { CustomEmojiService } from '@/core/CustomEmojiService.js';
-import { EmojiEntityService } from '@/core/entities/EmojiEntityService.js';
-import { ApiError } from '../../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import type { EmojisRepository } from '@/models/_.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import { DI } from '@/di-symbols.ts';
+import { DriveService } from '@/core/DriveService.ts';
+import { CustomEmojiService } from '@/core/CustomEmojiService.ts';
+import { EmojiEntityService } from '@/core/entities/EmojiEntityService.ts';
+import { ApiError } from '../../../error.ts';
 
 export const meta = {
 	tags: ['admin'],

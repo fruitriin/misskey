@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { BlockingsRepository, FollowingsRepository, MutingsRepository, RenoteMutingsRepository, MiUserProfile, UserProfilesRepository, UsersRepository, MiFollowing } from '@/models/_.js';
-import { MemoryKVCache, RedisKVCache } from '@/misc/cache.js';
-import type { MiLocalUser, MiUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { bindThis } from '@/decorators.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import type { BlockingsRepository, FollowingsRepository, MutingsRepository, RenoteMutingsRepository, MiUserProfile, UserProfilesRepository, UsersRepository, MiFollowing } from '@/models/_.ts';
+import { MemoryKVCache, RedisKVCache } from '@/misc/cache.ts';
+import type { MiLocalUser, MiUser } from '@/models/User.ts';
+import { DI } from '@/di-symbols.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import type { GlobalEvents } from '@/core/GlobalEventService.ts';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 @Injectable()

@@ -5,26 +5,26 @@
 
 import { Brackets, In } from 'typeorm';
 import { Injectable, Inject } from '@nestjs/common';
-import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
-import type { MiNote, IMentionedRemoteUsers } from '@/models/Note.js';
-import type { InstancesRepository, NotesRepository, UsersRepository } from '@/models/_.js';
-import { RelayService } from '@/core/RelayService.js';
-import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
-import NotesChart from '@/core/chart/charts/notes.js';
-import PerUserNotesChart from '@/core/chart/charts/per-user-notes.js';
-import InstanceChart from '@/core/chart/charts/instance.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { bindThis } from '@/decorators.js';
-import { MetaService } from '@/core/MetaService.js';
-import { SearchService } from '@/core/SearchService.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
-import { isPureRenote } from '@/misc/is-pure-renote.js';
+import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.ts';
+import type { MiNote, IMentionedRemoteUsers } from '@/models/Note.ts';
+import type { InstancesRepository, NotesRepository, UsersRepository } from '@/models/_.ts';
+import { RelayService } from '@/core/RelayService.ts';
+import { FederatedInstanceService } from '@/core/FederatedInstanceService.ts';
+import { DI } from '@/di-symbols.ts';
+import type { Config } from '@/config.ts';
+import NotesChart from '@/core/chart/charts/notes.ts';
+import PerUserNotesChart from '@/core/chart/charts/per-user-notes.ts';
+import InstanceChart from '@/core/chart/charts/instance.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { ApRendererService } from '@/core/activitypub/ApRendererService.ts';
+import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { SearchService } from '@/core/SearchService.ts';
+import { ModerationLogService } from '@/core/ModerationLogService.ts';
+import { isPureRenote } from '@/misc/is-pure-renote.ts';
 
 @Injectable()
 export class NoteDeleteService {

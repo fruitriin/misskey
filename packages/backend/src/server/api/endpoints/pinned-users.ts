@@ -5,13 +5,13 @@
 
 import { IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository } from '@/models/_.js';
-import * as Acct from '@/misc/acct.js';
-import type { MiUser } from '@/models/User.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DI } from '@/di-symbols.js';
+import type { UsersRepository } from '@/models/_.ts';
+import * as Acct from '@/misc/acct.ts';
+import type { MiUser } from '@/models/User.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { MetaService } from '@/core/MetaService.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { DI } from '@/di-symbols.ts';
 
 export const meta = {
 	tags: ['users'],

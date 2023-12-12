@@ -6,18 +6,18 @@
 import ms from 'ms';
 import { In } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { MiUser } from '@/models/User.js';
-import type { UsersRepository, NotesRepository, BlockingsRepository, DriveFilesRepository, ChannelsRepository } from '@/models/_.js';
-import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { MiNote } from '@/models/Note.js';
-import type { MiChannel } from '@/models/Channel.js';
-import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
-import { NoteCreateService } from '@/core/NoteCreateService.js';
-import { DI } from '@/di-symbols.js';
-import { isPureRenote } from '@/misc/is-pure-renote.js';
-import { ApiError } from '../../error.js';
+import type { MiUser } from '@/models/User.ts';
+import type { UsersRepository, NotesRepository, BlockingsRepository, DriveFilesRepository, ChannelsRepository } from '@/models/_.ts';
+import type { MiDriveFile } from '@/models/DriveFile.ts';
+import type { MiNote } from '@/models/Note.ts';
+import type { MiChannel } from '@/models/Channel.ts';
+import { MAX_NOTE_TEXT_LENGTH } from '@/const.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.ts';
+import { NoteCreateService } from '@/core/NoteCreateService.ts';
+import { DI } from '@/di-symbols.ts';
+import { isPureRenote } from '@/misc/is-pure-renote.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['notes'],

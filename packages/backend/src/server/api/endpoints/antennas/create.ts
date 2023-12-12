@@ -4,14 +4,14 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { IdService } from '@/core/IdService.js';
-import type { UserListsRepository, AntennasRepository } from '@/models/_.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { AntennaEntityService } from '@/core/entities/AntennaEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { UserListsRepository, AntennasRepository } from '@/models/_.ts';
+import { GlobalEventService } from '@/core/GlobalEventService.ts';
+import { AntennaEntityService } from '@/core/entities/AntennaEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['antennas'],

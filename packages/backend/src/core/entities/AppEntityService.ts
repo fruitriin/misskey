@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { AccessTokensRepository, AppsRepository } from '@/models/_.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { MiApp } from '@/models/App.js';
-import type { MiUser } from '@/models/User.js';
-import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.ts';
+import type { AccessTokensRepository, AppsRepository } from '@/models/_.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { MiApp } from '@/models/App.ts';
+import type { MiUser } from '@/models/User.ts';
+import { bindThis } from '@/decorators.ts';
 
 @Injectable()
 export class AppEntityService {

@@ -5,16 +5,16 @@
 
 import { In, IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
-import { DI } from '@/di-symbols.js';
-import PerUserPvChart from '@/core/chart/charts/per-user-pv.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
-import { ApiLoggerService } from '../../ApiLoggerService.js';
+import type { UsersRepository } from '@/models/_.ts';
+import type { MiUser } from '@/models/User.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.ts';
+import { DI } from '@/di-symbols.ts';
+import PerUserPvChart from '@/core/chart/charts/per-user-pv.ts';
+import { RoleService } from '@/core/RoleService.ts';
+import { ApiError } from '../../error.ts';
+import { ApiLoggerService } from '../../ApiLoggerService.ts';
 import type { FindOptionsWhere } from 'typeorm';
 
 export const meta = {

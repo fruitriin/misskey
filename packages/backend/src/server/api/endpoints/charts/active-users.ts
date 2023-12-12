@@ -4,10 +4,10 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { getJsonSchema } from '@/core/chart/core.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import ActiveUsersChart from '@/core/chart/charts/active-users.js';
-import { schema } from '@/core/chart/charts/entities/active-users.js';
+import { getJsonSchema } from '@/core/chart/core.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import ActiveUsersChart from '@/core/chart/charts/active-users.ts';
+import { schema } from '@/core/chart/charts/entities/active-users.ts';
 
 export const meta = {
 	tags: ['charts', 'users'],

@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserProfilesRepository, NoteReactionsRepository } from '@/models/_.js';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { QueryService } from '@/core/QueryService.js';
-import { NoteReactionEntityService } from '@/core/entities/NoteReactionEntityService.js';
-import { DI } from '@/di-symbols.js';
-import { ApiError } from '../../error.js';
+import type { UserProfilesRepository, NoteReactionsRepository } from '@/models/_.ts';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { QueryService } from '@/core/QueryService.ts';
+import { NoteReactionEntityService } from '@/core/entities/NoteReactionEntityService.ts';
+import { DI } from '@/di-symbols.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['users', 'reactions'],

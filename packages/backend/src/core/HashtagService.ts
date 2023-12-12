@@ -5,16 +5,16 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import { DI } from '@/di-symbols.js';
-import type { MiUser } from '@/models/User.js';
-import { normalizeForSearch } from '@/misc/normalize-for-search.js';
-import { IdService } from '@/core/IdService.js';
-import type { MiHashtag } from '@/models/Hashtag.js';
-import type { HashtagsRepository } from '@/models/_.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { bindThis } from '@/decorators.js';
-import { FeaturedService } from '@/core/FeaturedService.js';
-import { MetaService } from '@/core/MetaService.js';
+import { DI } from '@/di-symbols.ts';
+import type { MiUser } from '@/models/User.ts';
+import { normalizeForSearch } from '@/misc/normalize-for-search.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { MiHashtag } from '@/models/Hashtag.ts';
+import type { HashtagsRepository } from '@/models/_.ts';
+import { UserEntityService } from '@/core/entities/UserEntityService.ts';
+import { bindThis } from '@/decorators.ts';
+import { FeaturedService } from '@/core/FeaturedService.ts';
+import { MetaService } from '@/core/MetaService.ts';
 
 @Injectable()
 export class HashtagService {

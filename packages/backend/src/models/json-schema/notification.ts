@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { notificationTypes } from '@/types.js';
+import { notificationTypes } from '@/types.ts';
 
 export const packedNotificationSchema = {
 	type: 'object',

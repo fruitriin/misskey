@@ -10,7 +10,7 @@ import { Injectable } from '@nestjs/common';
 import * as nsfw from 'nsfwjs';
 import si from 'systeminformation';
 import { Mutex } from 'async-mutex';
-import { bindThis } from '@/decorators.js';
+import { bindThis } from '@/decorators.ts';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = dirname(_filename);

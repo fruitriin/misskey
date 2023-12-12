@@ -4,12 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DI } from '@/di-symbols.js';
-import type { AntennasRepository } from '@/models/_.js';
-import type { Packed } from '@/misc/json-schema.js';
-import type { MiAntenna } from '@/models/Antenna.js';
-import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.ts';
+import type { AntennasRepository } from '@/models/_.ts';
+import type { Packed } from '@/misc/json-schema.ts';
+import type { MiAntenna } from '@/models/Antenna.ts';
+import { bindThis } from '@/decorators.ts';
+import { IdService } from '@/core/IdService.ts';
 
 @Injectable()
 export class AntennaEntityService {

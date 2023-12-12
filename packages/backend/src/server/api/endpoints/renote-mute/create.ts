@@ -5,13 +5,13 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { IdService } from '@/core/IdService.js';
-import type { RenoteMutingsRepository } from '@/models/_.js';
-import type { MiRenoteMuting } from '@/models/RenoteMuting.js';
-import { DI } from '@/di-symbols.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { ApiError } from '../../error.js';
+import { Endpoint } from '@/server/api/endpoint-base.ts';
+import { IdService } from '@/core/IdService.ts';
+import type { RenoteMutingsRepository } from '@/models/_.ts';
+import type { MiRenoteMuting } from '@/models/RenoteMuting.ts';
+import { DI } from '@/di-symbols.ts';
+import { GetterService } from '@/server/api/GetterService.ts';
+import { ApiError } from '../../error.ts';
 
 export const meta = {
 	tags: ['account'],
