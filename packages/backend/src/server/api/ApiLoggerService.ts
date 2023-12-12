@@ -14,6 +14,7 @@ export class ApiLoggerService {
 	constructor(
 		private loggerService: LoggerService,
 	) {
+		this.loggerService = new LoggerService()
 		this.logger = this.loggerService.getLogger('api');
 	}
 }

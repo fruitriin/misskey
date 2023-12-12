@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { ServerModule } from '@/server/ServerModule.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { DaemonModule } from '@/daemons/DaemonModule.js';
+import {LoggerService} from "@/core/LoggerService.js";
 
 @Module({
 	imports: [

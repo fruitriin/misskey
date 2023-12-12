@@ -18,6 +18,7 @@ export async function server() {
 		logger: new NestLogger(),
 	});
 
+
 	const serverService = app.get(ServerService);
 	await serverService.launch();
 

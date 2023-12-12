@@ -4,7 +4,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type Logger from '@/logger.js';
+import type Logger from '@/logger.ts';
 import { LoggerService } from '@/core/LoggerService.js';
 
 @Injectable()
@@ -14,6 +14,9 @@ export class ClientLoggerService {
 	constructor(
 		private loggerService: LoggerService,
 	) {
+		console.error("FIXME: line LoggerService.ts L:20")
+		this.loggerService = new LoggerService()
 		this.logger = this.loggerService.getLogger('client');
+
 	}
 }

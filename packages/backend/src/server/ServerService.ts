@@ -64,6 +64,7 @@ export class ServerService implements OnApplicationShutdown {
 		private fileServerService: FileServerService,
 		private clientServerService: ClientServerService,
 		private globalEventService: GlobalEventService,
+
 		private loggerService: LoggerService,
 		private oauth2ProviderService: OAuth2ProviderService,
 	) {
