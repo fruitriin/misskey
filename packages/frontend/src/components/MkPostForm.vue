@@ -459,11 +459,13 @@ function upload(file: File, name?: string): void {
 function setVisibility() {
 	os.popup(defineAsyncComponent(() => import('@/components/MkVisibilityPicker.vue')), {
 		currentVisibility: actualVisibility.value,
-		isSilenced: $i?.isSilenced,
+		disablePublic: $i?.isSilenced,
 		// チャンネル→ダイレクトの選択変更ができなくなるので、チャンネル選択中の場合は意図的にfalseを渡すようにする
-		localOnly: postChannel.value ? false : actualLocalOnly.value,
+		disableSpecified: postChannel.value ? false : actualLocalOnly.value,
 		src: visibilityButton.value,
 		currentChannel: postChannel.value,
+		reply: props.reply,
+		renote: props.renote,
 	}, {
 		changeVisibility: v => {
 			visibility.value = v;

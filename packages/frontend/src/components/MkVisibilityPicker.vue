@@ -9,35 +9,35 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div :class="[$style.label, $style.item]">
 			{{ i18n.ts.visibility }}
 		</div>
-		<button key="public" :disabled="isSilenced" class="_button" :class="[$style.item, { [$style.active]: v === 'public' &&!currentChannel }]" data-index="1" @click="choose('public')">
+		<button key="public" :disabled="actualDisablePublic" class="_button" :class="[$style.item, { [$style.active]: v === 'public' &&!currentChannel }]" data-index="1" @click="choose('public')">
 			<div :class="$style.icon"><i class="ti ti-world"></i></div>
 			<div :class="$style.body">
 				<span :class="$style.itemTitle">{{ i18n.ts._visibility.public }}</span>
 				<span :class="$style.itemDescription">{{ i18n.ts._visibility.publicDescription }}</span>
 			</div>
 		</button>
-		<button key="home" class="_button" :class="[$style.item, { [$style.active]: v === 'home' && !currentChannel }]" data-index="2" @click="choose('home')">
+		<button key="home" :disabled="actualDisableHome" class="_button" :class="[$style.item, { [$style.active]: v === 'home' && !currentChannel }]" data-index="2" @click="choose('home')">
 			<div :class="$style.icon"><i class="ti ti-home"></i></div>
 			<div :class="$style.body">
 				<span :class="$style.itemTitle">{{ i18n.ts._visibility.home }}</span>
 				<span :class="$style.itemDescription">{{ i18n.ts._visibility.homeDescription }}</span>
 			</div>
 		</button>
-		<button key="followers" class="_button" :class="[$style.item, { [$style.active]: v === 'followers' && !currentChannel }]" data-index="3" @click="choose('followers')">
+		<button key="followers" :disabled="actualDisableFollowers" class="_button" :class="[$style.item, { [$style.active]: v === 'followers' && !currentChannel }]" data-index="3" @click="choose('followers')">
 			<div :class="$style.icon"><i class="ti ti-lock"></i></div>
 			<div :class="$style.body">
 				<span :class="$style.itemTitle">{{ i18n.ts._visibility.followers }}</span>
 				<span :class="$style.itemDescription">{{ i18n.ts._visibility.followersDescription }}</span>
 			</div>
 		</button>
-		<button key="specified" :disabled="localOnly" class="_button" :class="[$style.item, { [$style.active]: v === 'specified' && !currentChannel }]" data-index="4" @click="choose('specified')">
+		<button key="specified" :disabled="actualDisableSpecified" class="_button" :class="[$style.item, { [$style.active]: v === 'specified' && !currentChannel }]" data-index="4" @click="choose('specified')">
 			<div :class="$style.icon"><i class="ti ti-mail"></i></div>
 			<div :class="$style.body">
 				<span :class="$style.itemTitle">{{ i18n.ts._visibility.specified }}</span>
 				<span :class="$style.itemDescription">{{ i18n.ts._visibility.specifiedDescription }}</span>
 			</div>
 		</button>
-		<button ref="channelsButton" class="_button" :class="[$style.item, { [$style.active]: currentChannel }]" data-index="5" @click="chooseChannel">
+		<button ref="channelsButton" :disabled="actualDisableChannel" class="_button" :class="[$style.item, { [$style.active]: currentChannel }]" data-index="5" @click="chooseChannel">
 			<div :class="$style.channelWrapper" :style="[currentChannel ? {borderLeftColor: `${currentChannel.color}`} : {}]">
 				<div :class="$style.icon">
 					<i class="ti ti-device-tv"></i>
@@ -56,22 +56,22 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { nextTick, shallowRef, ref, computed } from 'vue';
+import { computed, nextTick, ref, shallowRef } from 'vue';
 import * as Misskey from 'misskey-js';
 import MkModal from '@/components/MkModal.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
 import { api } from '@/scripts/api.js';
-
-const modal = shallowRef<InstanceType<typeof MkModal>>();
-const channelsButton = shallowRef<InstanceType<typeof HTMLButtonElement>>();
+import { calcVisibilityRange, NoteVisibilityWeight } from '@/scripts/note-visibility-utils.js';
 
 const props = withDefaults(defineProps<{
 	currentVisibility: typeof Misskey.noteVisibilities[number];
-	isSilenced: boolean;
-	localOnly: boolean;
+	disablePublic: boolean;
+	disableSpecified: boolean;
 	src?: HTMLElement;
-  currentChannel?: Misskey.entities.Channel
+  currentChannel?: Misskey.entities.Channel,
+	reply?: Misskey.entities.Note;
+	renote?: Misskey.entities.Note;
 }>(), {
 });
 
@@ -81,22 +81,57 @@ const emit = defineEmits<{
 	(ev: 'closed'): void;
 }>();
 
-const v = ref(props.currentVisibility);
+const modal = shallowRef<InstanceType<typeof MkModal>>();
+const channelsButton = shallowRef<InstanceType<typeof HTMLButtonElement>>();
 
-/**
- * Visibility とチャンネルはそれぞれ独立だけど、今のところはチャンネル投稿は連合なしだし公開範囲も変更できないようである
+const actualDisablePublic = computed<boolean>(() => props.disablePublic || calcDisabled(NoteVisibilityWeight.PUBLIC));
+const actualDisableHome = computed<boolean>(() => calcDisabled(NoteVisibilityWeight.HOME));
+const actualDisableFollowers = computed<boolean>(() => calcDisabled(NoteVisibilityWeight.FOLLOWERS));
+const actualDisableSpecified = computed<boolean>(() => props.disableSpecified || calcDisabled(NoteVisibilityWeight.SPECIFIED));
+const actualDisableChannel = computed<boolean>(() => {
+	const reply = props.reply;
+	if (reply) {
+		// リプライの場合
+		if (!reply.channelId) {
+			// リプライ先がチャンネル外だったら非活性
+			return true;
+		} else if (reply.channelId !== currentChannel.value?.id) {
+			// リプライ先が選択中のチャンネル以外だったら非活性
+			return true;
+		}
+	}
 
- packages/frontend/src/components/MkPostForm.vue :475
- if (props.channel) {
- visibility.value = 'public';
- localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
- return;
- }
+	return false;
+});
 
- */
+const v = ref<typeof Misskey.noteVisibilities[number]>(props.currentVisibility);
+
 const channels = ref<Misskey.entities.Channel[]>([]);
 const currentChannel = ref<Misskey.entities.Channel | undefined>(props.currentChannel);
 const currentChannelName = computed<string | null>(() => currentChannel.value?.name ?? null);
+
+function calcDisabled(weight: NoteVisibilityWeight): boolean {
+	const reply = props.reply;
+	const renote = props.renote;
+
+	if (reply?.channelId) {
+		// リプライがチャンネルの場合はチャンネル固定としたいので非活性
+		return true;
+	}
+
+	if (renote?.channel && !renote.channel.allowRenoteToExternal) {
+		// チャンネルの外部公開制限がある場合はチャンネル固定としたいので非活性
+		return true;
+	}
+
+	const calcWeight = calcVisibilityRange({ reply, renote });
+	if (weight < calcWeight) {
+		// 要求された公開範囲の重みとリプライ・リノートから取り出された重みが釣り合わない場合は非活性
+		return true;
+	}
+
+	return false;
+}
 
 async function fetchChannels() {
 	const res = await api('channels/my-favorites', {
