@@ -4,8 +4,8 @@
  */
 
 import { toArray } from '@/misc/prelude/array.js';
-import { isHashtag } from '../type.js';
 import type { IObject, IApHashtag } from '../type.js';
+import { isHashtag } from '../type.js';
 
 export function extractApHashtags(tags: IObject | IObject[] | null | undefined): string[] {
 	if (tags == null) return [];

@@ -11,8 +11,8 @@ import { awaitAll } from '@/misc/prelude/await-all.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiRole } from '@/models/Role.js';
 import { bindThis } from '@/decorators.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 import { IdService } from '@/core/IdService.js';
+import {DEFAULT_POLICIES} from "@/const.js";
 
 @Injectable()
 export class RoleEntityService {

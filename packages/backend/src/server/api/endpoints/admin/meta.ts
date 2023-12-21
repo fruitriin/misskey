@@ -8,7 +8,8 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { MetaService } from '@/core/MetaService.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+
+import {DEFAULT_POLICIES} from "@/const.js";
 
 export const meta = {
 	tags: ['meta'],

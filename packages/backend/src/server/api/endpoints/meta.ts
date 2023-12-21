@@ -7,13 +7,12 @@ import { IsNull, LessThanOrEqual, MoreThan, Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import JSON5 from 'json5';
 import type { AdsRepository, UsersRepository } from '@/models/_.js';
-import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
+import {DEFAULT_POLICIES, MAX_NOTE_TEXT_LENGTH} from '@/const.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { MetaService } from '@/core/MetaService.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 
 export const meta = {
 	tags: ['meta'],

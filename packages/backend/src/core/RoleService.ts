@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import type {OnApplicationShutdown, OnModuleInit} from '@nestjs/common';
+import {Inject, Injectable} from '@nestjs/common';
 import * as Redis from 'ioredis';
-import { In } from 'typeorm';
-import { ModuleRef } from '@nestjs/core';
+import {In} from 'typeorm';
+import {ModuleRef} from '@nestjs/core';
 import type {
 	MiRole,
 	MiRoleAssignment,
@@ -14,22 +15,22 @@ import type {
 	RolesRepository,
 	UsersRepository,
 } from '@/models/_.js';
-import { MemoryKVCache, MemorySingleCache } from '@/misc/cache.js';
-import type { MiUser } from '@/models/User.js';
-import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
-import { MetaService } from '@/core/MetaService.js';
-import { CacheService } from '@/core/CacheService.js';
-import type { RoleCondFormulaValue } from '@/models/Role.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { IdService } from '@/core/IdService.js';
-import { ModerationLogService } from '@/core/ModerationLogService.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import { NotificationService } from '@/core/NotificationService.js';
-import type { OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
+import {MemoryKVCache, MemorySingleCache} from '@/misc/cache.js';
+import type {MiUser} from '@/models/User.js';
+import {DI} from '@/di-symbols.js';
+import {bindThis} from '@/decorators.js';
+import {MetaService} from '@/core/MetaService.js';
+import {CacheService} from '@/core/CacheService.js';
+import type {RoleCondFormulaValue} from '@/models/Role.js';
+import {UserEntityService} from '@/core/entities/UserEntityService.js';
+import type {GlobalEvents} from '@/core/GlobalEventService.js';
+import {GlobalEventService} from '@/core/GlobalEventService.js';
+import {IdService} from '@/core/IdService.js';
+import {ModerationLogService} from '@/core/ModerationLogService.js';
+import type {Packed} from '@/misc/json-schema.js';
+import {FanoutTimelineService} from '@/core/FanoutTimelineService.js';
+import {NotificationService} from '@/core/NotificationService.js';
+import {DEFAULT_POLICIES} from "@/const.js";
 
 export type RolePolicies = {
 	gtlAvailable: boolean;
@@ -57,33 +58,6 @@ export type RolePolicies = {
 	rateLimitFactor: number;
 	avatarDecorationLimit: number;
 };
-
-export const DEFAULT_POLICIES: RolePolicies = {
-	gtlAvailable: true,
-	ltlAvailable: true,
-	canPublicNote: true,
-	canInvite: false,
-	inviteLimit: 0,
-	inviteLimitCycle: 60 * 24 * 7,
-	inviteExpirationTime: 0,
-	canManageCustomEmojis: false,
-	canManageAvatarDecorations: false,
-	canSearchNotes: false,
-	canUseTranslator: true,
-	canHideAds: false,
-	driveCapacityMb: 100,
-	alwaysMarkNsfw: false,
-	pinLimit: 5,
-	antennaLimit: 5,
-	wordMuteLimit: 200,
-	webhookLimit: 3,
-	clipLimit: 10,
-	noteEachClipsLimit: 200,
-	userListLimit: 10,
-	userEachUserListsLimit: 50,
-	rateLimitFactor: 1,
-	avatarDecorationLimit: 1,
-}as const;
 
 @Injectable()
 export class RoleService implements OnApplicationShutdown, OnModuleInit {

@@ -7,13 +7,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { MetaService } from '@/core/MetaService.js';
-import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
+import {DEFAULT_POLICIES, MAX_NOTE_TEXT_LENGTH} from '@/const.js';
 import { MemorySingleCache } from '@/misc/cache.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import NotesChart from '@/core/chart/charts/notes.js';
 import UsersChart from '@/core/chart/charts/users.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 const nodeinfo2_1path = '/nodeinfo/2.1';

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import {DEFAULT_POLICIES} from "@/const.js";
+
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
@@ -29,7 +31,6 @@ import {
 	hiddenNote,
 } from '../utils.js';
 import type { INestApplicationContext } from '@nestjs/common';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 describe('クリップ', () => {
 	type User = Packed<'User'>;
 	type Note = Packed<'Note'>;

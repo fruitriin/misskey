@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import {DEFAULT_POLICIES} from "@/const.js";
+
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
@@ -22,7 +24,6 @@ import {
 } from '../utils.js';
 import type * as misskey from 'misskey-js';
 import type { INestApplicationContext } from '@nestjs/common';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 describe('ユーザー', () => {
 	// エンティティとしてのユーザーを主眼においたテストを記述する
 	// (User を返すエンドポイントと User エンティティを書き換えるエンドポイントをテストする)

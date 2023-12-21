@@ -105,7 +105,7 @@ export interface IOrderedCollection extends IObject {
 	orderedItems: ApObject;
 }
 
-export const validPost = ['Note', 'Question', 'Article', 'Audio', 'Document', 'Image', 'Page', 'Video', 'Event'];
+export const validPost = ['Note', 'Question', 'Article', 'Audio', 'Document', 'Image', 'Page', 'Video', 'Event'] as const;
 
 export const isPost = (object: IObject): object is IPost =>
 	validPost.includes(getApType(object));

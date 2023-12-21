@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import {DEFAULT_POLICIES} from "@/const.js";
+
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
@@ -23,7 +25,6 @@ import {
 	uploadFile,
 	testPaginationConsistency,
 } from '../utils.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 
 const compareBy = <T extends { id: string }>(selector: (s: T) => string = (s: T): string => s.id) => (a: T, b: T): number => {
 	return selector(a).localeCompare(selector(b));

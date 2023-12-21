@@ -16,7 +16,8 @@ import { loadConfig } from '../src/config.js';
 import type * as misskey from 'misskey-js';
 
 export { server as startServer } from '@/boot/common.js';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+
+import {DEFAULT_POLICIES} from "@/const.js";
 
 interface UserToken {
 	token: string;
