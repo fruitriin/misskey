@@ -10,7 +10,6 @@ import { ModuleMocker } from 'jest-mock';
 import { Test } from '@nestjs/testing';
 import * as lolex from '@sinonjs/fake-timers';
 import { GlobalModule } from '@/GlobalModule.js';
-import { RoleService } from '@/core/RoleService.js';
 import type { MiRole, RolesRepository, RoleAssignmentsRepository, UsersRepository, MiUser } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { MetaService } from '@/core/MetaService.js';
@@ -23,6 +22,7 @@ import { NotificationService } from '@/core/NotificationService.js';
 import { sleep } from '../utils.js';
 import type { TestingModule } from '@nestjs/testing';
 import type { MockFunctionMetadata } from 'jest-mock';
+import { RoleService } from '@/core/RoleService.js';
 
 const moduleMocker = new ModuleMocker(global);
 
