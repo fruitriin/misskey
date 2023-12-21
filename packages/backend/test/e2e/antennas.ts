@@ -7,7 +7,7 @@ process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
 import { inspect } from 'node:util';
-import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import type { DEFAULT_POLICIES } from '@/core/RoleService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import {
 	signup,
@@ -31,11 +31,11 @@ const compareBy = <T extends { id: string }>(selector: (s: T) => string = (s: T)
 
 describe('アンテナ', () => {
 	// エンティティとしてのアンテナを主眼においたテストを記述する
-	// (Antennaを返すエンドポイント、Antennaエンティティを書き換えるエンドポイント、Antennaからノートを取得するエンドポイントをテストする)
+	// (Antenna を返すエンドポイント、Antenna エンティティを書き換えるエンドポイント、Antenna からノートを取得するエンドポイントをテストする)
 
-	// BUG misskey-jsとjson-schemaが一致していない。
-	// - srcのenumにgroupが残っている
-	// - userGroupIdが残っている, isActiveがない
+	// BUG misskey-js と json-schema が一致していない。
+	// - src の enum に group が残っている
+	// - userGroupId が残っている，isActive がない
 	type Antenna = misskey.entities.Antenna | Packed<'Antenna'>;
 	type User = misskey.entities.MeSignup;
 	type Note = misskey.entities.Note;
@@ -150,7 +150,7 @@ describe('アンテナ', () => {
 		}
 	});
 
-	//#region 作成(antennas/create)
+	//#region 作成 (antennas/create)
 
 	test('が作成できること、キーが過不足なく入っていること。', async () => {
 		const response = await successfulApiCall({
@@ -180,7 +180,7 @@ describe('アンテナ', () => {
 	});
 
 	test('が上限いっぱいまで作成できること', async () => {
-		// antennaLimit + 1まで作れるのがキモ
+		// antennaLimit + 1 まで作れるのがキモ
 		const response = await Promise.all([...Array(DEFAULT_POLICIES.antennaLimit + 1)].map(() => successfulApiCall({
 			endpoint: 'antennas/create',
 			parameters: { ...defaultParam },
@@ -238,7 +238,7 @@ describe('アンテナ', () => {
 		{ parameters: (): object => ({ notify: false }) },
 		{ parameters: (): object => ({ notify: true }) },
 	];
-	test.each(antennaParamPattern)('を作成できること($#)', async ({ parameters }) => {
+	test.each(antennaParamPattern)('を作成できること ($#)', async ({ parameters }) => {
 		const response = await successfulApiCall({
 			endpoint: 'antennas/create',
 			parameters: { ...defaultParam, ...parameters() },
@@ -249,9 +249,9 @@ describe('アンテナ', () => {
 	});
 
 	//#endregion
-	//#region 更新(antennas/update)
+	//#region 更新 (antennas/update)
 
-	test.each(antennaParamPattern)('を変更できること($#)', async ({ parameters }) => {
+	test.each(antennaParamPattern)('を変更できること ($#)', async ({ parameters }) => {
 		const antenna = await successfulApiCall({ endpoint: 'antennas/create', parameters: defaultParam, user: alice });
 		const response = await successfulApiCall({
 			endpoint: 'antennas/update',
@@ -277,9 +277,9 @@ describe('アンテナ', () => {
 	});
 
 	//#endregion
-	//#region 表示(antennas/show)
+	//#region 表示 (antennas/show)
 
-	test('をID指定で表示できること。', async () => {
+	test('を ID 指定で表示できること。', async () => {
 		const antenna = await successfulApiCall({ endpoint: 'antennas/create', parameters: defaultParam, user: alice });
 		const response = await successfulApiCall({
 			endpoint: 'antennas/show',
@@ -289,10 +289,10 @@ describe('アンテナ', () => {
 		const expected = { ...antenna };
 		assert.deepStrictEqual(response, expected);
 	});
-	test.todo('は他人のものをID指定で表示できない');
+	test.todo('は他人のものを ID 指定で表示できない');
 
 	//#endregion
-	//#region 一覧(antennas/list)
+	//#region 一覧 (antennas/list)
 
 	test('をリスト形式で取得できること。', async () => {
 		const antenna = await successfulApiCall({ endpoint: 'antennas/create', parameters: defaultParam, user: alice });
@@ -307,7 +307,7 @@ describe('アンテナ', () => {
 	});
 
 	//#endregion
-	//#region 削除(antennas/delete)
+	//#region 削除 (antennas/delete)
 
 	test('を削除できること。', async () => {
 		const antenna = await successfulApiCall({ endpoint: 'antennas/create', parameters: defaultParam, user: alice });
@@ -325,7 +325,7 @@ describe('アンテナ', () => {
 	//#endregion
 
 	describe('のノート', () => {
-		//#region アンテナのノート取得(antennas/notes)
+		//#region アンテナのノート取得 (antennas/notes)
 
 		test('を取得できること。', async () => {
 			const keyword = 'キーワード';
@@ -358,8 +358,8 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				// BUG e4144a1 以降home指定は壊れている(allと同じ)
-				label: 'ホーム指定はallと同じ',
+				// BUG e4144a1 以降 home 指定は壊れている (all と同じ)
+				label: 'ホーム指定は all と同じ',
 				parameters: (): object => ({ src: 'home' }),
 				posts: [
 					{ note: (): Promise<Note> => post(alice, { text: `${keyword}` }), included: true },
@@ -370,7 +370,7 @@ describe('アンテナ', () => {
 			},
 			{
 				// https://github.com/misskey-dev/misskey/issues/9025
-				label: 'ただし、フォロワー限定投稿とDM投稿を含まない。フォロワーであっても。',
+				label: 'ただし、フォロワー限定投稿と DM 投稿を含まない。フォロワーであっても。',
 				parameters: (): object => ({}),
 				posts: [
 					{ note: (): Promise<Note> => post(userFollowedByAlice, { text: `${keyword}`, visibility: 'public' }), included: true },
@@ -408,7 +408,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: '「見つけやすくする」がOFFのユーザーのノートも含まれる',
+				label: '「見つけやすくする」が OFF のユーザーのノートも含まれる',
 				parameters: (): object => ({}),
 				posts: [
 					{ note: (): Promise<Note> => post(userNotExplorable, { text: `${keyword}` }), included: true },
@@ -455,14 +455,14 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: 'CWにもマッチする',
+				label: 'CW にもマッチする',
 				parameters: (): object => ({ keywords: [[keyword]] }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: 'test', cw: `cw ${keyword}` }), included: true },
 				],
 			},
 			{
-				label: 'キーワード1つ',
+				label: 'キーワード 1 つ',
 				parameters: (): object => ({ keywords: [[keyword]] }),
 				posts: [
 					{ note: (): Promise<Note> => post(alice, { text: 'test' }) },
@@ -471,7 +471,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: 'キーワード3つ(AND)',
+				label: 'キーワード 3 つ (AND)',
 				parameters: (): object => ({ keywords: [['A', 'B', 'C']] }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: 'test A' }) },
@@ -482,7 +482,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: 'キーワード3つ(OR)',
+				label: 'キーワード 3 つ (OR)',
 				parameters: (): object => ({ keywords: [['A'], ['B'], ['C']] }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: 'test' }) },
@@ -495,7 +495,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: '除外ワード3つ(AND)',
+				label: '除外ワード 3 つ (AND)',
 				parameters: (): object => ({ excludeKeywords: [['A', 'B', 'C']] }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: `test ${keyword}` }), included: true },
@@ -508,7 +508,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: '除外ワード3つ(OR)',
+				label: '除外ワード 3 つ (OR)',
 				parameters: (): object => ({ excludeKeywords: [['A'], ['B'], ['C']] }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: `test ${keyword}` }), included: true },
@@ -521,7 +521,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: 'キーワード1つ(大文字小文字区別する)',
+				label: 'キーワード 1 つ (大文字小文字区別する)',
 				parameters: (): object => ({ keywords: [['KEYWORD']], caseSensitive: true }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: 'keyword' }) },
@@ -530,7 +530,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: 'キーワード1つ(大文字小文字区別しない)',
+				label: 'キーワード 1 つ (大文字小文字区別しない)',
 				parameters: (): object => ({ keywords: [['KEYWORD']], caseSensitive: false }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: 'keyword' }), included: true },
@@ -539,7 +539,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: '除外ワード1つ(大文字小文字区別する)',
+				label: '除外ワード 1 つ (大文字小文字区別する)',
 				parameters: (): object => ({ excludeKeywords: [['KEYWORD']], caseSensitive: true }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: `${keyword}` }), included: true },
@@ -549,7 +549,7 @@ describe('アンテナ', () => {
 				],
 			},
 			{
-				label: '除外ワード1つ(大文字小文字区別しない)',
+				label: '除外ワード 1 つ (大文字小文字区別しない)',
 				parameters: (): object => ({ excludeKeywords: [['KEYWORD']], caseSensitive: false }),
 				posts: [
 					{ note: (): Promise<Note> => post(bob, { text: `${keyword}` }), included: true },
@@ -598,14 +598,14 @@ describe('アンテナ', () => {
 			});
 
 			const notes = await posts.reduce(async (prev, current) => {
-				// includedに関わらずnote()は評価して投稿する。
+				// included に関わらず note() は評価して投稿する。
 				const p = await prev;
 				const n = await current.note();
 				if (current.included) return p.concat(n);
 				return p;
 			}, Promise.resolve([] as Note[]));
 
-			// alice視点でNoteを取り直す
+			// alice 視点で Note を取り直す
 			const expected = await Promise.all(notes.reverse().map(s => successfulApiCall({
 				endpoint: 'notes/show',
 				parameters: { noteId: s.id },
@@ -623,13 +623,13 @@ describe('アンテナ', () => {
 			assert.deepStrictEqual(response, expected);
 		});
 
-		test.skip('が取得でき、日付指定のPaginationに一貫性があること', async () => { });
+		test.skip('が取得でき、日付指定の Pagination に一貫性があること', async () => { });
 		test.each([
-			{ label: 'ID指定', offsetBy: 'id' },
+			{ label: 'ID 指定', offsetBy: 'id' },
 
-			// BUG sinceDate, untilDateはsinceIdや他のエンドポイントとは異なり、その時刻に一致するレコードを含んでしまう。
+			// BUG sinceDate, untilDate は sinceId や他のエンドポイントとは異なり、その時刻に一致するレコードを含んでしまう。
 			// { label: '日付指定', offsetBy: 'createdAt' },
-		] as const)('が取得でき、$labelのPaginationに一貫性があること', async ({ offsetBy }) => {
+		] as const)('が取得でき、$label の Pagination に一貫性があること', async ({ offsetBy }) => {
 			const antenna = await successfulApiCall({
 				endpoint: 'antennas/create',
 				parameters: { ...defaultParam, keywords: [[keyword]] },
@@ -651,8 +651,8 @@ describe('アンテナ', () => {
 			}, offsetBy, 'desc');
 		});
 
-		// BUG 7日過ぎると作り直すしかない。 https://github.com/misskey-dev/misskey/issues/10476
-		test.todo('を取得したときActiveに戻る');
+		// BUG 7 日過ぎると作り直すしかない。https://github.com/misskey-dev/misskey/issues/10476
+		test.todo('を取得したとき Active に戻る');
 
 		//#endregion
 	});
