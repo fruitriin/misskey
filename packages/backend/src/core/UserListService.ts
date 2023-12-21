@@ -20,6 +20,7 @@ import { QueueService } from '@/core/QueueService.js';
 import { RedisKVCache } from '@/misc/cache.js';
 import { RoleService } from '@/core/RoleService.js';
 
+
 @Injectable()
 export class UserListService implements OnApplicationShutdown {
 	public static TooManyUsersError = class extends Error {};

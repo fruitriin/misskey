@@ -83,7 +83,7 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	userEachUserListsLimit: 50,
 	rateLimitFactor: 1,
 	avatarDecorationLimit: 1,
-};
+}as const;
 
 @Injectable()
 export class RoleService implements OnApplicationShutdown, OnModuleInit {
@@ -374,7 +374,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const assigns = moderatorRoles.length > 0 ? await this.roleAssignmentsRepository.findBy({
 			roleId: In(moderatorRoles.map(r => r.id)),
 		}) : [];
-		// TODO: isRootなアカウントも含める
+		// TODO: isRoot なアカウントも含める
 		return assigns.map(a => a.userId);
 	}
 
@@ -394,7 +394,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const assigns = administratorRoles.length > 0 ? await this.roleAssignmentsRepository.findBy({
 			roleId: In(administratorRoles.map(r => r.id)),
 		}) : [];
-		// TODO: isRootなアカウントも含める
+		// TODO: isRoot なアカウントも含める
 		return assigns.map(a => a.userId);
 	}
 
