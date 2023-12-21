@@ -7,8 +7,7 @@ process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
 import { inspect } from 'node:util';
-import type { DEFAULT_POLICIES } from '@/core/RoleService.js';
-import type { Packed } from '@/misc/json-schema.js';
+import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 import {
 	signup,
 	post,
@@ -17,7 +16,6 @@ import {
 	startServer,
 	api,
 	successfulApiCall,
-	failedApiCall,
 	uploadFile,
 } from '../utils.js';
 import type * as misskey from 'misskey-js';
