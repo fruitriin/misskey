@@ -1,7 +1,10 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import * as mfm from 'mfm-js';
+// ノートの実態はめんどくさいのでfakesから持ってきている
+// 実際はEntryで認証なしでAPIを叩くなどする
 import { note } from '@/../.storybook/fakes.ts';
+// その場合、EntryはAPIを叩く、embedComponentsはレンダリングに注力する
 import MkReactionsViewer from '@/components/MkReactionsViewer.vue';
 import { i18n } from '@/i18n.js';
 import MkUrlPreview from '@/components/MkUrlPreview.vue';
@@ -17,6 +20,12 @@ import { getNoteSummary } from '@/scripts/get-note-summary.js';
 import { isEnabledUrlPreview } from '@/instance.js';
 import number from '@/filters/number.js';
 
+// TODO: Localeの判定とローカルストレージの設定の処理は行う必要がある
+// Note: 今時点ではないので / で一度Misskey本体を表示してlocalstorageに入れてもらうといい感じ
+
+// MkNotes類を呼んでしまうとなぜかos.tsが呼ばれてachivement処理が呼ばれるので
+// MkNoteのほぼパクリみたいなコンポーネントは作る必要がある
+// EmEntyNoteにベタ書きしているが、embedComponentsの役割である
 export default defineComponent({
 	components: {
 		MkInstanceTicker, MkMediaList, MkNoteSub, MkPoll, MkCwButton, MkNoteHeader, MkUrlPreview,
@@ -24,11 +33,16 @@ export default defineComponent({
 	},
 	data() {
 		console.log({ fakeNote: note() });
+		// MkNote互換っぽいデータを雑に用意する
 		return {
 			mock: true,
 			isDeleted: false,
 			isRenote: false,
 			muted: false,
+			isLong: false,
+			translating: false,
+			translation: false,
+			collapsed: false,
 			parsed: mfm.parse(note().text),
 			showContent: false,
 			canRenote: false,
@@ -52,7 +66,8 @@ export default defineComponent({
 			return i18n;
 		},
 	},
-	methods: { number, getNoteSummary, userPage, showRenoteMenu: () => {}, onContextmenu: () => {} },
+	// コンテキストメニュー等は中身が空のものに差し替えている
+	methods: { number, getNoteSummary, userPage, showRenoteMenu: () => {}, onContextmenu: () => {}, renote: () => {} },
 });
 </script>
 
@@ -70,15 +85,14 @@ export default defineComponent({
 	>
 		<MkNoteSub v-if="appearNote.reply && !renoteCollapsed" :note="appearNote.reply" :class="$style.replyTo"/>
 		<div v-if="pinned" :class="$style.tip"><i class="ti ti-pin"></i> {{ i18n.ts.pinnedNote }}</div>
-		<!--<div v-if="appearNote._prId_" class="tip"><i class="ti ti-speakerphone"></i> {{ i18n.ts.promotion }}<button class="_textButton hide" @click="readPromo()">{{ i18n.ts.hideThisNote }} <i class="ti ti-x"></i></button></div>-->
-		<!--<div v-if="appearNote._featuredId_" class="tip"><i class="ti ti-bolt"></i> {{ i18n.ts.featured }}</div>-->
 		<div v-if="isRenote" :class="$style.renote">
 			<div v-if="note.channel" :class="$style.colorBar" :style="{ background: note.channel.color }"></div>
 			<MkAvatar :class="$style.renoteAvatar" :user="note.user" link preview/>
 			<i class="ti ti-repeat" style="margin-right: 4px;"></i>
 			<I18n :src="i18n.ts.renotedBy" tag="span" :class="$style.renoteText">
 				<template #user>
-					<MkA v-user-preview="note.userId" :class="$style.renoteUserName" :to="userPage(note.user)">
+<!--					<MkA v-user-preview="note.userId" :class="$style.renoteUserName" :to="userPage(note.user)">-->
+					<MkA  :class="$style.renoteUserName" :to="userPage(note.user)">
 						<MkUserName :user="note.user"/>
 					</MkA>
 				</template>
@@ -86,7 +100,7 @@ export default defineComponent({
 			<div :class="$style.renoteInfo">
 				<button ref="renoteTime" :class="$style.renoteTime" class="_button" @mousedown.prevent="showRenoteMenu()">
 					<i class="ti ti-dots" :class="$style.renoteMenu"></i>
-					<MkTime :time="note.createdAt"/>
+<!--					<MkTime :time="note.createdAt"/>-->
 				</button>
 				<span v-if="note.visibility !== 'public'" style="margin-left: 0.5em;" :title="i18n.ts._visibility[note.visibility]">
 					<i v-if="note.visibility === 'home'" class="ti ti-home"></i>
