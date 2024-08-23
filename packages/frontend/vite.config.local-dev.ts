@@ -80,7 +80,10 @@ const devConfig: UserConfig = {
 		...defaultConfig.build,
 		rollupOptions: {
 			...defaultConfig.build?.rollupOptions,
-			input: 'index.html',
+			input: {
+				main: 'index.html',
+				embed: "embed.html"
+			  }
 		},
 	},
 
