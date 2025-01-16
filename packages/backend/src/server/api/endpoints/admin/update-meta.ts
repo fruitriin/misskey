@@ -218,6 +218,19 @@ export const paramDef = {
 		remoteNotesCleaningExpiryDaysForEachNotes: { type: 'number' },
 		remoteNotesCleaningMaxProcessingDurationInMinutes: { type: 'number' },
 		showRoleBadgesOfRemoteUsers: { type: 'boolean' },
+		highlightRateFactor: {
+			type: 'number',
+		},
+
+		highlightMidPopularityThreshold: {
+			type: 'number',
+		},
+		highlightHighPopularityThreashold: {
+			type: 'number',
+		},
+		highlightExcludeEmojis: {
+			type: 'string',
+		},
 	},
 	required: [],
 } as const;
@@ -760,6 +773,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.showRoleBadgesOfRemoteUsers !== undefined) {
 				set.showRoleBadgesOfRemoteUsers = ps.showRoleBadgesOfRemoteUsers;
+			}
+
+			if (ps.highlightRateFactor) {
+				set.highlightRateFactor = ps.highlightRateFactor;
+				set.highlightMidPopularityThreshold = ps.highlightMidPopularityThreshold;
+				set.highlightHighPopularityThreashold = ps.highlightHighPopularityThreashold;
+				set.highlightExcludeEmojis = ps.highlightExcludeEmojis;
 			}
 
 			const before = await this.metaService.fetch(true);

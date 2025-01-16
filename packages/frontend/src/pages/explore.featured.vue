@@ -14,8 +14,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 		style="margin-bottom: var(--MI-margin);"
 	>
 	</MkTab>
-	<MkNotesTimeline v-if="tab === 'notes'" :paginator="paginatorForNotes"/>
-	<MkNotesTimeline v-else-if="tab === 'polls'" :paginator="paginatorForPolls"/>
+	<MkNotesTimeline v-if="tab === 'notes'" :featured="true" :paginator="paginatorForNotes"/>
+	<MkNotesTimeline v-else-if="tab === 'polls'" :featured="true" :paginator="paginatorForPolls"/>
 </div>
 </template>
 
