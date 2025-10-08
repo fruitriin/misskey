@@ -12,6 +12,7 @@ import type { GridRow } from '@/components/grid/row.js';
 import type { GridContext } from '@/components/grid/grid-event.js';
 import { copyToClipboard } from '@/utility/copy-to-clipboard.js';
 import type { GridColumn, GridColumnSetting } from '@/components/grid/column.js';
+import { toast } from "@/os.js"
 
 export function isCellElement(elem: HTMLElement): boolean {
 	return elem.hasAttribute('data-grid-cell');
@@ -168,11 +169,27 @@ export async function pasteToGridFromClipboard(
 				callback(cell.row, cell.column, parseValue(lines[0][0], cell.column.setting));
 			}
 		}
+		toast("ペーストしました")
 	} else {
 		// 表形式文字列の場合は表形式にパースし、選択範囲に合うように貼り付ける
 		const offsetRow = bounds.leftTop.row;
 		const offsetCol = bounds.leftTop.col;
 		const { columns, rows } = context;
+
+		// 選択範囲のサイズ
+		const selectedRowCount = bounds.rightBottom.row - bounds.leftTop.row + 1;
+		const selectedColCount = bounds.rightBottom.col - bounds.leftTop.col + 1;
+
+		// クリップボードデータのサイズ
+		const clipboardRowCount = lines.length;
+		const clipboardColCount = Math.max(...lines.map(line => line.length));
+
+		// サイズの不一致をチェック
+		let pasteResult = "範囲ペーストしました";
+		if (clipboardRowCount > selectedRowCount || clipboardColCount > selectedColCount) {
+			pasteResult = "選択範囲が足りません。選択範囲が不足した貼り付けは行われませんでした。";
+		}
+
 		for (let row = bounds.leftTop.row; row <= bounds.rightBottom.row; row++) {
 			const rowIdx = row - offsetRow;
 			if (lines.length <= rowIdx) {
@@ -193,7 +210,9 @@ export async function pasteToGridFromClipboard(
 				}
 			}
 		}
+		toast(pasteResult);
 	}
+
 }
 
 /**
