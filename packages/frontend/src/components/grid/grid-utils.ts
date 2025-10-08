@@ -169,6 +169,7 @@ export async function pasteToGridFromClipboard(
 				callback(cell.row, cell.column, parseValue(lines[0][0], cell.column.setting));
 			}
 		}
+		// FXIME: この辺のi18nの依存関係をうまく処理するために toastとi18nを別のファイルにしないといけないかも（未調査
 		toast("ペーストしました")
 	} else {
 		// 表形式文字列の場合は表形式にパースし、選択範囲に合うように貼り付ける
