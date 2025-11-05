@@ -3432,3 +3432,16 @@ _qr:
   scanFile: "端末の画像をスキャン"
   raw: "テキスト"
   mfm: "MFM"
+
+_timemachine:
+  title: "タイムマシン"
+  selectDate: "日付を選択"
+  selectTime: "時刻を選択"
+  startTimeshift: "タイムシフト開始"
+  currentTime: "現在時刻"
+  originalTime: "開始時刻"
+  play: "再生"
+  pause: "一時停止"
+  stop: "停止"
+  playbackSpeed: "再生速度"
+  invalidDateTime: "無効な日時です"
