@@ -506,10 +506,10 @@ describe('クリップ', () => {
 			});
 		};
 
-		const myFavorites = async (request: Partial<ApiRequest<'clips/my-favorites'>> = {}): Promise<Misskey.entities.Clip[]> => {
+		const myFavorites = async (parameters: Partial<Misskey.entities.ClipsMyFavoritesRequest> = {}, request: Partial<ApiRequest<'clips/my-favorites'>> = {}): Promise<Misskey.entities.Clip[]> => {
 			return successfulApiCall({
 				endpoint: 'clips/my-favorites',
-				parameters: {},
+				parameters,
 				user: alice,
 				...request,
 			});
@@ -562,8 +562,8 @@ describe('クリップ', () => {
 				await favorite({ clipId: clip.id });
 			}
 
-			// pagenationはない。全部一気にとれる。
-			const favorited = await myFavorites();
+			// pagenationで全件取得できる
+			const favorited = await myFavorites({ limit: clips.length });
 			assert.strictEqual(favorited.length, clips.length);
 			for (const clip of favorited) {
 				assert.strictEqual(clip.favoritedCount, 1);
@@ -657,9 +657,52 @@ describe('クリップ', () => {
 
 		test('を取得したとき他人のお気に入りは含まない。', async () => {
 			await favorite({ clipId: aliceClip.id });
-			const favorited = await myFavorites({ user: bob });
+			const favorited = await myFavorites({}, { user: bob });
 			assert.deepStrictEqual(favorited, []);
 		});
+
+		test('をlimit指定で取得できる。', async () => {
+			const clips = await createMany({}, 5);
+			for (const clip of clips) {
+				await favorite({ clipId: clip.id });
+			}
+
+			const favorited = await myFavorites({ limit: 3 });
+			assert.strictEqual(favorited.length, 3);
+		});
+
+		test('をID範囲指定で取得できる。', async () => {
+			const clips = await createMany({}, 7);
+			clips.sort(compareBy(s => s.id));
+			for (const clip of clips) {
+				await favorite({ clipId: clip.id });
+			}
+
+			const favorited = await myFavorites({
+				sinceId: clips[1].id,
+				untilId: clips[5].id,
+			});
+
+			// sinceIdとuntilId自体は結果に含まれない
+			const favoriteIds = favorited.map(c => c.id).sort();
+			const expectedIds = [clips[2].id, clips[3].id, clips[4].id].sort();
+			assert.deepStrictEqual(favoriteIds, expectedIds);
+		});
+
+		test.each([
+			{ label: 'limitゼロ', parameters: { limit: 0 } },
+			{ label: 'limit最大+1', parameters: { limit: 101 } },
+		])('の取得は$labelだとできない', async ({ parameters }) => failedApiCall({
+			endpoint: 'clips/my-favorites',
+			parameters: {
+				...parameters,
+			},
+			user: alice,
+		}, {
+			status: 400,
+			code: 'INVALID_PARAM',
+			id: '3d81ceae-475f-4600-b2a8-2bc116157532',
+		}));
 	});
 
 	describe('に紐づくノート', () => {
