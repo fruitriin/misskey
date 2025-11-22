@@ -40,9 +40,11 @@ import { Paginator } from '@/utility/paginator.js';
 const tab = ref('my');
 
 const paginator = markRaw(new Paginator('clips/list', {
+	canFetchDetection: 'limit',
 }));
 
 const favoritesPaginator = markRaw(new Paginator('clips/my-favorites', {
+	canFetchDetection: 'limit',
 }));
 
 async function create() {
