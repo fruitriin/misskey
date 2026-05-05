@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <PageWithHeader v-model:tab="tab" :actions="headerActions" :tabs="headerTabs">
-	<div class="_spacer" style="--MI_SPACER-w: 700px;">
+	<div class="_spacer" :style="tab === 'contents' ? '--MI_SPACER-w: 1400px' : '--MI_SPACER-w: 700px'">
 		<div class="jqqmcavi">
 			<MkButton v-if="pageId && author != null" class="button" inline link :to="`/@${ author.username }/pages/${ currentName }`"><i class="ti ti-external-link"></i> {{ i18n.ts._pages.viewPage }}</MkButton>
 			<MkButton v-if="!readonly" inline primary class="button" @click="save"><i class="ti ti-device-floppy"></i> {{ i18n.ts.save }}</MkButton>
@@ -46,11 +46,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 		</div>
 
-		<div v-else-if="tab === 'contents'">
-			<div :class="$style.contents">
-				<XBlocks v-model="content" class="content"/>
+		<div v-else-if="tab === 'contents'" :class="$style.editorWithPreview">
+			<div :class="$style.editorColumn">
+				<XBlocks v-model="content"/>
+				<MkButton v-if="!readonly" rounded :class="$style.addButton" @click="add()"><i class="ti ti-plus"></i></MkButton>
+			</div>
 
-				<MkButton v-if="!readonly" rounded class="add" @click="add()"><i class="ti ti-plus"></i></MkButton>
+			<div :class="$style.previewColumn">
+				<div :class="$style.previewHeader">
+					<i class="ti ti-eye"></i> {{ i18n.ts.preview }}
+				</div>
+				<div :class="$style.previewBody">
+					<XPage :page="previewPage"/>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -62,6 +70,7 @@ import { computed, provide, watch, ref } from 'vue';
 import * as Misskey from 'misskey-js';
 import { url } from '@@/js/config.js';
 import XBlocks from './page-editor.blocks.vue';
+import XPage from '@/components/page/page.vue';
 import { genId } from '@/utility/id.js';
 import MkButton from '@/components/MkButton.vue';
 import MkSelect from '@/components/MkSelect.vue';
@@ -260,6 +269,28 @@ function removeEyeCatchingImage() {
 	eyeCatchingImageId.value = null;
 }
 
+const previewPage = computed<Misskey.entities.Page>(() => ({
+	id: 'preview',
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
+	userId: $i?.id ?? '',
+	user: ($i ?? {}) as Misskey.entities.UserLite,
+	content: content.value,
+	variables: [],
+	title: title.value,
+	name: name.value,
+	summary: summary.value,
+	hideTitleWhenPinned: hideTitleWhenPinned.value,
+	alignCenter: alignCenter.value,
+	font: font.value as 'serif' | 'sans-serif',
+	script: '',
+	eyeCatchingImageId: eyeCatchingImageId.value,
+	eyeCatchingImage: eyeCatchingImage.value,
+	attachedFiles: [],
+	likedCount: 0,
+	isLiked: false,
+}));
+
 async function init() {
 	if (props.initPageId) {
 		page.value = await misskeyApi('pages/show', {
@@ -318,12 +349,53 @@ definePage(() => ({
 </script>
 
 <style lang="scss" module>
-.contents {
-	&:global {
-		> .add {
-			margin: 16px auto 0 auto;
-		}
+.editorWithPreview {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+
+	@media (max-width: 850px) {
+		flex-direction: column;
 	}
+}
+
+.editorColumn {
+	flex: 1;
+	min-width: 0;
+}
+
+.addButton {
+	margin: 16px auto 0 auto;
+}
+
+.previewColumn {
+	flex: 1;
+	min-width: 0;
+	border: 1px solid var(--MI_THEME-divider);
+	border-radius: var(--MI-radius);
+	background: var(--MI_THEME-panel);
+	overflow: hidden;
+
+	@media (max-width: 850px) {
+		width: 100%;
+	}
+}
+
+.previewHeader {
+	padding: 10px 16px;
+	font-size: 0.85em;
+	font-weight: bold;
+	border-bottom: 1px solid var(--MI_THEME-divider);
+	color: var(--MI_THEME-fgTransparentWeak);
+
+	> i {
+		margin-right: 6px;
+	}
+}
+
+.previewBody {
+	padding: 16px;
+	min-height: 100px;
 }
 </style>
 
