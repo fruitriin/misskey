@@ -2753,6 +2753,8 @@ _pages:
   featured: "Popular"
   inspector: "Inspector"
   contents: "Contents"
+  preview: "Preview"
+  mfmNoMultiline: "This MFM tag does not support multi-line selection"
   content: "Page block"
   variables: "Variables"
   title: "Title"

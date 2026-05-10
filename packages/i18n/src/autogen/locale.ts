@@ -10737,6 +10737,14 @@ export interface Locale extends ILocale {
          */
         "contents": string;
         /**
+         * プレビュー
+         */
+        "preview": string;
+        /**
+         * 行またぎできないMFMです
+         */
+        "mfmNoMultiline": string;
+        /**
          * ページブロック
          */
         "content": string;
