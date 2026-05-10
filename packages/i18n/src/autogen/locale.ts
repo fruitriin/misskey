@@ -9947,6 +9947,10 @@ export interface Locale extends ILocale {
          */
         "serverMetric": string;
         /**
+         * DBサーバーメトリクス
+         */
+        "dbServerMetric": string;
+        /**
          * AiScriptコンソール
          */
         "aiscript": string;
