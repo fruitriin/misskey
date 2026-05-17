@@ -62,11 +62,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-else class="ti ti-bolt-off ti-fw"></i>
 			</button>
 			<div style="display:flex; flex-wrap: wrap;">
-				<button v-tooltip.noDelay.right="i18n.ts.note" class="_button" :class="[$style.post, {[$style.twoColumn]: isInChannel}]" data-cy-open-post-form @click="os.post({}, {forceTimeline: true})">
+				<button v-if="!isInChannel || showLocalTimelinePostButtonInChannel" v-tooltip.noDelay.right="i18n.ts.note" class="_button" :class="[$style.post, {[$style.twoColumn]: isInChannel && showLocalTimelinePostButtonInChannel}]" data-cy-open-post-form @click="os.post({}, {forceTimeline: true})">
 					<div><i class="ti ti-pencil ti-fw" :class="$style.postIcon"></i><span :class="$style.postText">{{ i18n.ts.note }}</span></div>
 				</button>
 				<Transition>
-					<button v-if="isInChannel" v-tooltip.noDelay.right="i18n.ts.note" class="_button" :class="[$style.post, {[$style.twoColumn]: isInChannel}]" data-cy-open-post-form @click="os.post">
+					<button v-if="isInChannel" v-tooltip.noDelay.right="i18n.ts.note" class="_button" :class="[$style.post, {[$style.twoColumn]: showLocalTimelinePostButtonInChannel}]" data-cy-open-post-form @click="os.post">
 						<i class="ti ti-device-tv ti-fw" :class="$style.postIcon"></i><span :class="$style.postText">ch</span>
 					</button>
 				</Transition>
@@ -142,6 +142,7 @@ const iconOnly = computed(() => {
 });
 
 const isInChannel = computed(() => mainRouter.currentRoute.value.name === 'channel');
+const showLocalTimelinePostButtonInChannel = computed(() => prefer.r.showLocalTimelinePostButtonInChannel.value);
 const otherMenuItemIndicated = computed(() => {
 	for (const def in navbarItemDef) {
 		if (prefer.r.menu.value.includes(def)) continue;

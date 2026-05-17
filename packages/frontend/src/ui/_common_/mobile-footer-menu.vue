@@ -37,7 +37,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<i :class="$style.itemIcon" class="ti ti-device-tv"></i>
 		</div>
 	</button>
-	<button :class="[$style.item, $style.post, $style.postButton, isChannel ? $style.postButtonFloat : undefined ]" class="_button" @click="os.post({},{forceTimeline: true})">
+	<button v-if="!isChannel || showLocalTimelinePostButtonInChannel" :class="[$style.item, $style.post, $style.postButton, isChannel ? $style.postButtonFloat : undefined ]" class="_button" @click="os.post({},{forceTimeline: true})">
 		<div :class="$style.itemInner">
 			<i :class="$style.navButtonIcon" class="ti ti-pencil"></i>
 		</div>
@@ -51,12 +51,14 @@ import { $i } from '@/i.js';
 import * as os from '@/os.js';
 import { mainRouter } from '@/router.js';
 import { navbarItemDef } from '@/navbar.js';
+import { prefer } from '@/preferences.js';
 
 const drawerMenuShowing = defineModel<boolean>('drawerMenuShowing');
 const widgetsShowing = defineModel<boolean>('widgetsShowing');
 
 const rootEl = useTemplateRef('rootEl');
 const isChannel = computed(() => mainRouter.currentRoute.value.name === 'channel');
+const showLocalTimelinePostButtonInChannel = computed(() => prefer.r.showLocalTimelinePostButtonInChannel.value);
 
 const menuIndicated = computed(() => {
 	for (const def in navbarItemDef) {
