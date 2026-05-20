@@ -775,10 +775,19 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				set.showRoleBadgesOfRemoteUsers = ps.showRoleBadgesOfRemoteUsers;
 			}
 
-			if (ps.highlightRateFactor) {
+			if (ps.highlightRateFactor !== undefined) {
 				set.highlightRateFactor = ps.highlightRateFactor;
+			}
+
+			if (ps.highlightMidPopularityThreshold !== undefined) {
 				set.highlightMidPopularityThreshold = ps.highlightMidPopularityThreshold;
+			}
+
+			if (ps.highlightHighPopularityThreashold !== undefined) {
 				set.highlightHighPopularityThreashold = ps.highlightHighPopularityThreashold;
+			}
+
+			if (ps.highlightExcludeEmojis !== undefined) {
 				set.highlightExcludeEmojis = ps.highlightExcludeEmojis;
 			}
 

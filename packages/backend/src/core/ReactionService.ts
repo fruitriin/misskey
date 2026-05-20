@@ -209,7 +209,10 @@ export class ReactionService {
 				.execute();
 		}
 
-		const excludeEmojis = this.meta.highlightExcludeEmojis.split(/:\n/).filter(v => v);
+		const excludeEmojis = this.meta.highlightExcludeEmojis
+			.split('\n')
+			.map(v => v.trim())
+			.filter(v => v);
 
 		// 30%の確率、セルフではない、3日以内に投稿されたノートの場合ハイライト用ランキング更新
 		if (
