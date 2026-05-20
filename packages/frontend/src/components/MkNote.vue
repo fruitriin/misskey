@@ -64,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote" :files="appearNote.files" :poll="appearNote.poll" style="margin: 4px 0;"/>
 				</p>
 				<div v-show="appearNote.cw == null || showContent" :class="[{ [$style.contentCollapsed]: collapsed }]">
-					<div :class="[$style.text, {[$style.akafav]:(featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.highPopularity ), [$style.aofav]: featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.midPopularity && note.reactionCount < highlightPopularityThreshold.highPopularity }]">
+					<div :class="[$style.text, {[$style.akafav]:(featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.highPopularity ), [$style.aofav]: featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.midPopularity && note.reactionCount < highlightPopularityThreshold.highPopularity }]" :style="favstarColorVars">
 						<span v-if="appearNote.isHidden" style="opacity: 0.5">({{ i18n.ts.private }})</span>
 						<MkA v-if="appearNote.replyId" :class="$style.replyIcon" :to="`/notes/${appearNote.replyId}`"><i class="ti ti-arrow-back-up"></i></MkA>
 						<Mfm
@@ -241,6 +241,7 @@ import { isEnabledUrlPreview } from '@/utility/url-preview.js';
 import { focusPrev, focusNext } from '@/utility/focus.js';
 import { getAppearNote } from '@/utility/get-appear-note.js';
 import { prefer } from '@/preferences.js';
+import { store } from '@/store.js';
 import { getPluginHandlers } from '@/plugin.js';
 import { DI } from '@/di.js';
 import { globalEvents } from '@/events.js';
@@ -279,6 +280,14 @@ const highlightPopularityThreshold = computed(() => {
 		midPopularity: instance.highlightMidPopularityThreshold,
 	}
 })
+
+const favstarColorVars = computed(() => {
+	if (!props.featured || !prefer.s.enableFavstar) return undefined;
+	return {
+		'--MI-favstarAka': store.s.darkMode ? prefer.s.favstarDarkAka : prefer.s.favstarLightAka,
+		'--MI-favstarAo': store.s.darkMode ? prefer.s.favstarDarkAo : prefer.s.favstarLightAo,
+	};
+});
 // plugin
 const noteViewInterruptors = getPluginHandlers('note_view_interruptor');
 const hideByPlugin = ref(false);
@@ -738,11 +747,11 @@ function emitUpdReaction(emoji: string, delta: number) {
 
 	.akafav {
 		font-size: 2rem;
-		color: #f7796c;
+		color: var(--MI-favstarAka, #f7796c);
 	}
 	.aofav {
 		font-size: 1.5rem;
-		color: rgb(68, 164, 193);
+		color: var(--MI-favstarAo, #44a4c1);
 	}
 
 	&:focus-visible {
