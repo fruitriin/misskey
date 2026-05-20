@@ -225,6 +225,9 @@ export const PREF_DEF = definePreferences({
 	showReactionsCount: {
 		default: false,
 	},
+	enableFavstar: {
+		default: true,
+	},
 	enableQuickAddMfmFunction: {
 		default: false,
 	},

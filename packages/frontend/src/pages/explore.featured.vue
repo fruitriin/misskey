@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div class="_spacer" style="--MI_SPACER-w: 800px;">
+	<MkSwitch v-model="enableFavstar" style="margin-bottom: var(--MI-margin);">ふぁぼったー</MkSwitch>
 	<MkTab
 		v-model="tab"
 		:tabs="[
@@ -23,8 +24,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { markRaw, ref } from 'vue';
 import MkNotesTimeline from '@/components/MkNotesTimeline.vue';
 import MkTab from '@/components/MkTab.vue';
+import MkSwitch from '@/components/MkSwitch.vue';
 import { i18n } from '@/i18n.js';
 import { Paginator } from '@/utility/paginator.js';
+import { prefer } from '@/preferences.js';
+
+const enableFavstar = prefer.model('enableFavstar');
 
 const paginatorForNotes = markRaw(new Paginator('notes/featured', {
 	limit: 10,

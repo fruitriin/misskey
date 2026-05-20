@@ -64,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote" :files="appearNote.files" :poll="appearNote.poll" style="margin: 4px 0;"/>
 				</p>
 				<div v-show="appearNote.cw == null || showContent" :class="[{ [$style.contentCollapsed]: collapsed }]">
-					<div :class="[$style.text, {[$style.akafav]:(featured && note.reactionCount >= highlightPopularityThreshold.highPopularity ), [$style.aofav]: featured && note.reactionCount >= highlightPopularityThreshold.midPopularity && note.reactionCount < highlightPopularityThreshold.highPopularity }]">
+					<div :class="[$style.text, {[$style.akafav]:(featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.highPopularity ), [$style.aofav]: featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.midPopularity && note.reactionCount < highlightPopularityThreshold.highPopularity }]">
 						<span v-if="appearNote.isHidden" style="opacity: 0.5">({{ i18n.ts.private }})</span>
 						<MkA v-if="appearNote.replyId" :class="$style.replyIcon" :to="`/notes/${appearNote.replyId}`"><i class="ti ti-arrow-back-up"></i></MkA>
 						<Mfm
