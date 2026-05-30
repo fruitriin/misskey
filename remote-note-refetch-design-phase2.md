@@ -105,12 +105,18 @@ Phase 1（[remote-note-refetch-design.md](./remote-note-refetch-design.md)）で
   - 簡易代替: フロント定数で同値（24h）をハードコード。単一ソース性は劣るが実装は最小。
   - 初版は「meta 公開」を推奨（将来 TTL 可変にしても UI が追従する）。
 
-### 3-2. エンドポイント `notes/refetch`
+### 3-2. エンドポイント `notes/refetch`（キュー化 — 敵対的レビュー §7-2 反映）
 
 - 入力 `{ noteId }`、`requireCredential: true`、`limit` でレート制限（TTL ガードと二重防御）。
-- 中身は `getNote` → リモート判定 → `apNoteService.updateNoteIfStale(note, { force:false })` → 更新後ノートを pack して返す。
-- TTL 中に叩かれた場合: コアが no-op で現状ノートを返す。エンドポイントは `COOLDOWN` エラーを投げる方針を推奨
-  （UI は通常クールダウン中はリンクを出さないが、競合・直叩き対策としてサーバでも弾く）。
+- **同期 await はしない**（Phase 1 原則「同期フェッチ禁止」に整合）。リモート fetch は最悪 10s 超
+  （fetch 5s + 分散ロック待機 5s + alternate 追加 GET）でコネクションを専有し、遅いリモート指定で連打されると
+  ワーカー枯渇（slow-loris 類似）。→ **TTL 切れ時はジョブをキューに enqueue し、即座に現状ノートを pack して返す**。
+- フロー: `getNote` → リモート判定 → **enqueue（実フェッチはワーカーで `updateNoteIfStale` 実行）** → 現状ノートを即 pack 返却。
+- TTL 中に叩かれた場合: enqueue 自体しない（or ワーカー側 TTL ガードで no-op）。**エラーにはしない**（確定）。
+  サーバは黙って現状ノートを返す（直叩き・競合時も自分の画面は最新 DB 状態に追いつく）。
+- **UX 反映**: 即時レスポンスは更新前ノートなので、UI は enqueue 後に**少し待ってから `notes/show` を再取得**して
+  差し替える（§4-6）。理想は streaming の `noteUpdated` で push だが、初版は短い遅延ポーリングで可。
+- キューは既存パターン（例 `SystemQueue` / 専用 `RefetchNote` ジョブ）に倣う。重複 enqueue はジョブ ID に `noteId` を使い de-dup。
 
 ### 3-3. UI（`MkRemoteCaution` を汎用のまま拡張）
 
@@ -161,19 +167,25 @@ export const paramDef = {
   required: ['noteId'],
 } as const;
 
-// 実装本体
+// 実装本体（キュー化: 同期 fetch しない）
 const note = await this.getterService.getNote(ps.noteId).catch(/* → noSuchNote */);
 if (note.uri == null) throw new ApiError(meta.errors.isLocalNote);
 
-// TTL 切れなら実フェッチ＆更新、TTL 中なら何もせず現状ノートを返す（どちらも下で pack）。
-// → クールダウン中でも「最新 DB 状態を返す」= FE↔BE リフレッシュは常に成立。
-const updated = await this.apNoteService.updateNoteIfStale(note, { force: false });
-return await this.noteEntityService.pack(updated ?? note, me, { detail: true });
+// TTL 切れなら再フェッチジョブを enqueue（重複は jobId=noteId で de-dup）。実フェッチはワーカーで実行。
+// TTL 中は enqueue しない（ワーカー側 TTL ガードでも二重防御）。いずれもエラーにはしない。
+const fresh = note.lastFetchedAt != null
+  && Date.now() - note.lastFetchedAt.getTime() < NOTE_REFETCH_TTL;
+if (!fresh) {
+  await this.queueService.enqueueRefetchNote(note.id); // 例。実フェッチは updateNoteIfStale をワーカーで
+}
+// 即座に現状ノートを返す（更新はワーカー完了後に UI が notes/show 再取得で拾う、§4-6）
+return await this.noteEntityService.pack(note, me, { detail: true });
 ```
 
 - `id`（UUID）は `node -e "console.log(crypto.randomUUID())"` 等で採番。
-- DI: `GetterService` / `ApNoteService` / `NoteEntityService`。
+- DI: `GetterService` / `QueueService`（enqueue）/ `NoteEntityService`。実フェッチワーカーが `ApNoteService.updateNoteIfStale` を呼ぶ。
 - クールダウン判定をサーバに持たせないので `updateNoteIfStale` の戻り値拡張は**不要**（§4-2 は採用しない）。
+- per-host スロットル（§7-3）はワーカー側の実フェッチ直前で消費する。
 
 ### 4-2. （不採用）`updateNoteIfStale` の戻り値拡張
 
@@ -262,9 +274,15 @@ const nextRefetchAt = computed(() => {
 
 async function refetchNote() {
   if (note.value == null) return;
-  const res = await os.apiWithDialog('notes/refetch', { noteId: note.value.id });
-  note.value = res;            // 差し替え → MkNoteDetailed に伝播（絵文字も更新）
-  os.toast(i18n.ts.refetched);
+  const id = note.value.id;
+  // notes/refetch は enqueue して即時に現状ノートを返す（§3-2 キュー化）。
+  await misskeyApi('notes/refetch', { noteId: id });
+  os.toast(i18n.ts.refetchQueued); // 「更新を予約しました」等
+  // ワーカー完了を少し待って notes/show を再取得し差し替え（理想は streaming の noteUpdated push）。
+  window.setTimeout(async () => {
+    const res = await misskeyApi('notes/show', { noteId: id });
+    note.value = res; // 差し替え → MkNoteDetailed に伝播（絵文字も更新）
+  }, 2500);
 }
 ```
 
@@ -274,7 +292,7 @@ async function refetchNote() {
 orRefetch: "または再取得"
 refetchAvailableIn: "再取得は{time}に利用できます"   # {time} には _timeIn.hours の結果（例「4時間後」）が入る
 refetchedNTimes: "これまで{n}回再取得"
-refetched: "再取得しました"
+refetchQueued: "更新を予約しました"   # キュー化のため「予約」。完了は数秒後に notes/show 再取得で反映
 ```
 
 - `refetchAvailableIn` は `i18n.tsx.refetchAvailableIn({ time: i18n.tsx._timeIn.hours({ n }) })` で参照
@@ -313,6 +331,15 @@ refetched: "再取得しました"
 
 残る軽微な選択:
 - **TTL 値の配布**: フロント定数（4h ハードコード, 最小）/ instance meta 公開（将来 TTL 可変対応）。初版は定数でよい。
+
+### 敵対的レビュー反映（Phase 2 関連・要点）
+
+詳細は Phase 1 §7。Phase 2 に直接効くもの:
+- **`notes/refetch` はキュー化**（§3-2, §4-1）。同期 await による slow-loris / ワーカー枯渇を回避。UI は enqueue 後に
+  `notes/show` を遅延再取得して差し替え（§4-6）。
+- **per-host スロットル**（Phase 1 §7-3）はワーカー側で消費。ユーザー単位 rate limit だけでは単一リモートに集中し得る。
+- **emojisCache のクラスタ無効化**（Phase 1 §7-1）が無いと、再取得しても UI に絵文字 URL が反映されない（最大 12h）。
+  これは Phase 2 の見た目の動作に直結する必須対策。
 
 ---
 

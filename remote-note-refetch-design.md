@@ -236,18 +236,31 @@ public async updateNoteIfStale(
     if (fresh) return note;                                   // TTL 内 → 何もせず現状ノートを返す（黙って返す）
   }
 
-  const unlock = await acquireApObjectLock(this.redisClient, note.uri); // 重複防止
+  const unlock = await acquireApObjectLock(this.redisClient, note.uri); // 分散ロック(Redis SET NX)・重複防止
   try {
-    // 連打防止: 試行前に先行更新（RemoteUserResolveService.ts:99-102 と同作法）
-    // refetchedCount は「実際にフェッチした回数」なのでここで +1
-    await this.notesRepository.increment({ id: note.id }, 'refetchedCount', 1);
-    await this.notesRepository.update(note.id, { lastFetchedAt: new Date() });
+    // double-checked locking: ロック取得待ちの間に別プロセスが更新済みかもしれないので DB を再読込して再判定
+    // （ロックは TTL チェックの後に取るため、これが無いとロック直列化で N 回実フェッチが出得る）
+    const current = await this.notesRepository.findOneBy({ id: note.id });
+    if (current == null) return null;
+    if (!opts?.force && current.lastFetchedAt != null
+      && Date.now() - current.lastFetchedAt.getTime() < NOTE_REFETCH_TTL) {
+      return current; // 直前に他プロセスが取得済み → 実フェッチしない
+    }
+
+    // 連打防止: 試行前に先行更新（RemoteUserResolveService.ts:99-102 と同作法）。
+    // lastFetchedAt と refetchedCount を 1 文の UPDATE に統合（ロック保持時間を縮める）。
+    await this.notesRepository.createQueryBuilder().update()
+      .set({ lastFetchedAt: () => 'now()', refetchedCount: () => '"refetchedCount" + 1' })
+      .where({ id: note.id }).execute();
 
     const resolver = opts?.resolver ?? await this.apResolverService.createResolver();
     const object = await resolver.resolve(note.uri);
     return await this.updateNote(note, object);              // 4-5
   } catch (e) {
-    // 取得失敗は握りつぶす（lastFetchedAt 先行更新済みなので連打しない）
+    // 失敗種別で分岐（§8-4 デッドゾーン対策）
+    //  - 恒久失敗(404/410/403): そのまま（必要なら削除追従。lastFetchedAt は進んだまま）
+    //  - 一時失敗(5xx/timeout/接続不能): lastFetchedAt を「短い再試行猶予」まで巻き戻す
+    //    （= now - (TTL - RETRY_BACKOFF) にして次回試行を RETRY_BACKOFF 後に許可。死活鯖への連打は防ぐ）
     this.logger.debug(`updateNoteIfStale failed: ${e}`);
     return note;
   } finally {
@@ -273,7 +286,7 @@ public async updateNoteIfStale(
 private async updateNote(exist: MiNote, object: IObject): Promise<MiNote> {
   // host は exist 側から取る（actor.host 相当）
   const host = this.utilityService.extractDbHost(exist.uri!);
-  // 絵文字を無条件 upsert
+  // 絵文字を無条件 upsert（extractEmojis 内で DB 更新 + 後述のクラスタ全体キャッシュ無効化を行う）
   await this.extractEmojis(object.tag ?? [], host, { force: true }).catch(e => {
     this.logger.debug(`updateNote extractEmojis failed: ${e}`);
     return [];
@@ -285,6 +298,10 @@ private async updateNote(exist: MiNote, object: IObject): Promise<MiNote> {
   return await this.notesRepository.findOneByOrFail({ id: exist.id });
 }
 ```
+
+> **重要（§7-1）**: `extractEmojis` の force update は DB の `emoji` 行を書き換えるだけでは UI に反映されない。
+> `CustomEmojiService.emojisCache`（プロセスローカル・12h）を**クラスタ全体で無効化**しない限り、最大 12h
+> 古い `publicUrl` が出続ける。これは本機能の主目的が達成されない致命的欠陥なので、§7-1 の対策を必須とする。
 
 補足:
 - 既存ノートの emoji 名リスト（`note.emojis`）に追従させたい場合は、ここで `note.emojis` 更新も検討（初版は任意）。
@@ -305,10 +322,10 @@ private async updateNote(exist: MiNote, object: IObject): Promise<MiNote> {
 
 | ケース | 初版の扱い |
 | --- | --- |
-| 410 Gone / Tombstone | 更新せず `lastFetchedAt` だけ進める（削除追従は将来検討） |
+| 410 Gone / 404 / 403（恒久失敗） | 更新せず `lastFetchedAt` は進めたまま（削除追従は将来検討）。次回は通常 TTL 後 |
+| 5xx / timeout / 接続不能（一時失敗） | `lastFetchedAt` を `now - (TTL - RETRY_BACKOFF)` に巻き戻し、`RETRY_BACKOFF`(例 10分) 後に再試行可（デッドゾーン回避、§7-4） |
 | フェデレーション禁止 / ブロック鯖 | `isFederationAllowedUri` で早期 return |
 | ローカルノート (`uri == null`) | 対象外（早期 return） |
-| 取得失敗（タイムアウト等） | catch して握りつぶし。先行更新済みで連打しない |
 
 ---
 
@@ -325,10 +342,78 @@ private async updateNote(exist: MiNote, object: IObject): Promise<MiNote> {
 
 ---
 
-## 6. 実装順序（推奨）
+## 7. 敵対的レビュー反映（負荷・連合・整合性の対策）
 
-1. `Note.ts` に `lastFetchedAt` 追加 → migration 生成（`create-migration`）→ `check-migrations`。
-2. `extractEmojis` に `force` 追加（既存挙動不変を確認）。
-3. `updateNote` / `updateNoteIfStale` 実装（トリガー未配線）。
-4. typecheck / lint / federation test。
-5. （将来）UI 更新ボタン用エンドポイント + misskey-js 再生成 + CHANGELOG。
+AP 連合ネットワーク負荷 / 自サーバー負荷の観点で敵対的レビューを実施し、実コードで裏取りした結果の対策。
+**7-1 / 7-2 / 7-3 は実装前に必ず潰すブロッカー。**
+
+### 7-1. 【Critical】emojisCache のクラスタ全体無効化（これが無いと機能が動かない）
+
+- 事実: `populateEmoji`（`CustomEmojiService.ts:389`）は `emojisCache`（`MemoryKVCache`, 12h, **プロセスローカルな Map**）に
+  `(name, host)` → `publicUrl` をキャッシュ。`extractEmojis` の update は **このキャッシュを一切無効化しない**
+  （`emojisCache.delete` は `cache.ts:241` に存在するが呼ばれていない。`localEmojisCache.refresh()` はローカル絵文字専用）。
+- 影響: 再フェッチで DB の `publicUrl` を更新しても、populate は最大 12h 古い URL を返し続け、
+  マルチワーカーでは更新を行っていないワーカーは**永遠に古いまま**。= 「ボタンを押しても変わらない」。
+- 対策（必須）:
+  1. `GlobalEventService` の `InternalEventTypes`（`GlobalEventService.ts:226`）に
+     `remoteEmojiUpdated: { name: string; host: string; }` を追加。
+  2. `extractEmojis` が force でリモート絵文字行を update した後、`publishInternalEvent('remoteEmojiUpdated', { name, host })` を発行。
+  3. `CustomEmojiService` が `redisForSub` の `message` を購読し（先例: `CacheService.ts:120` が同手法で
+     MemoryKVCache をクラスタ無効化している）、受信時に `this.emojisCache.delete(`${name} ${host}`)` を実行。
+- これにより全ワーカーのプロセスローカルキャッシュが無効化され、次回 populate で新 URL が反映される。
+
+### 7-2. 【High】再フェッチをジョブキューに逃がす（同期 await をやめる）
+
+- 矛盾: Phase 1 原則「再フェッチはバックグラウンド前提（同期フェッチ禁止）」に対し、Phase 2 のエンドポイントは
+  リクエスト内で `updateNoteIfStale` を **同期 await** していた。
+- 負荷: リモート fetch timeout 5s + 分散ロック取得待機 **最大 5s**（`acquireApObjectLock` = retry 50×100ms, `distributed-lock.ts`）
+  + HTML alternate 追加 GET ⇒ **最悪 10s 超、1 リクエストでコネクション/Promise を専有**。遅いリモート指定で連打されると
+  API ワーカー枯渇（slow-loris 類似）。
+- 対策（推奨）: `notes/refetch` は TTL 切れ時に **ジョブをキューに enqueue して即座に現状ノートを pack して返す**。
+  UI は次回 `notes/show`（または streaming）で更新を拾う。詳細・UX 反映は Phase 2 側で扱う（Phase 2 §3-2 参照）。
+
+### 7-3. 【High】リモートホスト単位のフェッチ・スロットル
+
+- 事実: rate limit（`ApiCallService.ts:318`）は **ユーザー単位（`user.id`）**。リモートホスト単位の保護は無い。
+  TTL ガードは**ノート単位**なので、別ノートを 30 個ずつ叩けば `30 × U req/h` が単一リモートに集中
+  （U=1,000 で約 8.3 req/s 恒常、sockpuppet で青天井）。
+- 対策（推奨）: ユーザー単位 rate limit に加え、**per-host のフェッチ予算**（トークンバケット or host 単位 TTL）を導入。
+  実フェッチ直前（`updateNoteIfStale` のロック内）でホスト予算を消費し、枯渇時は skip（現状ノートを返す）。
+
+### 7-4. 【Medium】失敗種別の区別とデッドゾーン回避
+
+- 問題: 先行 `lastFetchedAt` 更新 + 失敗の握りつぶしで、一時障害でも「4h に 1 回しか試行できず毎回失敗 → 永遠に更新されない」。
+- 対策: catch で **一時失敗（5xx/timeout/接続不能）** と **恒久失敗（404/410/403）** を区別。
+  一時失敗時は `lastFetchedAt` を `now - (TTL - RETRY_BACKOFF)`（例 `RETRY_BACKOFF=10分`）に巻き戻し、短い猶予で再試行可に。
+  恒久失敗時のみ通常 TTL を進める（§4-7 表に反映済み）。
+
+### 7-5. 【Medium】TTL=4h の再評価
+
+- ユーザー版 24h の **6 倍**。さらに本機能はユーザーがボタンで能動トリガー可能。連合負荷の定量根拠を添えて再評価する。
+- 選択肢: ベース 24h・ボタン経由のみ短縮 / per-host スロットル（7-3）前提で 4h 維持。`refetchedCount` 表示は
+  心理的抑止にとどまり技術的制約にはならない点に留意。
+
+### 7-6. 【Medium】resolver の制限を明文化
+
+- `signedGet` 経由は `size: 10MB`・`timeout: 5s`・HTML alternate link 追跡で**追加 GET 1 回**が発生し得る
+  （AP の `getJson` は 256KB だが本経路は send デフォルトの 10MB）。遅延・サイズ攻撃の面がある。
+- 対策: 設計書に制限を明記し、必要なら本経路専用に size 上限を 256KB へ絞る。
+
+### 7-7. 【Low】その他
+
+- **double-checked locking**: ロック取得後に `lastFetchedAt` を再 SELECT して二重フェッチを排除（§4-4 に反映済み）。
+- **2 UPDATE 文の統合**: `lastFetchedAt` 更新 + `refetchedCount` increment を 1 文に統合（§4-4 に反映済み）。
+- **`note.emojis` 名リスト追従**: 絵文字が**追加/改名**された場合、`note.emojis`（名前配列）が古いと新絵文字が pack されない。
+  主目的（URL 差し替え）なら許容だが、追加/改名まで反映するなら `updateNote` で `note.emojis` も更新する（初版は任意・§4-5 補足）。
+- **署名 GET の actor**: instance actor の鍵で取得＝リモートのアクセスログにタイミング相関が残る（既存の初回取得と同主体なので新規リスクは小）。
+
+---
+
+## 8. 実装順序（推奨）
+
+1. `Note.ts` に `lastFetchedAt` / `refetchedCount` 追加 → migration 生成（`create-migration`）→ `check-migrations`。
+2. `extractEmojis` に `force` 追加（既存挙動不変を確認）+ **§7-1 のキャッシュ無効化（InternalEvent 発行 + 購読）**。
+3. `updateNote` / `updateNoteIfStale` 実装（double-checked locking・1 文 UPDATE・失敗種別分岐込み、トリガー未配線）。
+4. **§7-3 per-host スロットル**を実フェッチ経路に組み込み。
+5. typecheck / lint / federation test（「再フェッチで絵文字 URL が更新され、キャッシュ無効化で populate に反映される」ケース）。
+6. （Phase 2）`notes/refetch` を **キュー化（§7-2）**して追加 + misskey-js 再生成 + CHANGELOG。
