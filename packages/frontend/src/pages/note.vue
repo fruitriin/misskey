@@ -18,7 +18,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkButton rounded :class="$style.loadButton" @click="showNext = 'user'"><i class="ti ti-chevron-up"></i> <i class="ti ti-user"></i></MkButton>
 					</div>
 					<div class="_margin _gaps_s">
-						<MkRemoteCaution v-if="note.user.host != null" :href="note.url ?? note.uri"/>
+						<MkRemoteCaution v-if="note.user.host != null" :href="note.url ?? note.uri" :refetchable="true" :nextRefetchAt="nextRefetchAt" :refetchedCount="note.refetchedCount" @refetch="refetchNote"/>
 						<MkNoteDetailed :key="note.id" v-model:note="note" :initialTab="initialTab" :class="$style.note"/>
 					</div>
 					<div v-if="clips && clips.length > 0" class="_margin">
@@ -53,6 +53,7 @@ import MkNotesTimeline from '@/components/MkNotesTimeline.vue';
 import MkRemoteCaution from '@/components/MkRemoteCaution.vue';
 import MkButton from '@/components/MkButton.vue';
 import { misskeyApi } from '@/utility/misskey-api.js';
+import * as os from '@/os.js';
 import { definePage } from '@/page.js';
 import { i18n } from '@/i18n.js';
 import { dateString } from '@/filters/date.js';
@@ -148,6 +149,26 @@ function fetchNote() {
 		}
 		error.value = err;
 	});
+}
+
+// リモートノートの再取得が次に可能になる時刻 (ms)。null は即時可能を意味する。
+const NOTE_REFETCH_TTL = 1000 * 60 * 60 * 4; // 4h (backend の NOTE_REFETCH_TTL と一致させる)
+const nextRefetchAt = computed<number | null>(() => {
+	const t = note.value?.lastFetchedAt;
+	return t ? new Date(t).getTime() + NOTE_REFETCH_TTL : null;
+});
+
+async function refetchNote() {
+	if (note.value == null) return;
+	const id = note.value.id;
+	// notes/refetch は enqueue して即座に現状ノートを返す (バックグラウンド再取得)。
+	await misskeyApi('notes/refetch', { noteId: id });
+	os.toast(i18n.ts.refetchQueued);
+	// ワーカーの完了を少し待ってから notes/show を取り直して差し替える。
+	window.setTimeout(async () => {
+		const res = await misskeyApi('notes/show', { noteId: id }).catch(() => null);
+		if (res != null && note.value?.id === id) note.value = res;
+	}, 2500);
 }
 
 watch(() => props.noteId, fetchNote, {

@@ -113,6 +113,10 @@ export type PostScheduledNoteJobData = {
 	noteDraftId: string;
 };
 
+export type RefetchNoteJobData = {
+	noteId: MiNote['id'];
+};
+
 export type SystemWebhookDeliverJobData<T extends SystemWebhookEventType = SystemWebhookEventType> = {
 	type: T;
 	content: SystemWebhookPayload<T>;
