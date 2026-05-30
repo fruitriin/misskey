@@ -29,6 +29,19 @@ Phase 1（[remote-note-refetch-design.md](./remote-note-refetch-design.md)）で
    **`MkRemoteCaution` はリモートユーザー注意にも使われる汎用部品**なので、ノート固有ロジックを埋め込まず、
    「再取得導線は任意 props + emit」で外から注入し、API 呼び出し・ノート差し替えは `note.vue` 側に置く。
 3. 取得後は `note.vue` の `note` ref を差し替えるだけで `MkNoteDetailed` に伝播する（既存の双方向バインド）。
+4. **クールダウンはサーバで弾かず黙って現状ノートを返す**（決定）。FE 側で押下不可にするのが一次防御。
+   他人が直前に再取得済みでも、`notes/refetch` は**常に最新 DB 状態を pack して返す**ので、
+   **FE↔BE のリフレッシュ（=自分の画面の更新）はクールダウン中でも必ず行われる**。
+   = 「自分が押した時、実フェッチは走らなくても最新状態には追いつく」。
+
+### 決定事項（このフェーズで確定）
+
+| 項目 | 決定 |
+| --- | --- |
+| TTL | **4 時間**（Phase 1 で確定）。`refetchedCount` を併せて表示 |
+| クールダウン | サーバはエラーにせず黙って現状ノートを返す。FE で押下不可にする |
+| エンドポイント kind | **`write:notes`**。他人（リモートユーザー）のリソース更新だが、リモート由来なので許容 |
+| 「N 時間後」表記 | 時間で丸める。**MkTime 相当（非リアルタイム＝秒で再描画しない）** |
 
 ### スコープ
 
@@ -132,13 +145,13 @@ Phase 1（[remote-note-refetch-design.md](./remote-note-refetch-design.md)）で
 export const meta = {
   tags: ['notes'],
   requireCredential: true,
-  kind: 'write:notes', // 【決定】write:notes / read:account のどちらか（DB を更新するため write 系を推奨）
+  kind: 'write:notes', // 決定: DB を更新するため write 系。他人(リモート)のノート更新だがリモート由来なので許容
   limit: { duration: ms('1hour'), max: 30 }, // TTL と二重防御
   res: { type: 'object', optional: false, nullable: false, ref: 'Note' },
   errors: {
     noSuchNote:  { message: 'No such note.',  code: 'NO_SUCH_NOTE',  id: '<uuidgen>' },
     isLocalNote: { message: 'Cannot refetch a local note.', code: 'IS_LOCAL_NOTE', id: '<uuidgen>' },
-    cooldown:    { message: 'Refetch is on cooldown.', code: 'COOLDOWN', id: '<uuidgen>' },
+    // 決定: クールダウンはエラーにしない（黙って現状ノートを返す）→ COOLDOWN エラーは設けない
   },
 } as const;
 
@@ -152,39 +165,35 @@ export const paramDef = {
 const note = await this.getterService.getNote(ps.noteId).catch(/* → noSuchNote */);
 if (note.uri == null) throw new ApiError(meta.errors.isLocalNote);
 
+// TTL 切れなら実フェッチ＆更新、TTL 中なら何もせず現状ノートを返す（どちらも下で pack）。
+// → クールダウン中でも「最新 DB 状態を返す」= FE↔BE リフレッシュは常に成立。
 const updated = await this.apNoteService.updateNoteIfStale(note, { force: false });
-// TTL 中は updateNoteIfStale が現状ノートをそのまま返す設計。
-// クールダウンを区別したい場合は updateNoteIfStale が「更新したか」を返すよう拡張し、
-// 未更新なら throw new ApiError(meta.errors.cooldown); （§4-2 参照）
 return await this.noteEntityService.pack(updated ?? note, me, { detail: true });
 ```
 
 - `id`（UUID）は `node -e "console.log(crypto.randomUUID())"` 等で採番。
 - DI: `GetterService` / `ApNoteService` / `NoteEntityService`。
+- クールダウン判定をサーバに持たせないので `updateNoteIfStale` の戻り値拡張は**不要**（§4-2 は採用しない）。
 
-### 4-2. 【改修/決定】`packages/backend/src/core/activitypub/models/ApNoteService.ts`
+### 4-2. （不採用）`updateNoteIfStale` の戻り値拡張
 
-Phase 1 の `updateNoteIfStale` の**戻り値でクールダウンを区別**できると `notes/refetch` が `COOLDOWN` を返せる。
-最小実装なら戻り値そのままでも可（その場合エンドポイントはクールダウンを区別せず常に現状ノートを返す）。
-
-```ts
-// 案: TTL 内で何もしなかったことを呼び出し側へ伝える
-// return 値を { note, refetched: boolean } にする / もしくは TTL 内なら null を返す等。
-```
-
-→ 【決定】クールダウンを `COOLDOWN` エラーにするか、黙って現状ノートを返すか。UI は事前に出し分けるので
-**最小実装（黙って返す）でも要件は満たせる**。サーバ厳格化したいなら区別する。
+当初検討していた「TTL 中かどうかを呼び出し側へ伝える」拡張は、**クールダウンをサーバでエラーにしない**
+決定により**不要**。`updateNoteIfStale` は Phase 1 のまま（現状ノート or 更新後ノートを返す）でよい。
+クールダウン中の抑止は FE の押下不可表示に任せる。
 
 ### 4-3. 【改修】`packages/backend/src/server/api/endpoint-list.ts`
 
 `notes/refetch` を手動登録（`add-api-endpoint` skill 準拠）。
 
-### 4-4. 【改修】ノート pack に `lastFetchedAt` を公開
+### 4-4. 【改修】ノート pack に `lastFetchedAt` / `refetchedCount` を公開
 
-- `packages/backend/src/models/json-schema/note.ts` … `lastFetchedAt`（string, nullable, optional）を schema 追加。
+- `packages/backend/src/models/json-schema/note.ts` … `lastFetchedAt`（string, nullable, optional）と
+  `refetchedCount`（number, optional）を schema 追加。
 - `packages/backend/src/core/entities/NoteEntityService.ts` … `pack` の戻りに
-  `lastFetchedAt: note.lastFetchedAt?.toISOString() ?? null` を追加（リモートノートのみ非 null）。
-- これにより misskey-js の `Note` 型に `lastFetchedAt` が乗る（再生成で反映）。
+  `lastFetchedAt: note.lastFetchedAt?.toISOString() ?? null` と `refetchedCount: note.refetchedCount` を追加
+  （`lastFetchedAt` はリモートノートのみ非 null）。
+- これにより misskey-js の `Note` 型に両フィールドが乗る（再生成で反映）。
+- UI は `lastFetchedAt`+TTL で出し分け、`refetchedCount` を「これまで N 回再取得」として表示する。
 
 ### 4-5. 【改修】`packages/frontend/src/components/MkRemoteCaution.vue`
 
@@ -196,8 +205,12 @@ props 追加と emit、テンプレートに再取得導線を追加。汎用性
   <i class="ti ti-alert-triangle" style="margin-right: 8px;"></i>{{ i18n.ts.remoteUserCaution }}
   <a v-if="href" :class="$style.link" :href="href" rel="nofollow noopener" target="_blank">{{ i18n.ts.showOnRemote }}</a>
   <template v-if="refetchable">
+    <!-- TTL 切れ: リンク「または再取得」 -->
     <a v-if="canRefetchNow" :class="$style.link" href="#" @click.prevent="emit('refetch')">{{ i18n.ts.orRefetch }}</a>
-    <span v-else :class="$style.cooldown">{{ i18n.tsx.refetchAvailableIn({ n: remainingHours }) }}</span>
+    <!-- TTL 中: 静的テキスト「再取得は N 時間後に利用できます」（MkTime 相当・非リアルタイム） -->
+    <span v-else :class="$style.cooldown">{{ i18n.tsx.refetchAvailableIn({ time: i18n.tsx._timeIn.hours({ n: remainingHours }) }) }}</span>
+    <!-- これまでの再取得回数 -->
+    <span v-if="refetchedCount" :class="$style.count">{{ i18n.tsx.refetchedNTimes({ n: refetchedCount }) }}</span>
   </template>
 </div>
 </template>
@@ -210,15 +223,19 @@ const props = defineProps<{
   href?: string;
   refetchable?: boolean;
   nextRefetchAt?: number | null; // ms。null/過去なら即再取得可
+  refetchedCount?: number;       // これまでの実フェッチ回数
 }>();
 const emit = defineEmits<{ (ev: 'refetch'): void }>();
 
 const canRefetchNow = computed(() => props.nextRefetchAt == null || Date.now() >= props.nextRefetchAt);
-const remainingHours = computed(() => Math.max(1, Math.ceil(((props.nextRefetchAt ?? 0) - Date.now()) / 3600000)));
+// MkTime と同じく時間で丸める（Math.round）。computed だが ticking now を参照しないので非リアルタイム＝静的。
+const remainingHours = computed(() => Math.max(1, Math.round(((props.nextRefetchAt ?? 0) - Date.now()) / 3600000)));
 </script>
 ```
 
-（SPDX は HTML コメント形式の既存ヘッダーを踏襲。`$style.cooldown` のスタイルは `$style.link` に倣って追加。）
+ポイント:
+- 「N 時間後」は既存 `_timeIn.hours: "{n}時間後"`（`locales/ja-JP.yml:2442`）を再利用。**MkTime コンポーネント自体は未来時刻を「未来」としか出さない**ため使わず、時間丸め（`Math.round`）の静的表示で代替（= ユーザー要望「MkTime のリアルタイムなし」）。
+- SPDX は HTML コメント形式の既存ヘッダーを踏襲。`$style.cooldown` / `$style.count` は `$style.link` に倣って追加。
 
 ### 4-6. 【改修】`packages/frontend/src/pages/note.vue`
 
@@ -230,13 +247,14 @@ const remainingHours = computed(() => Math.max(1, Math.ceil(((props.nextRefetchA
   :href="note.url ?? note.uri"
   :refetchable="true"
   :nextRefetchAt="nextRefetchAt"
+  :refetchedCount="note.refetchedCount"
   @refetch="refetchNote"
 />
 ```
 
 ```ts
-// TTL は meta 公開値（§3-1）。例として instance から取得 or 定数。
-const REFETCH_TTL = /* instance.meta の値 or 24h */;
+// TTL = 4h（Phase 1 の NOTE_REFETCH_TTL と同値）。meta 公開値があればそれを使う（§3-1）。
+const REFETCH_TTL = 1000 * 60 * 60 * 4;
 const nextRefetchAt = computed(() => {
   const t = note.value?.lastFetchedAt; // pack で追加（§4-4）
   return t ? new Date(t).getTime() + REFETCH_TTL : null; // null=即可
@@ -254,11 +272,14 @@ async function refetchNote() {
 
 ```yaml
 orRefetch: "または再取得"
-refetchAvailableIn: "再取得は{n}時間後に利用できます"
+refetchAvailableIn: "再取得は{time}に利用できます"   # {time} には _timeIn.hours の結果（例「4時間後」）が入る
+refetchedNTimes: "これまで{n}回再取得"
 refetched: "再取得しました"
 ```
 
-- パラメータ付き `refetchAvailableIn` は `i18n.tsx.refetchAvailableIn({ n })` で参照。
+- `refetchAvailableIn` は `i18n.tsx.refetchAvailableIn({ time: i18n.tsx._timeIn.hours({ n }) })` で参照
+  （「N 時間後」部分は既存 `_timeIn.hours`（`ja-JP.yml:2442`）を再利用）。
+- `refetchedNTimes` は `i18n.tsx.refetchedNTimes({ n })` で参照。
 - 他言語 yml は触らない（Crowdin 管轄）。`packages/i18n` の型は自動再生成。
 - 追加は `add-i18n-key` skill 準拠。
 
@@ -283,12 +304,15 @@ refetched: "再取得しました"
 
 ---
 
-## 6. 要決定事項（Phase 2）
+## 6. 決定事項（Phase 2・確定）
 
-1. **TTL 値の配布**: instance meta 公開（推奨）/ フロント定数ハードコード。
-2. **クールダウンの扱い**: `COOLDOWN` エラーで厳格化 / 黙って現状ノートを返す（最小）。
-3. **エンドポイント kind**: `write:notes`（推奨, DB 更新あり）/ `read:account`。
-4. **「N 時間後」表記の粒度**: 時間単位（`ceil`）で十分か、分単位まで出すか。
+1. **TTL**: 4 時間（Phase 1 確定）。`refetchedCount` を併記。
+2. **クールダウン**: サーバはエラーにせず黙って現状ノートを返す。FE で押下不可にする。`COOLDOWN` エラーは設けない。
+3. **エンドポイント kind**: `write:notes`（DB 更新あり。他人=リモートユーザーのリソースだが許容）。
+4. **「N 時間後」表記**: 時間で丸める（`Math.round`）。MkTime 相当の非リアルタイム静的表示。`_timeIn.hours` 再利用。
+
+残る軽微な選択:
+- **TTL 値の配布**: フロント定数（4h ハードコード, 最小）/ instance meta 公開（将来 TTL 可変対応）。初版は定数でよい。
 
 ---
 

@@ -36,6 +36,8 @@
   条件判定を省いて常に上書きしてよい）。
 - 将来 UI に「更新ボタン」を置く場合も、同じコアを `force:false` で呼ぶだけ
   （TTL 内なら無視 / TTL 外なら再フェッチ、が自然に満たされる）。
+- **TTL = 4 時間**（決定）。短めにして即応性を確保しつつ、**再取得回数 `refetchedCount` を表示**して
+  無駄押しを抑止・透明化する。24h 単純版へ倒す場合は定数 1 行の変更 + `refetchedCount` 不使用で済む。
 
 ---
 
@@ -135,12 +137,46 @@ if (user.lastFetchedAt == null || Date.now() - user.lastFetchedAt.getTime() > 10
 ### 4-1. 【改修】`src/models/Note.ts` — 最終取得時刻カラム追加
 
 `MiUser.lastFetchedAt`（`User.ts:26`）と対称に、`MiNote` へ追加する。
+あわせて再取得回数カウンタも追加する。
 
 ```ts
 // 既存カラム群に追記（例: uri 付近）
 @Column('timestamp with time zone', { nullable: true })
 public lastFetchedAt: Date | null;
+
+// 実際にリモート再フェッチが走った回数（クールダウンで skip した分は数えない）
+// 既存の denormalize カウンタ (renoteCount/repliesCount/clippedCount/pageCount) と同じ smallint default 0
+@Column('smallint', { default: 0 })
+public refetchedCount: number;
 ```
+
+#### fetch 回数をどこに・どう保存するか（保存方針）
+
+**結論: `note` テーブルに `refetchedCount smallint NOT NULL DEFAULT 0` カラムを 1 本足す。**
+
+根拠（= これが idiomatic である理由）:
+
+- `note` テーブルには既に **denormalize された smallint カウンタが複数存在する**:
+  `renoteCount` / `repliesCount` / `clippedCount` / `pageCount`（`Note.ts:102-122`、すべて `smallint default 0`）。
+  `refetchedCount` はこれらと完全に同列の「そのノートに紐づくカウンタ」であり、**既存パターンに従うだけ**。
+- 値はノート 1 件に 1 個・上限も小さい（再取得回数が smallint 上限 32767 を超えることは非現実的）。
+  → 別テーブルに切り出す必然性がなく、JOIN も増やさない。pack でそのまま返せる。
+- 更新は TypeORM の **`repository.increment({ id }, 'refetchedCount', 1)`** で
+  アトミックな `UPDATE ... SET refetchedCount = refetchedCount + 1`。競合に強い。
+- migration コスト: PostgreSQL 11+ では **定数デフォルト (`DEFAULT 0`) のカラム追加は metadata-only で即時**
+  （全行書き換えが走らない）。巨大な `note` テーブルでも実用上問題にならない。
+
+代替案と不採用理由:
+
+| 案 | 内容 | 評価 |
+| --- | --- | --- |
+| **A: note にカラム追加**（採用） | `refetchedCount smallint` | 既存カウンタと同型・同パターン。最小で一貫 |
+| B: 別テーブル | `note_refetch_stat(noteId, count)` 等 | リモートノートのみ行を持てるが、JOIN/エンティティが増える。1 整数のために過剰 |
+| C: Redis カウンタ | ephemeral な INCR | 永続しない＝再起動/expire で消える。「これまで N 回」を恒久表示したいので不適 |
+| D: 保存しない（lastFetchedAt のみ） | 回数は出さない | TTL=24h 単純版に倒す場合の選択肢。4h+回数表示の方針では不採用 |
+
+> 補足: もし「`note` 本体にこれ以上カラムを増やしたくない」という運用判断が優先されるなら B も成立する。
+> ただし本機能のために専用テーブル＋リポジトリ＋pack の JOIN を新設するのは割に合わないため、初版は A を推す。
 
 ### 4-2. 【新規】migration — `lastFetchedAt` 追加
 
@@ -148,8 +184,10 @@ public lastFetchedAt: Date | null;
 
 - `node -e "console.log(Date.now())"` で UNIX ms を採番、ファイル名に使用。
 - クラス名は `AddNoteLastFetchedAt{13桁ms}`、SPDX ヘッダー付与。
-- `up`: `ALTER TABLE "note" ADD "lastFetchedAt" TIMESTAMP WITH TIME ZONE`
-- `down`: `ALTER TABLE "note" DROP COLUMN "lastFetchedAt"`
+- `up`: `ALTER TABLE "note" ADD "lastFetchedAt" TIMESTAMP WITH TIME ZONE` /
+  `ALTER TABLE "note" ADD "refetchedCount" smallint NOT NULL DEFAULT 0`
+  （定数デフォルトなので PG11+ では metadata-only / 即時）
+- `down`: 上記 2 カラムの `DROP COLUMN`
 - 生成は `create-migration` skill 推奨。`pnpm --filter backend check-migrations` を通す。
 
 ### 4-3. 【改修】`src/core/activitypub/models/ApNoteService.ts` — `extractEmojis` に force
@@ -183,7 +221,7 @@ TTL ガード付き再フェッチ本体。**トリガー非依存**。
 
 ```ts
 // 定数（ファイル先頭 or config）
-const NOTE_REFETCH_TTL = 1000 * 60 * 60 * 24; // 24h（ユーザー版に合わせる）
+const NOTE_REFETCH_TTL = 1000 * 60 * 60 * 4; // 4h（決定）。24h 版にする場合はここだけ変更
 
 @bindThis
 public async updateNoteIfStale(
@@ -197,12 +235,14 @@ public async updateNoteIfStale(
   if (!opts?.force) {
     const fresh = note.lastFetchedAt != null
       && Date.now() - note.lastFetchedAt.getTime() < NOTE_REFETCH_TTL;
-    if (fresh) return note;                                   // TTL 内 → 無視
+    if (fresh) return note;                                   // TTL 内 → 何もせず現状ノートを返す（黙って返す）
   }
 
   const unlock = await acquireApObjectLock(this.redisClient, note.uri); // 重複防止
   try {
     // 連打防止: 試行前に先行更新（RemoteUserResolveService.ts:99-102 と同作法）
+    // refetchedCount は「実際にフェッチした回数」なのでここで +1
+    await this.notesRepository.increment({ id: note.id }, 'refetchedCount', 1);
     await this.notesRepository.update(note.id, { lastFetchedAt: new Date() });
 
     const resolver = opts?.resolver ?? await this.apResolverService.createResolver();
@@ -217,6 +257,10 @@ public async updateNoteIfStale(
   }
 }
 ```
+
+> 注: `refetchedCount` の +1 を「先行更新」段で行うと取得失敗時もカウントされる。厳密に成功回数だけ
+> 数えたい場合は `updateNote` 成功後に +1 する。初版は「試行回数 ≒ 実フェッチ回数」で先行 +1 とする
+> （TTL でガードされ多重カウントは起きないため）。
 
 依存 import の確認（既存利用箇所あり）:
 - `acquireApObjectLock` … `resolveNote`（`ApNoteService.ts:362`）で既に使用。
