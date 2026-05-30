@@ -22,6 +22,7 @@ import { PollService } from '@/core/PollService.js';
 import { StatusError } from '@/misc/status-error.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { CustomEmojiService } from '@/core/CustomEmojiService.js';
+import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { bindThis } from '@/decorators.js';
 import { checkHttps } from '@/misc/check-https.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
@@ -87,6 +88,7 @@ export class ApNoteService {
 		private noteCreateService: NoteCreateService,
 		private apDbResolverService: ApDbResolverService,
 		private customEmojiService: CustomEmojiService,
+		private globalEventService: GlobalEventService,
 		private apLoggerService: ApLoggerService,
 	) {
 		this.logger = this.apLoggerService.logger;
@@ -442,14 +444,17 @@ export class ApNoteService {
 				return current;
 			}
 
-			// 連打防止: 試行前に lastFetchedAt / refetchedCount を 1 文の UPDATE で先行更新する。
-			await this.notesRepository.createQueryBuilder().update()
-				.set({ lastFetchedAt: () => 'now()', refetchedCount: () => '"refetchedCount" + 1' })
-				.where({ id: note.id }).execute();
+			// 連打防止: 試行前に lastFetchedAt のみ先行更新する (refetchedCount は再フェッチ成功時に加算)。
+			await this.notesRepository.update({ id: note.id }, { lastFetchedAt: new Date() });
 
 			const resolver = opts?.resolver ?? await this.apResolverService.createResolver();
 			const object = await resolver.resolve(note.uri);
-			return await this.updateNote(note, object);
+			// resolve 成功 = 再フェッチ成功とみなして refetchedCount を加算する。
+			await this.notesRepository.increment({ id: note.id }, 'refetchedCount', 1);
+			const updated = await this.updateNote(note, object);
+			// 購読中クライアントへ通知。クライアントは 'updated' を受けて notes/show を取り直す (§7-2 streaming 化)。
+			this.globalEventService.publishNoteStream(updated, 'updated', { cw: updated.cw, text: updated.text ?? '' });
+			return updated;
 		} catch (e) {
 			// 失敗種別を区別する (§7-4)。恒久失敗 (403/404/410) はそのまま、一時失敗は次回の試行を早める。
 			const permanent = e instanceof StatusError

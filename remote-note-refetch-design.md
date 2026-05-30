@@ -4,7 +4,7 @@
 **ノートを主キーとした TTL 付き遅延再フェッチ**で解消する。
 
 - 対象: `packages/backend`（ActivityPub 取り込み + DB 保存）
-- ステータス: 設計（未実装）
+- ステータス: 実装済み（PR #35）
 - ブランチ: `claude/remote-emoji-refetch-2nbU9`
 
 ---
@@ -144,7 +144,7 @@ if (user.lastFetchedAt == null || Date.now() - user.lastFetchedAt.getTime() > 10
 @Column('timestamp with time zone', { nullable: true })
 public lastFetchedAt: Date | null;
 
-// 実際にリモート再フェッチが走った回数（クールダウンで skip した分は数えない）
+// リモート再フェッチに成功した回数（試行のみ・失敗・クールダウン skip は数えない）
 // 既存の denormalize カウンタ (renoteCount/repliesCount/clippedCount/pageCount) と同じ smallint default 0
 @Column('smallint', { default: 0 })
 public refetchedCount: number;
@@ -247,17 +247,19 @@ public async updateNoteIfStale(
       return current; // 直前に他プロセスが取得済み → 実フェッチしない
     }
 
-    // 連打防止: 試行前に先行更新（RemoteUserResolveService.ts:99-102 と同作法）。
-    // lastFetchedAt と refetchedCount を 1 文の UPDATE に統合（ロック保持時間を縮める）。
-    await this.notesRepository.createQueryBuilder().update()
-      .set({ lastFetchedAt: () => 'now()', refetchedCount: () => '"refetchedCount" + 1' })
-      .where({ id: note.id }).execute();
+    // 連打防止: 試行前に lastFetchedAt のみ先行更新（RemoteUserResolveService.ts:99-102 と同作法）。
+    // refetchedCount は「再フェッチ成功時のみ」加算するため、ここでは触らない（PR #35 レビュー反映）。
+    await this.notesRepository.update({ id: note.id }, { lastFetchedAt: new Date() });
 
     const resolver = opts?.resolver ?? await this.apResolverService.createResolver();
-    const object = await resolver.resolve(note.uri);
-    return await this.updateNote(note, object);              // 4-5
+    const object = await resolver.resolve(note.uri);          // resolve 成功 = 再フェッチ成功
+    await this.notesRepository.increment({ id: note.id }, 'refetchedCount', 1);
+    const updated = await this.updateNote(note, object);      // 4-5
+    // 購読中クライアントへ通知。クライアントは 'updated' を受けて notes/show を取り直す（§7-2 streaming 化）。
+    this.globalEventService.publishNoteStream(note.id, 'updated', { cw: updated.cw, text: updated.text });
+    return updated;
   } catch (e) {
-    // 失敗種別で分岐（§8-4 デッドゾーン対策）
+    // 失敗種別で分岐（§7-4 デッドゾーン対策）。resolve が throw した場合 refetchedCount は加算されない。
     //  - 恒久失敗(404/410/403): そのまま（必要なら削除追従。lastFetchedAt は進んだまま）
     //  - 一時失敗(5xx/timeout/接続不能): lastFetchedAt を「短い再試行猶予」まで巻き戻す
     //    （= now - (TTL - RETRY_BACKOFF) にして次回試行を RETRY_BACKOFF 後に許可。死活鯖への連打は防ぐ）
@@ -269,9 +271,10 @@ public async updateNoteIfStale(
 }
 ```
 
-> 注: `refetchedCount` の +1 を「先行更新」段で行うと取得失敗時もカウントされる。厳密に成功回数だけ
-> 数えたい場合は `updateNote` 成功後に +1 する。初版は「試行回数 ≒ 実フェッチ回数」で先行 +1 とする
-> （TTL でガードされ多重カウントは起きないため）。
+> 注（PR #35 レビュー反映）: `refetchedCount` は **再フェッチ成功時のみ** 加算する（`resolver.resolve` 成功後に
+> `increment`）。失敗時は加算されないため、`refetchedCount` は「成功した再フェッチ回数」を正しく表す。
+> `lastFetchedAt` は連打防止のため試行前に先行更新する（成功・失敗を問わず進める。一時失敗時のみ catch で巻き戻す）。
+> このため先行更新と count 加算は別 UPDATE に分かれる（旧版の 1 文統合は廃止）。
 
 依存 import の確認（既存利用箇所あり）:
 - `acquireApObjectLock` … `resolveNote`（`ApNoteService.ts:362`）で既に使用。
@@ -336,9 +339,24 @@ private async updateNote(exist: MiNote, object: IObject): Promise<MiNote> {
 - 検証:
   - `pnpm --filter backend check-migrations`（migration 整合）
   - `pnpm --filter backend typecheck` / `pnpm lint`
-  - federation test（`packages/backend/test-federation/test/emoji.test.ts` 周辺）に
-    「再フェッチで絵文字 URL が更新される」ケースを追加検討。
 - API を追加する場合（4-6）は `pnpm build-misskey-js-with-types` で misskey-js 再生成 + CHANGELOG 追記。
+
+## 6. テスト方針（PR #35 レビュー反映）
+
+AP の実フェッチは **モック**（`resolver.resolve` をスタブ）。federation test（実 2 インスタンス）は難度・不安定さが高いため初版では行わない。
+
+- **unit**（`packages/backend/test/unit/`）— `ApNoteService.updateNoteIfStale` を中心に:
+  - TTL ガード: `lastFetchedAt` が TTL(4h) 内のノートを force なしで渡すと resolver が呼ばれず現状ノートが返る。
+  - TTL 切れ: `lastFetchedAt` が null / 4h 超で resolver が 1 回呼ばれる。
+  - `refetchedCount`: **成功時に +1 / 失敗（resolver throw）時は +0**（本 PR の修正点）。
+  - ローカルノート（`uri == null`）は対象外でそのまま返る。
+  - per-host バジェット枯渇時は resolve せず現状ノートを返す。
+  - 成功時に `publishNoteStream(id, 'updated', ...)` が呼ばれる（streaming 化の検証）。
+- **e2e**（`packages/backend/test/e2e/`）— `notes/refetch` エンドポイント:
+  - ローカルノート → `IS_LOCAL_NOTE`。
+  - 存在しない noteId → `NO_SUCH_NOTE`。
+  - 認証なし → requireCredential で弾かれる。
+  - （可能なら）リモートノートを用意し、即座に現状ノートが返ることを確認。難しければ unit に寄せる。
 
 ---
 
@@ -369,8 +387,10 @@ AP 連合ネットワーク負荷 / 自サーバー負荷の観点で敵対的�
 - 負荷: リモート fetch timeout 5s + 分散ロック取得待機 **最大 5s**（`acquireApObjectLock` = retry 50×100ms, `distributed-lock.ts`）
   + HTML alternate 追加 GET ⇒ **最悪 10s 超、1 リクエストでコネクション/Promise を専有**。遅いリモート指定で連打されると
   API ワーカー枯渇（slow-loris 類似）。
-- 対策（推奨）: `notes/refetch` は TTL 切れ時に **ジョブをキューに enqueue して即座に現状ノートを pack して返す**。
-  UI は次回 `notes/show`（または streaming）で更新を拾う。詳細・UX 反映は Phase 2 側で扱う（Phase 2 §3-2 参照）。
+- 対策（実装済み）: `notes/refetch` は TTL 切れ時に **ジョブを refetchNote キューに enqueue して即座に現状ノートを pack して返す**。
+  再フェッチ完了時に `updateNoteIfStale` が `publishNoteStream(note.id, 'updated', ...)` を発行し、UI は
+  既存の note capture（`useNoteCapture` の `noteUpdated` 購読）が `notes/show` を取り直して反映する
+  （PR #35 レビュー反映: setTimeout ポーリングを廃止して streaming 化）。詳細・UX 反映は Phase 2 §3-2 参照。
 
 ### 7-3. 【High】リモートホスト単位のフェッチ・スロットル
 
@@ -402,7 +422,9 @@ AP 連合ネットワーク負荷 / 自サーバー負荷の観点で敵対的�
 ### 7-7. 【Low】その他
 
 - **double-checked locking**: ロック取得後に `lastFetchedAt` を再 SELECT して二重フェッチを排除（§4-4 に反映済み）。
-- **2 UPDATE 文の統合**: `lastFetchedAt` 更新 + `refetchedCount` increment を 1 文に統合（§4-4 に反映済み）。
+- **`lastFetchedAt` と `refetchedCount` の更新タイミング**: `lastFetchedAt` は試行前に先行更新（連打防止）、
+  `refetchedCount` は **再フェッチ成功後にのみ** `increment`（PR #35 レビュー反映）。両者は別 UPDATE になる
+  （旧版の 1 文統合は「失敗時もカウントされる」問題があったため廃止、§4-4 参照）。
 - **`note.emojis` 名リスト追従**: 絵文字が**追加/改名**された場合、`note.emojis`（名前配列）が古いと新絵文字が pack されない。
   主目的（URL 差し替え）なら許容だが、追加/改名まで反映するなら `updateNote` で `note.emojis` も更新する（初版は任意・§4-5 補足）。
 - **署名 GET の actor**: instance actor の鍵で取得＝リモートのアクセスログにタイミング相関が残る（既存の初回取得と同主体なので新規リスクは小）。
@@ -413,7 +435,8 @@ AP 連合ネットワーク負荷 / 自サーバー負荷の観点で敵対的�
 
 1. `Note.ts` に `lastFetchedAt` / `refetchedCount` 追加 → migration 生成（`create-migration`）→ `check-migrations`。
 2. `extractEmojis` に `force` 追加（既存挙動不変を確認）+ **§7-1 のキャッシュ無効化（InternalEvent 発行 + 購読）**。
-3. `updateNote` / `updateNoteIfStale` 実装（double-checked locking・1 文 UPDATE・失敗種別分岐込み、トリガー未配線）。
+3. `updateNote` / `updateNoteIfStale` 実装（double-checked locking・失敗種別分岐・**成功時のみ refetchedCount 加算**・
+   成功時 `publishNoteStream('updated')` 込み、トリガー未配線）。
 4. **§7-3 per-host スロットル**を実フェッチ経路に組み込み。
-5. typecheck / lint / federation test（「再フェッチで絵文字 URL が更新され、キャッシュ無効化で populate に反映される」ケース）。
-6. （Phase 2）`notes/refetch` を **キュー化（§7-2）**して追加 + misskey-js 再生成 + CHANGELOG。
+5. typecheck / lint / unit・e2e テスト（§6。AP はモック）。
+6. （Phase 2）`notes/refetch` を **キュー化（§7-2）**して追加 + フロントは streaming で反映 + misskey-js 再生成 + CHANGELOG。

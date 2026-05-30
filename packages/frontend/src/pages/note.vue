@@ -160,15 +160,10 @@ const nextRefetchAt = computed<number | null>(() => {
 
 async function refetchNote() {
 	if (note.value == null) return;
-	const id = note.value.id;
-	// notes/refetch は enqueue して即座に現状ノートを返す (バックグラウンド再取得)。
-	await misskeyApi('notes/refetch', { noteId: id });
+	// notes/refetch は再取得ジョブを enqueue する。完了するとサーバが 'updated' を
+	// ストリーム配信し、MkNoteDetailed の note capture が notes/show を取り直して反映する。
+	await misskeyApi('notes/refetch', { noteId: note.value.id });
 	os.toast(i18n.ts.refetchQueued);
-	// ワーカーの完了を少し待ってから notes/show を取り直して差し替える。
-	window.setTimeout(async () => {
-		const res = await misskeyApi('notes/show', { noteId: id }).catch(() => null);
-		if (res != null && note.value?.id === id) note.value = res;
-	}, 2500);
 }
 
 watch(() => props.noteId, fetchNote, {

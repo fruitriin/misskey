@@ -5,7 +5,7 @@ Phase 1（[remote-note-refetch-design.md](./remote-note-refetch-design.md)）で
 
 - 対象: `packages/backend`（API エンドポイント） + `packages/frontend`（ノート詳細 UI） + `locales/ja-JP.yml`
 - 前提: Phase 1（`MiNote.lastFetchedAt` / `updateNoteIfStale` / `updateNote` / `extractEmojis` の force）が実装済み
-- ステータス: 設計（未実装）
+- ステータス: 実装済み（PR #35）
 - ブランチ: `claude/remote-emoji-refetch-2nbU9`
 
 ---
@@ -114,9 +114,10 @@ Phase 1（[remote-note-refetch-design.md](./remote-note-refetch-design.md)）で
 - フロー: `getNote` → リモート判定 → **enqueue（実フェッチはワーカーで `updateNoteIfStale` 実行）** → 現状ノートを即 pack 返却。
 - TTL 中に叩かれた場合: enqueue 自体しない（or ワーカー側 TTL ガードで no-op）。**エラーにはしない**（確定）。
   サーバは黙って現状ノートを返す（直叩き・競合時も自分の画面は最新 DB 状態に追いつく）。
-- **UX 反映**: 即時レスポンスは更新前ノートなので、UI は enqueue 後に**少し待ってから `notes/show` を再取得**して
-  差し替える（§4-6）。理想は streaming の `noteUpdated` で push だが、初版は短い遅延ポーリングで可。
-- キューは既存パターン（例 `SystemQueue` / 専用 `RefetchNote` ジョブ）に倣う。重複 enqueue はジョブ ID に `noteId` を使い de-dup。
+- **UX 反映（streaming）**: 即時レスポンスは更新前ノートだが、ワーカーの再フェッチ完了時に backend が
+  `publishNoteStream(id, 'updated')` を発行し、UI は既存の note capture（`useNoteCapture` の `noteUpdated` 購読）が
+  `notes/show` を取り直して差し替える（§4-6）。**PR #35 レビュー反映: setTimeout ポーリングは廃止し streaming に統一**。
+- キューは専用 `refetchNote` キュー（`RefetchNoteProcessorService`）。重複 enqueue はジョブ ID に `noteId` を使い de-dup。
 
 ### 3-3. UI（`MkRemoteCaution` を汎用のまま拡張）
 
@@ -235,7 +236,7 @@ const props = defineProps<{
   href?: string;
   refetchable?: boolean;
   nextRefetchAt?: number | null; // ms。null/過去なら即再取得可
-  refetchedCount?: number;       // これまでの実フェッチ回数
+  refetchedCount?: number;       // 再フェッチに成功した回数
 }>();
 const emit = defineEmits<{ (ev: 'refetch'): void }>();
 
@@ -274,17 +275,17 @@ const nextRefetchAt = computed(() => {
 
 async function refetchNote() {
   if (note.value == null) return;
-  const id = note.value.id;
-  // notes/refetch は enqueue して即時に現状ノートを返す（§3-2 キュー化）。
-  await misskeyApi('notes/refetch', { noteId: id });
-  os.toast(i18n.ts.refetchQueued); // 「更新を予約しました」等
-  // ワーカー完了を少し待って notes/show を再取得し差し替え（理想は streaming の noteUpdated push）。
-  window.setTimeout(async () => {
-    const res = await misskeyApi('notes/show', { noteId: id });
-    note.value = res; // 差し替え → MkNoteDetailed に伝播（絵文字も更新）
-  }, 2500);
+  // notes/refetch は再取得ジョブを enqueue する（§3-2 キュー化）。完了するとサーバが
+  // publishNoteStream(id, 'updated') を配信し、MkNoteDetailed の note capture
+  // (useNoteCapture の noteUpdated 購読) が notes/show を取り直して反映する。
+  await misskeyApi('notes/refetch', { noteId: note.value.id });
+  os.toast(i18n.ts.refetchQueued); // 「更新を予約しました」
 }
 ```
+
+> PR #35 レビュー反映: 旧版の `window.setTimeout(2500ms)` 遅延ポーリングは廃止。完了通知は backend の
+> `publishNoteStream('updated')` → 既存 streaming（`useNoteCapture`）経由で push される。
+> これにより低速リモートでも「2.5 秒後に古いデータを掴む」問題が解消される。
 
 ### 4-7. 【改修】`locales/ja-JP.yml`（ja-JP のみ編集可）
 
@@ -292,7 +293,7 @@ async function refetchNote() {
 orRefetch: "または再取得"
 refetchAvailableIn: "再取得は{time}に利用できます"   # {time} には _timeIn.hours の結果（例「4時間後」）が入る
 refetchedNTimes: "これまで{n}回再取得"
-refetchQueued: "更新を予約しました"   # キュー化のため「予約」。完了は数秒後に notes/show 再取得で反映
+refetchQueued: "更新を予約しました"   # キュー化のため「予約」。完了は streaming の 'updated' で反映
 ```
 
 - `refetchAvailableIn` は `i18n.tsx.refetchAvailableIn({ time: i18n.tsx._timeIn.hours({ n }) })` で参照
