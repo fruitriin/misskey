@@ -152,7 +152,8 @@ public refetchedCount: number;
 
 #### fetch 回数をどこに・どう保存するか（保存方針）
 
-**結論: `note` テーブルに `refetchedCount smallint NOT NULL DEFAULT 0` カラムを 1 本足す。**
+**決定（確定）: `note` テーブルに `refetchedCount smallint NOT NULL DEFAULT 0` カラムを 1 本足す。**
+別テーブル / Redis 案は不採用。以下はその根拠と、不採用案の記録。
 
 根拠（= これが idiomatic である理由）:
 
@@ -170,13 +171,10 @@ public refetchedCount: number;
 
 | 案 | 内容 | 評価 |
 | --- | --- | --- |
-| **A: note にカラム追加**（採用） | `refetchedCount smallint` | 既存カウンタと同型・同パターン。最小で一貫 |
-| B: 別テーブル | `note_refetch_stat(noteId, count)` 等 | リモートノートのみ行を持てるが、JOIN/エンティティが増える。1 整数のために過剰 |
-| C: Redis カウンタ | ephemeral な INCR | 永続しない＝再起動/expire で消える。「これまで N 回」を恒久表示したいので不適 |
+| **A: note にカラム追加**（★採用・確定） | `refetchedCount smallint` | 既存カウンタと同型・同パターン。最小で一貫 |
+| B: 別テーブル | `note_refetch_stat(noteId, count)` 等 | リモートノートのみ行を持てるが、JOIN/エンティティが増える。1 整数のために過剰 → 不採用 |
+| C: Redis カウンタ | ephemeral な INCR | 永続しない＝再起動/expire で消える。「これまで N 回」を恒久表示したいので不適 → 不採用 |
 | D: 保存しない（lastFetchedAt のみ） | 回数は出さない | TTL=24h 単純版に倒す場合の選択肢。4h+回数表示の方針では不採用 |
-
-> 補足: もし「`note` 本体にこれ以上カラムを増やしたくない」という運用判断が優先されるなら B も成立する。
-> ただし本機能のために専用テーブル＋リポジトリ＋pack の JOIN を新設するのは割に合わないため、初版は A を推す。
 
 ### 4-2. 【新規】migration — `lastFetchedAt` 追加
 
