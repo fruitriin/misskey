@@ -4532,6 +4532,9 @@ export type components = {
             localOnly: boolean;
             /** @enum {string|null} */
             reactionAcceptance: 'likeOnly' | 'likeOnlyForRemote' | 'nonSensitiveOnly' | 'nonSensitiveOnlyForLocalLikeOnlyForRemote' | null;
+            /** @enum {string} */
+            renoteLock: 'none' | 'self' | 'admin';
+            renoteWindowDuration: number | null;
             scheduledAt: number | null;
             isActuallyScheduled: boolean;
         };

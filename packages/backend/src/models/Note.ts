@@ -256,6 +256,27 @@ export class MiNote {
 	public renoteChannelId: MiChannel['id'] | null;
 	//#endregion
 
+	/**
+	 * none  ... 誰でもリノート可
+	 * self  ... 投稿者本人のみリノート可（ユーザー設定）
+	 * admin ... 誰もリノート不可（モデレーター設定）
+	 */
+	@Column('varchar', {
+		length: 32,
+		default: 'none',
+	})
+	public renoteLock: 'none' | 'self' | 'admin';
+
+	/**
+	 * renoteLock が 'self' のとき、投稿者が自らリノートしてから
+	 * この分数内は他者もリノートを許可する。null のとき無効。
+	 */
+	@Column('integer', {
+		nullable: true,
+		default: null,
+	})
+	public renoteWindowDuration: number | null;
+
 	constructor(data: Partial<MiNote>) {
 		if (data == null) return;
 

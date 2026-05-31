@@ -5,7 +5,7 @@
 
 import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfm-js';
-import { In, DataSource, IsNull, LessThan } from 'typeorm';
+import { In, DataSource, IsNull, LessThan, MoreThan } from 'typeorm';
 import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { extractMentions } from '@/misc/extract-mentions.js';
@@ -361,6 +361,28 @@ export class NoteCreateService implements OnApplicationShutdown {
 				} else if (!renoteChannel.allowRenoteToExternal) {
 					// リノート作成のリクエストだが、対象チャンネルがリノート禁止だった場合
 					throw new IdentifiableError('7e435f4a-780d-4cfc-a15a-42519bd6fb67', 'Channel does not allow renote to external');
+				}
+			}
+
+			// renoteLock チェック
+			if (renote.renoteLock === 'admin') {
+				// 管理人ロック: 本人を含め誰もリノート不可
+				throw new IdentifiableError('6cf4e0b5-7a56-4e1e-a3df-5b3b4e0b9e8a', 'Renote is locked by moderator');
+			} else if (renote.renoteLock === 'self' && renote.userId !== user.id) {
+				// セルフロック: 本人以外はリノート不可。ただし投稿者が時間窓内にリノートしていれば許可
+				let allowed = false;
+				if (renote.renoteWindowDuration != null && renote.renoteWindowDuration > 0) {
+					const sinceId = this.idService.gen(Date.now() - renote.renoteWindowDuration * 60 * 1000);
+					allowed = await this.notesRepository.exists({
+						where: {
+							renoteId: renote.id,
+							userId: renote.userId,
+							id: MoreThan(sinceId),
+						},
+					});
+				}
+				if (!allowed) {
+					throw new IdentifiableError('0ece2e1a-3b3b-4b1b-9b1b-0b1b1b1b1b1b', 'Renote is locked by note owner');
 				}
 			}
 		}

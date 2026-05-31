@@ -533,6 +533,39 @@ export function getNoteMenu(props: {
 
 		if (appearNote.userId === $i.id || $i.isModerator || $i.isAdmin) {
 			menuItems.push({ type: 'divider' });
+
+			const isMod = $i.isModerator || $i.isAdmin;
+			menuItems.push({
+				type: 'parent',
+				icon: appearNote.renoteLock !== 'none' ? 'ti ti-repeat-off' : 'ti ti-repeat',
+				text: i18n.ts.renoteLock,
+				children: (() => {
+					const lockChildren: MenuItem[] = [
+						{
+							icon: 'ti ti-repeat',
+							text: i18n.ts.renoteLockNone,
+							active: appearNote.renoteLock === 'none',
+							action: () => os.apiWithDialog('notes/update-renote-lock', { noteId: appearNote.id, lock: 'none' }),
+						},
+						{
+							icon: 'ti ti-repeat-off',
+							text: i18n.ts.renoteLockSelf,
+							active: appearNote.renoteLock === 'self',
+							action: () => os.apiWithDialog('notes/update-renote-lock', { noteId: appearNote.id, lock: 'self' }),
+						},
+					];
+					if (isMod) {
+						lockChildren.push({
+							icon: 'ti ti-ban',
+							text: i18n.ts.renoteLockAdmin,
+							active: appearNote.renoteLock === 'admin',
+							action: () => os.apiWithDialog('notes/update-renote-lock', { noteId: appearNote.id, lock: 'admin' }),
+						});
+					}
+					return lockChildren;
+				})(),
+			});
+
 			if (appearNote.userId === $i.id) {
 				menuItems.push({
 					icon: 'ti ti-edit',

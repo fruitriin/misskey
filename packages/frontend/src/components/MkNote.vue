@@ -355,7 +355,12 @@ const translation = ref<Misskey.entities.NotesTranslateResponse | null>(null);
 const translating = ref(false);
 const showTicker = (prefer.s.instanceTicker === 'always') || (prefer.s.instanceTicker === 'remote' && appearNote.user.instance);
 const showTickerRenote = (prefer.s.instanceTicker === 'always') || (prefer.s.instanceTicker === 'remote' && appearNote.user.instance);
-const canRenote = computed(() => ['public', 'home'].includes(appearNote.visibility) || (appearNote.visibility === 'followers' && appearNote.userId === $i?.id));
+const canRenote = computed(() => {
+	if (!['public', 'home'].includes(appearNote.visibility) && !(appearNote.visibility === 'followers' && appearNote.userId === $i?.id)) return false;
+	if (appearNote.renoteLock === 'admin') return false;
+	if (appearNote.renoteLock === 'self' && appearNote.userId !== $i?.id) return false;
+	return true;
+});
 const renoteCollapsed = ref(
 	prefer.s.collapseRenotes && isRenote && (
 		($i && ($i.id === note.userId || $i.id === appearNote.userId)) || // `||` must be `||`! See https://github.com/misskey-dev/misskey/issues/13131

@@ -123,6 +123,12 @@ export const meta = {
 			code: 'CONTAINS_TOO_MANY_MENTIONS',
 			id: '4de0363a-3046-481b-9b0f-feff3e211025',
 		},
+
+		renoteLocked: {
+			message: 'Renote is locked.',
+			code: 'RENOTE_LOCKED',
+			id: '3d1a1d1a-1d1a-1d1a-1d1a-3d1a1d1a1d1a',
+		},
 	},
 } as const;
 
@@ -283,6 +289,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						throw new ApiError(meta.errors.cannotCreateAlreadyExpiredPoll);
 					} else if (err.id === 'bfa3905b-25f5-4894-b430-da331a490e4b') {
 						throw new ApiError(meta.errors.noSuchChannel);
+					} else if (err.id === '6cf4e0b5-7a56-4e1e-a3df-5b3b4e0b9e8a' || err.id === '0ece2e1a-3b3b-4b1b-9b1b-0b1b1b1b1b1b') {
+						throw new ApiError(meta.errors.renoteLocked);
 					}
 				}
 				throw err;

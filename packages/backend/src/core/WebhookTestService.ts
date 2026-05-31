@@ -107,6 +107,8 @@ function generateDummyNote(override?: Partial<MiNote>): MiNote {
 		renoteUserId: null,
 		renoteUserHost: null,
 		renoteChannelId: null,
+		renoteLock: 'none',
+		renoteWindowDuration: null,
 		...override,
 	};
 }
@@ -386,6 +388,8 @@ export class WebhookTestService {
 			channel: note.channel,
 			localOnly: note.localOnly,
 			reactionAcceptance: note.reactionAcceptance,
+			renoteLock: note.renoteLock,
+			renoteWindowDuration: note.renoteWindowDuration,
 			reactionEmojis: {},
 			reactions: {},
 			reactionCount: 0,
