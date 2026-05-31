@@ -9,9 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 		:modelValue="props.items"
 		direction="vertical"
 		withGaps
+		manualDragStart
 		@update:modelValue="v => emit('update:modelValue', v)"
 	>
-		<template #default="{ item }">
+		<template #default="{ item, dragStart }">
 			<div
 				v-panel
 				:class="[$style.item, { [$style.itemWaiting]: item.preprocessing, [$style.itemCompleted]: item.uploaded, [$style.itemFailed]: item.uploadFailed }]"
@@ -47,6 +48,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkSystemIcon v-if="item.uploading" :class="$style.itemIcon" type="waiting"/>
 						<MkSystemIcon v-else-if="item.uploaded" :class="$style.itemIcon" type="success"/>
 						<MkSystemIcon v-else-if="item.uploadFailed" :class="$style.itemIcon" type="error"/>
+					</div>
+					<div :class="$style.itemDragHandle" :draggable="true" @dragstart.stop="dragStart" @click.stop>
+						<i class="ti ti-menu"></i>
 					</div>
 				</div>
 			</div>
@@ -144,7 +148,6 @@ async function onThumbnailClick(item: UploaderItem, ev: MouseEvent) {
 	position: relative;
 	border-radius: 10px;
 	overflow: clip;
-	cursor: move;
 
 	&::before {
 		content: '';
@@ -234,6 +237,23 @@ async function onThumbnailClick(item: UploaderItem, ev: MouseEvent) {
 	width: 35px;
 }
 
+.itemDragHandle {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	padding: 0 4px;
+	font-size: 1.2em;
+	opacity: 0.7;
+	color: var(--MI_THEME-fg);
+	cursor: grab;
+	// タッチデバイスでハンドルからのドラッグを優先し、長押しのコンテキストメニュー/スクロールと競合させない
+	touch-action: none;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
 @container (max-width: 500px) {
 	.itemInner {
 		flex-direction: column;
@@ -261,6 +281,12 @@ async function onThumbnailClick(item: UploaderItem, ev: MouseEvent) {
 		position: absolute;
 		top: 8px;
 		right: 8px;
+	}
+
+	.itemDragHandle {
+		position: absolute;
+		right: 8px;
+		bottom: 8px;
 	}
 }
 </style>
