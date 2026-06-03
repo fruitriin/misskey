@@ -24,7 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	>
 	</div>
 	<div
-		v-for="(item, i) in modelValue"
+		v-for="(item, i) in previewOrder"
 		:key="`MkDraggableRoot:${item.id}`"
 		:class="$style.item"
 		:draggable="!manualDragStart"
@@ -42,7 +42,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			@dragleave="onDragleave($event, item)"
 			@drop.prevent.stop="onDrop($event, item, false)"
 		></div>
-		<div :key="`MkDraggableItem:${item.id}`" style="position: relative; z-index: 0;">
+		<div :key="`MkDraggableItem:${item.id}`" :class="{ [$style.sourceHidden]: draggedItemId === item.id }" style="position: relative; z-index: 0;">
 			<slot :item="item" :index="i" :dragStart="(ev) => onDragstart(ev, item)" :touchStart="(ev) => onTouchstart(ev, item)"></slot>
 		</div>
 		<div
@@ -77,7 +77,7 @@ const touchDropTarget = ref<{ instanceId: string; itemId: string; area: 'forward
 </script>
 
 <script lang="ts" setup generic="T extends { id: string; }">
-import { nextTick, onBeforeUnmount } from 'vue';
+import { nextTick, onBeforeUnmount, shallowRef, watch } from 'vue';
 import { getDragData, setDragData } from '@/drag-and-drop.js';
 import { genId } from '@/utility/id.js';
 
@@ -109,7 +109,36 @@ const dropReadyArea = ref<[T['id'] | null, 'forward' | 'backward' | null]>([null
 const instanceId = genId();
 const group = props.group ?? instanceId;
 
+// 自インスタンスが source の場合のみセットされる。これが非 null の間は
+// modelValue 変更の取り込みを止め、previewOrder で live な並び替えを表現する。
+const draggedItemId = ref<T['id'] | null>(null);
+const previewOrder = shallowRef<T[]>([]);
+
+watch(() => props.modelValue, (v) => {
+	if (draggedItemId.value == null) {
+		previewOrder.value = [...v];
+	}
+}, { immediate: true });
+
+function reorderPreview(sourceId: T['id'], targetId: T['id'], backward: boolean) {
+	if (sourceId === targetId) return;
+	const cur = previewOrder.value;
+	const fromIndex = cur.findIndex(x => x.id === sourceId);
+	if (fromIndex < 0) return;
+	const newOrder = [...cur];
+	const [moved] = newOrder.splice(fromIndex, 1);
+	let toIndex = newOrder.findIndex(x => x.id === targetId);
+	if (toIndex < 0) return;
+	if (backward) toIndex += 1;
+	newOrder.splice(toIndex, 0, moved);
+	// 順序が変わらない場合は更新スキップ (TransitionGroup の無駄な FLIP 計測を防ぐ)
+	if (newOrder.every((item, i) => item.id === cur[i].id)) return;
+	previewOrder.value = newOrder;
+}
+
 function isDropReady(itemId: T['id'], area: 'forward' | 'backward') {
+	// 同一インスタンス内 drag 中はレイアウト自体が位置を示すのでラインは不要
+	if (draggedItemId.value != null) return false;
 	if (dropReadyArea.value[0] === itemId && dropReadyArea.value[1] === area) return true;
 	const t = touchDropTarget.value;
 	if (t != null && t.instanceId === instanceId && t.itemId === itemId && t.area === area) return true;
@@ -125,6 +154,10 @@ function onDragstart(ev: DragEvent, item: T) {
 	target.addEventListener('dragend', (ev) => {
 		dragging.value = false;
 		dropReadyArea.value = [null, null];
+		// drop されなかった場合は preview を捨てて元の順序へ復帰させる。
+		// drop された場合も emit 結果が watch で取り込まれるため上書きで問題ない。
+		draggedItemId.value = null;
+		previewOrder.value = [...props.modelValue];
 	}, { once: true });
 
 	dropCallback = (targetInstanceId) => {
@@ -138,12 +171,18 @@ function onDragstart(ev: DragEvent, item: T) {
 	// SEE: https://issues.chromium.org/issues/41150279
 	window.setTimeout(() => {
 		dragging.value = true;
+		draggedItemId.value = item.id;
 	}, 10);
 }
 
 function onDragover(ev: DragEvent, item: T, backward: boolean) {
 	nextTick(() => {
 		dropReadyArea.value = [item.id, backward ? 'backward' : 'forward'];
+		// 自インスタンスが source の場合のみ live preview。クロスインスタンス時は
+		// dropReadyArea のアクセントライン (isDropReady) で位置を示す従来挙動を維持。
+		if (draggedItemId.value != null) {
+			reorderPreview(draggedItemId.value, item.id, backward);
+		}
 	});
 }
 
@@ -171,6 +210,13 @@ function onDrop(ev: DragEvent, item: T, backward: boolean) {
 	dropReadyArea.value = [null, null];
 	if (dragged == null) return;
 	dropCallback?.(instanceId);
+	// 自インスタンス内 drop: 既に previewOrder が並び替え後を表しているのでそのまま commit。
+	// applyDrop を通すと従来ロジックに従って再計算され、preview と一致しない位置に
+	// 飛ぶケース (連続する forward/backward 境界等) があるためここで分岐する。
+	if (dragged.instanceId === instanceId && draggedItemId.value != null) {
+		emit('update:modelValue', [...previewOrder.value]);
+		return;
+	}
 	applyDrop(dragged.item as T, dragged.group, item.id, backward);
 }
 
@@ -253,6 +299,10 @@ function cleanupTouchDrag() {
 	touchDropTarget.value = null;
 	dragging.value = false;
 	dropCallback = null;
+	// drop が走った場合は emit 結果を watch が取り込むので、ここで上書きしても問題ない。
+	// drop されなかった場合 (touchcancel 等) は元順序へ戻す役割を兼ねる。
+	draggedItemId.value = null;
+	previewOrder.value = [...props.modelValue];
 	if (touchGhostEl != null) {
 		touchGhostEl.remove();
 		touchGhostEl = null;
@@ -292,6 +342,7 @@ function startTouchDrag() {
 	const item = touchPending.item;
 	touchDragSession = { item, instanceId, group };
 	dragging.value = true;
+	draggedItemId.value = item.id;
 
 	// sourceRect は touchstart 時点でなく drag 開始時点で取り直す (待ち時間中にレイアウトが
 	// 変動する可能性があるため)
@@ -309,6 +360,11 @@ function startTouchDrag() {
 		ghost.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.3)';
 		ghost.style.transition = 'transform 0.05s linear';
 		ghost.style.transformOrigin = 'top left';
+		// Ghost は body 直下に配置するため container-type を持つ祖先が外れる。
+		// 子孫の @container クエリ (例: profile の .fieldDragItem) が元と同じ評価結果に
+		// なるよう、Ghost 自身を inline-size container にする。幅も rect.width 固定で
+		// 揃えているので元レイアウトと一致する。
+		ghost.style.containerType = 'inline-size';
 		window.document.body.appendChild(ghost);
 		touchGhostEl = ghost;
 	}
@@ -372,6 +428,10 @@ function onWindowTouchMove(ev: TouchEvent) {
 		const area = areaEl.dataset.mkDraggableArea as 'forward' | 'backward' | undefined;
 		if (targetInstanceId != null && targetItemId != null && (area === 'forward' || area === 'backward')) {
 			touchDropTarget.value = { instanceId: targetInstanceId, itemId: targetItemId, area };
+			// 自インスタンス内のホバーなら live preview
+			if (targetInstanceId === instanceId && draggedItemId.value != null) {
+				reorderPreview(draggedItemId.value, targetItemId, area === 'backward');
+			}
 			return;
 		}
 	}
@@ -408,10 +468,15 @@ function onWindowTouchEnd(ev: TouchEvent) {
 	const session = touchDragSession;
 
 	if (session != null && target != null) {
-		const handler = touchDropHandlers.get(target.instanceId);
-		if (handler != null) {
-			dropCallback?.(target.instanceId);
-			handler(session.item, session.group, target.itemId, target.area === 'backward');
+		// 自インスタンス内 drop は previewOrder をそのまま commit (HTML5 側 onDrop と同じ理由)
+		if (target.instanceId === instanceId && draggedItemId.value != null) {
+			emit('update:modelValue', [...previewOrder.value]);
+		} else {
+			const handler = touchDropHandlers.get(target.instanceId);
+			if (handler != null) {
+				dropCallback?.(target.instanceId);
+				handler(session.item, session.group, target.itemId, target.area === 'backward');
+			}
 		}
 	} else if (session != null) {
 		// emptyDropArea にドロップしたか確認
@@ -488,6 +553,12 @@ onBeforeUnmount(() => {
 }
 .items.vertical {
 	flex-direction: column;
+}
+
+.sourceHidden {
+	// ドラッグ中の source は穴として残す。visibility:hidden なら height は保たれ、
+	// forwardArea / backwardArea (item 直下の兄弟要素) のヒットテストは生きたまま。
+	visibility: hidden;
 }
 
 .item {
