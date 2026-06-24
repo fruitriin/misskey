@@ -27,11 +27,10 @@ if (providedAt > cachedAt) {
 
 // TODO: instanceをリアクティブにするかは再考の余地あり
 
-
 type HighlightPopularityThreshold = {
 	highlightMidPopularityThreshold: number;
-	highlightHighPopularityThreashold: number;
-}
+	highlightHighPopularityThreshold: number;
+};
 
 export const instance: Misskey.entities.MetaDetailed & HighlightPopularityThreshold = reactive(cachedMeta ?? {});
 

@@ -606,7 +606,7 @@ export const meta = {
 				type: 'number',
 				optinal: false, nullable: false,
 			},
-			highlightHighPopularityThreashold: {
+			highlightHighPopularityThreshold: {
 				type: 'number',
 				optinal: false, nullable: false,
 			},
@@ -772,7 +772,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				showRoleBadgesOfRemoteUsers: instance.showRoleBadgesOfRemoteUsers,
 				highlightRateFactor: instance.highlightRateFactor,
 				highlightMidPopularityThreshold: instance.highlightMidPopularityThreshold,
-				highlightHighPopularityThreashold: instance.highlightHighPopularityThreashold,
+				highlightHighPopularityThreshold: instance.highlightHighPopularityThreshold,
 				highlightExcludeEmojis: instance.highlightExcludeEmojis,
 			};
 		});

@@ -736,7 +736,7 @@ export class MiMeta {
 	@Column('integer', { default: 3 })
 	public highlightMidPopularityThreshold: number;
 	@Column('integer', { default: 5 })
-	public highlightHighPopularityThreashold: number;
+	public highlightHighPopularityThreshold: number;
 	@Column('text', { default: '' })
 	public highlightExcludeEmojis: string;
 }

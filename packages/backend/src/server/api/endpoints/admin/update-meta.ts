@@ -225,7 +225,7 @@ export const paramDef = {
 		highlightMidPopularityThreshold: {
 			type: 'number',
 		},
-		highlightHighPopularityThreashold: {
+		highlightHighPopularityThreshold: {
 			type: 'number',
 		},
 		highlightExcludeEmojis: {
@@ -783,8 +783,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				set.highlightMidPopularityThreshold = ps.highlightMidPopularityThreshold;
 			}
 
-			if (ps.highlightHighPopularityThreashold !== undefined) {
-				set.highlightHighPopularityThreashold = ps.highlightHighPopularityThreashold;
+			if (ps.highlightHighPopularityThreshold !== undefined) {
+				set.highlightHighPopularityThreshold = ps.highlightHighPopularityThreshold;
 			}
 
 			if (ps.highlightExcludeEmojis !== undefined) {

@@ -378,17 +378,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 							<MkKeyValue>
 								<template #key>ハイライトに採用される確率</template>
-								<template #value><MkInput v-model.number="infoForm.state.highlightRateFactor" :min="0" :max="100" placeholder="30"/></template>
+								<template #value><MkInput v-model.number="infoForm.state.highlightRateFactor" type="number" :min="0" :max="100" placeholder="30"/></template>
 							</MkKeyValue>
 
 							<MkKeyValue>
 								<template #key>ハイライトの青ふぁぼ</template>
-								<template #value><MkInput v-model.number="infoForm.state.highlightMidPopularityThreshold"/></template>
+								<template #value><MkInput v-model.number="infoForm.state.highlightMidPopularityThreshold" type="number"/></template>
 							</MkKeyValue>
 
 							<MkKeyValue>
 								<template #key>ハイライトの赤ふぁぼ</template>
-								<template #value><MkInput v-model.number="infoForm.state.highlightHighPopularityThreashold"/></template>
+								<template #value><MkInput v-model.number="infoForm.state.highlightHighPopularityThreshold" type="number"/></template>
 							</MkKeyValue>
 
 							<MkKeyValue>
@@ -448,7 +448,7 @@ const infoForm = useForm({
 	impressumUrl: meta.impressumUrl ?? '',
 	highlightRateFactor: meta.highlightRateFactor ?? 30,
 	highlightMidPopularityThreshold: meta.highlightMidPopularityThreshold ?? 3,
-	highlightHighPopularityThreashold: meta.highlightHighPopularityThreashold ?? 5,
+	highlightHighPopularityThreshold: meta.highlightHighPopularityThreshold ?? 5,
 	highlightExcludeEmojis: meta.highlightExcludeEmojis,
 }, async (state) => {
 	await os.apiWithDialog('admin/update-meta', {
@@ -464,7 +464,7 @@ const infoForm = useForm({
 		impressumUrl: state.impressumUrl,
 		highlightRateFactor: state.highlightRateFactor,
 		highlightMidPopularityThreshold: state.highlightMidPopularityThreshold,
-		highlightHighPopularityThreashold: state.highlightHighPopularityThreashold ?? 5,
+		highlightHighPopularityThreshold: state.highlightHighPopularityThreshold ?? 5,
 		highlightExcludeEmojis: state.highlightExcludeEmojis,
 
 	});

@@ -17,11 +17,11 @@ import { DI } from '@/di-symbols.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 
 type HighlightExtention = {
-	highlightRateFactor: number,
-	highlightMidPopularityThreshold: number,
-	highlightHighPopularityThreashold: number,
-	highlightExcludeEmojis: string
-}
+	highlightRateFactor: number;
+	highlightMidPopularityThreshold: number;
+	highlightHighPopularityThreshold: number;
+	highlightExcludeEmojis: string;
+};
 
 @Injectable()
 export class MetaEntityService {
@@ -145,7 +145,7 @@ export class MetaEntityService {
 
 			highlightRateFactor: instance.highlightRateFactor,
 			highlightMidPopularityThreshold: instance.highlightMidPopularityThreshold,
-			highlightHighPopularityThreashold: instance.highlightHighPopularityThreashold,
+			highlightHighPopularityThreshold: instance.highlightHighPopularityThreshold,
 			highlightExcludeEmojis: instance.highlightExcludeEmojis,
 		};
 

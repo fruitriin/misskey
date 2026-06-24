@@ -64,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote" :files="appearNote.files" :poll="appearNote.poll" style="margin: 4px 0;"/>
 				</p>
 				<div v-show="appearNote.cw == null || showContent" :class="[{ [$style.contentCollapsed]: collapsed }]">
-					<div :class="[$style.text, {[$style.akafav]:(featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.highPopularity ), [$style.aofav]: featured && prefer.s.enableFavstar && note.reactionCount >= highlightPopularityThreshold.midPopularity && note.reactionCount < highlightPopularityThreshold.highPopularity }]" :style="favstarColorVars">
+					<div :class="[$style.text, {[$style.akafav]:(featured && prefer.r.enableFavstar.value && note.reactionCount >= highlightPopularityThreshold.highPopularity ), [$style.aofav]: featured && prefer.r.enableFavstar.value && note.reactionCount >= highlightPopularityThreshold.midPopularity && note.reactionCount < highlightPopularityThreshold.highPopularity }]" :style="favstarColorVars">
 						<span v-if="appearNote.isHidden" style="opacity: 0.5">({{ i18n.ts.private }})</span>
 						<MkA v-if="appearNote.replyId" :class="$style.replyIcon" :to="`/notes/${appearNote.replyId}`"><i class="ti ti-arrow-back-up"></i></MkA>
 						<Mfm
@@ -273,19 +273,18 @@ const currentAntenna = inject<Ref<Misskey.entities.Antenna | null> | null>('curr
 
 let note = deepClone(props.note);
 
-
 const highlightPopularityThreshold = computed(() => {
 	return {
-		highPopularity: instance.highlightHighPopularityThreashold,
+		highPopularity: instance.highlightHighPopularityThreshold,
 		midPopularity: instance.highlightMidPopularityThreshold,
-	}
-})
+	};
+});
 
 const favstarColorVars = computed(() => {
-	if (!props.featured || !prefer.s.enableFavstar) return undefined;
+	if (!props.featured || !prefer.r.enableFavstar.value) return undefined;
 	return {
-		'--MI-favstarAka': store.s.darkMode ? prefer.s.favstarDarkAka : prefer.s.favstarLightAka,
-		'--MI-favstarAo': store.s.darkMode ? prefer.s.favstarDarkAo : prefer.s.favstarLightAo,
+		'--MI-favstarAka': store.r.darkMode.value ? prefer.r.favstarDarkAka.value : prefer.r.favstarLightAka.value,
+		'--MI-favstarAo': store.r.darkMode.value ? prefer.r.favstarDarkAo.value : prefer.r.favstarLightAo.value,
 	};
 });
 // plugin
