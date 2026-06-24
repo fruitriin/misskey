@@ -5,7 +5,18 @@
 
 // サーバー側 (UtilityService.isKeyWordIncluded) と同じ判定をクライアントで再現する。
 // バックエンドは RE2 を使うが、クライアントでは ReDoS の影響が自分のタブに限られるため
-// ネイティブの RegExp で代替する (後方参照・先読み等の差異により稀に挙動が異なりうる)。
+// ネイティブの RegExp で代替する。
+//
+// RE2 と JS RegExp の表現力の差について:
+// - RE2 にあって JS では使えない後方参照 `\1` / 先読み `(?=)` / 後読み `(?<=)` は、
+//   そもそも RE2 側の正規表現として書けないので考慮不要。
+// - フラグで吸収できる差 (大文字小文字 i / 複数行 m / dotall s、および RE2 は常に
+//   Unicode 対応なので u) は buildRegExpFromRe2() で対応する。
+// - フラグでは吸収できない、RE2 にあって JS (ES2025 時点) でも書けない構文
+//   (POSIX クラス `[[:alpha:]]` / `\A` `\z` / `(?P<name>)` / `\C` / `\x{...}` /
+//    ungreedy フラグ U / コロン無し `(?i)` 等) は再現できない。これらを含むフィルタは
+//   RegExp の構築に失敗し、マッチ無し扱い (= 警告もハイライトも出さない安全側) になる。
+//   詳細は buildRegExpFromRe2() のコメント参照。
 
 export type SensitiveWordRange = {
 	start: number;
@@ -14,8 +25,46 @@ export type SensitiveWordRange = {
 
 const regexpLike = /^\/(.+)\/(.*)$/;
 
-function ensureGlobalFlags(flags: string): string {
-	return flags.includes('g') ? flags : flags + 'g';
+/**
+ * RE2 のフラグのうち JS の RegExp と対応が取れるものだけを移植する。
+ * - i / m / s: JS と同義なのでそのまま通す
+ * - g: matchAll に必須なので常に付与する
+ * - U (ungreedy): JS に対応するフラグが無いため再現不可。落とす (貪欲/非貪欲の意味が
+ *   RE2 と逆になるが、構築自体を失敗させずマッチ有無の判定は概ね保つことを優先する)
+ * - それ以外の未知フラグも、JS が受け付けず RegExp 構築が例外になるため落とす
+ */
+function mapRe2FlagsToJs(re2Flags: string): string {
+	let flags = 'g';
+	for (const f of ['i', 'm', 's']) {
+		if (re2Flags.includes(f)) flags += f;
+	}
+	return flags;
+}
+
+/**
+ * RE2 構文の正規表現を JS の RegExp に変換する。構築できなければ null を返す。
+ *
+ * RE2 にあって JS (ES2025 時点) には無く、ここでは再現できない表現:
+ * - POSIX 文字クラス `[[:alpha:]]` など
+ * - テキスト先頭/末尾アンカー `\A` `\z`
+ * - Python 形式の名前付きグループ `(?P<name>...)` (JS は `(?<name>...)` のみ)
+ * - 任意 1 バイト `\C`
+ * - 波括弧 16 進エスケープ `\x{...}` (JS は u フラグ + `\u{...}`)
+ * - ungreedy フラグ `(?U)` / `/.../U`、コロン無しインラインフラグ `(?i)`
+ * これらを含むパターンは構築に失敗し、null (= 警告を出さない) になる。
+ */
+function buildRegExpFromRe2(source: string, re2Flags: string): RegExp | null {
+	const flags = mapRe2FlagsToJs(re2Flags);
+	// RE2 は Unicode 対応がデフォルト。u フラグ付きを優先し (`.` や文字クラスをコードポイント
+	// 単位で扱い `\p{...}` を有効化)、u 非互換なパターンは u 無しにフォールバックする。
+	for (const candidate of [flags + 'u', flags]) {
+		try {
+			return new RegExp(source, candidate);
+		} catch {
+			// 次の候補を試す
+		}
+	}
+	return null;
 }
 
 function pushAllOccurrences(ranges: SensitiveWordRange[], text: string, word: string): void {
@@ -70,13 +119,9 @@ export function detectSensitiveWords(text: string, keyWords: string[]): {
 				}
 			}
 		} else {
-			// /pattern/flags 形式 (RE2 相当を RegExp で代替)
-			let re: RegExp;
-			try {
-				re = new RegExp(regexp[1], ensureGlobalFlags(regexp[2]));
-			} catch {
-				continue;
-			}
+			// /pattern/flags 形式。サーバーは RE2 で評価するが、クライアントでは RegExp で代替する。
+			const re = buildRegExpFromRe2(regexp[1], regexp[2]);
+			if (re == null) continue; // RE2 専用構文などで構築できないものはスキップ (= 安全側)
 			let hit = false;
 			for (const m of text.matchAll(re)) {
 				if (m[0].length === 0) continue; // 0 文字マッチは無限ループ防止のため除外
