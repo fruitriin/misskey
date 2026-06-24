@@ -80,6 +80,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<textarea ref="textareaEl" v-model="text" :class="[$style.text]" :disabled="posting || posted" :readonly="textAreaReadOnly" :placeholder="placeholder" data-cy-post-form-text @keydown="onKeydown" @keyup="onKeyup" @paste="onPaste" @compositionupdate="onCompositionUpdate" @compositionend="onCompositionEnd"></textarea>
 		<div v-if="maxTextLength - textLength < 100" :class="['_acrylic', $style.textCount, { [$style.textOver]: textLength > maxTextLength }]">{{ maxTextLength - textLength }}</div>
 	</div>
+	<MkInfo v-if="matchedSensitiveWords.length > 0" warn :class="$style.sensitiveWordsWarning">{{ i18n.tsx.sensitiveWordsContained({ words: matchedSensitiveWords.join('」「') }) }}</MkInfo>
+	<div v-if="targetChannel" :class="$style.channelName"><i class="ti ti-device-tv" style="margin-right: 4px;"></i>{{ targetChannel.name }}</div>
 	<input v-show="withHashtags" ref="hashtagsInputEl" v-model="hashtags" :class="$style.hashtags" :placeholder="i18n.ts.hashtags" list="hashtags">
 	<XPostFormAttaches v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName"/>
 	<div v-if="uploader.items.value.length > 0" style="padding: 12px;">
@@ -89,7 +91,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkUploaderItems :items="uploader.items.value" @showMenu="(item, ev) => showPerUploadItemMenu(item, ev)" @showMenuViaContextmenu="(item, ev) => showPerUploadItemMenuViaContextmenu(item, ev)"/>
 	</div>
 	<MkPollEditor v-if="poll" v-model="poll" @destroyed="poll = null"/>
-	<MkNotePreview v-if="showPreview" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i"/>
+	<MkNotePreview v-if="showPreview" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i" :sensitiveWords="sensitiveWordsTarget != null ? (instance.sensitiveWords ?? []) : []"/>
 	<div v-if="showingOptions" style="padding: 8px 16px;">
 	</div>
 	<footer ref="footerEl" :class="$style.footer">
@@ -132,6 +134,7 @@ import XTextCounter from '@/components/MkPostForm.TextCounter.vue';
 import MkPollEditor from '@/components/MkPollEditor.vue';
 import MkNoteSimple from '@/components/MkNoteSimple.vue';
 import { erase, unique } from '@/utility/array.js';
+import { detectSensitiveWords } from '@/utility/sensitive-words.js';
 import { extractMentions } from '@/utility/extract-mentions.js';
 import { formatTimeString } from '@/utility/format-time-string.js';
 import { Autocomplete } from '@/utility/autocomplete.js';
@@ -305,6 +308,25 @@ const cwTextLength = computed((): number => {
 });
 
 const maxCwTextLength = 100;
+
+// 公開 (かつ非チャンネル) 投稿のみ、サーバー側でセンシティブワードによる自動ホーム送りが行われる。
+// その条件に合わせてセンシティブワードを検出し、警告・プレビューハイライトの対象にする。
+const sensitiveWordsTarget = computed((): string | null => {
+	if (visibility.value !== 'public' || targetChannel.value != null) return null;
+	if ((instance.sensitiveWords?.length ?? 0) === 0) return null;
+	return (useCw.value && cw.value) ? cw.value : text.value;
+});
+
+const matchedSensitiveWords = computed((): string[] => {
+	const target = sensitiveWordsTarget.value;
+	if (target == null) return [];
+	return detectSensitiveWords(target, instance.sensitiveWords ?? []).matched;
+});
+
+// タイムマシン中で投稿が制限されているかどうか
+const isTimemachinePostRestricted = computed((): boolean => {
+	return !!(isTimemachineActive.value && (ui === 'default' || ui === null));
+});
 
 const canPost = computed((): boolean => {
 	return !props.mock && !posting.value && !posted.value && !uploader.uploading.value && (uploader.items.value.length === 0 || uploader.readyForUpload.value) &&
@@ -1699,6 +1721,14 @@ html[data-color-scheme=light] .preview {
 }
 
 .showHowToUse {
+	margin: 0 20px 16px 20px;
+}
+
+.timemachineWarning {
+	margin: 0 20px 16px 20px;
+}
+
+.sensitiveWordsWarning {
 	margin: 0 20px 16px 20px;
 }
 

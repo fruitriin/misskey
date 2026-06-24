@@ -4421,6 +4421,10 @@ export interface Locale extends ILocale {
      */
     "sensitiveWordsDescription2": string;
     /**
+     * センシティブワード「{words}」が含まれているため、公開範囲がホームになります。
+     */
+    "sensitiveWordsContained": ParameterizedString<"words">;
+    /**
      * 禁止ワード
      */
     "prohibitedWords": string;
