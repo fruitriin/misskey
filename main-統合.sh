@@ -35,15 +35,9 @@ end
 git switch mistems-main
 git reset origin/develop --hard
 
-# MkPostFormの宛先にチャンネルを追加, 翻訳を追加 swap-CW
-# チャンネルの既読を同期, registory-item endpointを追加 router.definition, main-boot
-# 追加, MkHelp, 
-git merge --squash  riin/mkPostFormExtend # チャンネル既読の同期を統合
-git commit -a -m "投稿機能周の拡張"
-
-git merge --squash riin/channelIndex 
+git merge --squash riin/channelIndex
 git commit -a -m "チャンネルだいたいぜんぶみる" # フォローとお気に入りの説明を統合
-git merge --squash riin/mkNoteExtend 
+git merge --squash riin/mkNoteExtend
 git commit -a -m "MkNote拡張（チャンネルRenoteどこからきてどこへいくのか）"
 
 # ノートに表示されているリアクションにホバーしたときに出るやつ MkReactionsViewer.details.vue
@@ -81,23 +75,52 @@ git commit -a -m "無名のユーザーからの通知を拒否する(MisskeyIO/
 git merge --squash riin/annoy-logs-goneto-debuglevel
 git commit -a -m "正常系ログをデバッグレベルに落とす"
 
+git merge --squash riin/fix/notification-unread-count
+git commit -a -m "通知の残カウントバグを直す"
+
+# MkPagesエディターの拡張 + ドラッグアンドドロップのスマホ対応・アニメーション
+git merge --squash riin/release/mkPages-mkDraggable
+git commit -a -m "MkPagesエディター拡張/ドラッグアンドドロップのスマホ拡張とアニメーション"
+
 git merge --squash riin/add-claude-github-actions-1762310148415
 git commit -a -m "Add Claude Code GitHub Workflow"
-# コンフリクトしたので取り込んでない
-# git merge --squash riin/favstar &&\
-# git commit -a -m "ふぁぼすたーを感じる機能" &&\
 
+# ファンアウトタイムラインの歯抜けバグ修正
+git merge --squash riin/fix/fanout-timeline-redis-gap
+git commit -a -m "FTTLの歯抜けバグ修正"
+
+# 以前はコンフリクトで取り込めなかったが release/FavstarAndTimemachine で統合
+git merge --squash riin/release/FavstarAndTimemachine
+git commit -a -m "タイムマシンとふぁぼった"
+
+# 添付ファイルのエンコーディングがSJISになるバグ修正
+git merge --squash riin/fix-textfile-encode
+git commit -a -m "添付ファイルのエンコーディングがSJISになるバグの修正"
+
+# MkPostFormの宛先にチャンネルを追加, 翻訳を追加 swap-CW
+# チャンネルの既読を同期, registory-item endpointを追加 router.definition, main-boot
+# 追加, MkHelp,
+git merge --squash riin/mkPostFormExtend # チャンネル既読の同期を統合
+git commit -a -m "投稿機能周の拡張"
+
+# エラー画面で操作不能になることがあるのを修正
+git merge --squash riin/fix/error-page-unhandled
+git commit -a -m "エラー画面で操作不能になることがあるのを修正"
+
+# 以下は機能ブランチではなく mistems-main 上で直接修正・コミットしている
+# - clipへのノート登録レートリミットを 20->100へ緩和
+# - すべてのアカウントからログアウトされる問題を修正
+# - mistems-main.build-misskey-js-with-types 再生成
+
+# まだ取り込んでいないもの
 # コンフリクトしたので取り込んでない
 # git merge --squash riin/safe-rss &&\
 # git commit -a -m "saferRSS" &&\
-
 # コンフリクトの修正が必要
-#git merge --squash riin/readble-message-ratelimitservice 
-#git commit -a -m "BRIEF_REQUEST_INTERVAL を人間に意味のあるメッセージにする" 
-# git merge --squash riin/timemachine
-# git commit -a -m "実験的.タイムマシン"
+# git merge --squash riin/readble-message-ratelimitservice
+# git commit -a -m "BRIEF_REQUEST_INTERVAL を人間に意味のあるメッセージにする"
 
-set MISVER 75
+set MISVER 94
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
