@@ -1,14 +1,22 @@
 ---
-title: MISTEMS 統合フロー（mistems-main は使い捨てブランチ）
+title: MISTEMS 統合フロー（旧運用・歴史的記録）
 created: 2026-07-03
 last_verified: 2026-07-03
 depends_on: []
-status: active
+status: retired
 ---
 
-# MISTEMS 統合フロー（mistems-main は使い捨てブランチ）
+# MISTEMS 統合フロー（旧運用・歴史的記録）
 
-## 発見した知見
+## ⚠️ 運用停止（2026-07-03 オーナー決定）
+
+**upstream Misskey への追従は放棄された**（イヴの時間構想.md「実装の基盤」参照）。以下の統合フローは今後実行されない歴史的記録である。
+
+- `mistems-main` は**長寿命ブランチ**になった。直接コミットしてよく、次回統合で消える心配はない
+- `main-統合.sh` / `/squash-prep` / `/mistems-readme` / `/rebase-to-develop` はレガシー
+- この記録の価値: リポジトリの歴史（なぜ 27 個の squash コミットで構成されているか）と、mistems-feature-inventory.md の棚卸しの根拠を説明するため
+
+## 発見した知見（旧運用の記録）
 
 - **mistems-main は毎回作り直される使い捨てブランチ**。`main-統合.sh` が `git reset origin/develop --hard` から始まり、機能ブランチを順次 `git merge --squash` → `git commit` で積み上げる。1機能 = 1コミット
 - **統合スクリプトの正史は `mistems-readme` ブランチ**（`origin/mistems-readme:main-統合.sh`、約193行）。ルート `README.md` にも変更点リストとスクリプトの完全コピーが埋め込まれている（更新用スキル `/mistems-readme` あり）
@@ -20,15 +28,12 @@ status: active
 
 ## プロジェクトへの適用
 
-- **mistems-main 上のコミットは統合のたびに書き換わる**。恒久的な変更は機能ブランチとして切り出し、`main-統合.sh` に squash merge 行を追加する（`/squash-prep` スキルが書式生成を担当）
-- イヴの時間の実装も同様: 機能単位のブランチ + 統合スクリプトへの登録、が正規の入れ方
-- mistems-main への force push は運用上の前提（upstream AGENTS.md の force push 禁止は `main`/`develop`/`master` の話で、mistems-main には適用されない）
+- （旧運用時代の指針は失効。現在は mistems-main に直接コミットしてよい。CLAUDE.repo.md「ブランチ運用」参照）
+- 過去のコミット履歴を読むときの解釈: `origin/develop..HEAD` の各コミットは機能ブランチの squash 結果であり、1コミット = 1機能
 
 ## 注意点・制約
 
-- `main-統合.sh` はローカル手動実行。CI では走らない
-- mistems-main 上に直接コミットした変更は、次回の統合（reset --hard）で**消える**。ブランチ化を忘れないこと
-- CHANGELOG.md への追記は統合時に破棄されるため、MISTEMS 運用では実質意味を持たない（upstream への PR を出す場合のみ有効）
+- CHANGELOG.md は旧運用で統合のたびに破棄されていたため、MISTEMS 独自変更の記録は含まれていない（履歴を追うときは README.md の変更点リストが正）
 
 ## 参照
 

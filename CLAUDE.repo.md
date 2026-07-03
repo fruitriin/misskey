@@ -18,10 +18,11 @@ Misskey をベースに独自の拡張機能を追加した分散型SNSプラッ
 
 ## ブランチ運用（重要）
 
-- **`mistems-main` は使い捨てブランチ**。統合スクリプト（`main-統合.sh`、正史は `mistems-readme` ブランチ）が `origin/develop` への reset --hard から機能ブランチ群を squash merge して毎回作り直す
-- したがって **mistems-main への直接コミットは次回統合で消える**。恒久的な変更は機能ブランチに切り出し、`/squash-prep` で統合スクリプトに登録する
-- バージョンは `<upstream>-MISTEMS.<N>` 形式（現在 MISTEMS.96）
-- 詳細: `docs/knowhow/mistems-integration-flow.md`
+- **upstream Misskey への追従は放棄した（2026-07-03 オーナー決定）**。イヴの時間構想の「破壊して綺麗にする」を優先する。破壊的変更・コード削除を躊躇しない
+- **`mistems-main` は長寿命の main ブランチ**として直接開発してよい。かつては `main-統合.sh` が `origin/develop` から毎回作り直す使い捨てブランチだったが、**この統合サイクルは停止した**
+- 旧統合フローの歴史的記録は `docs/knowhow/mistems-integration-flow.md`（retired）。`/squash-prep` `/mistems-readme` `/rebase-to-develop` スキルは旧運用向けのレガシー
+- セキュリティ修正のみ、必要に応じて upstream から個別 cherry-pick を検討する
+- バージョンは `<upstream>-MISTEMS.<N>` 形式（現在 MISTEMS.96）を当面維持する
 
 ## コミットログ規約
 
