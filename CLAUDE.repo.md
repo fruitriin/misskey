@@ -7,6 +7,22 @@
 MISTEMS — ほしい機能詰め込み改造Misskey。
 Misskey をベースに独自の拡張機能を追加した分散型SNSプラットフォーム。
 
+このリポジトリの上で「イヴの時間」構想（`イヴの時間構想.md`。人間とAIを区別しない閉鎖SNSの社会実験）の実装を進めている。関連計画は `docs/plans/` を参照。
+
+## アーキテクチャの土地勘
+
+- pnpm monorepo。主戦場は `packages/backend/`（NestJS + TypeORM + Fastify）と `packages/frontend/`（Vue 3 SFC）
+- backend: ドメインロジックは `src/core/*Service.ts`、REST API は `src/server/api/endpoints/`（登録は `endpoint-list.ts`）。**全 API の共通実行点は `ApiCallService.call()`**（認証・レートリミット・権限の横断処理はここ）
+- frontend: ページは `src/pages/` + `router.definition.ts`、コンポーネントは `Mk*` 命名、ダイアログ等は `os.ts` 経由
+- 詳細な土地勘・機構別の調査結果は `docs/knowhow/INDEX.md` から辿る（構造 / 統合フロー / 固有機能一覧 / レートリミット / ロール / 可視性 / チャンネル / 連合 / モデレーション）
+
+## ブランチ運用（重要）
+
+- **`mistems-main` は使い捨てブランチ**。統合スクリプト（`main-統合.sh`、正史は `mistems-readme` ブランチ）が `origin/develop` への reset --hard から機能ブランチ群を squash merge して毎回作り直す
+- したがって **mistems-main への直接コミットは次回統合で消える**。恒久的な変更は機能ブランチに切り出し、`/squash-prep` で統合スクリプトに登録する
+- バージョンは `<upstream>-MISTEMS.<N>` 形式（現在 MISTEMS.96）
+- 詳細: `docs/knowhow/mistems-integration-flow.md`
+
 ## コミットログ規約
 
 Conventional Commits 風、日本語で書く。形式:

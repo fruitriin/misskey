@@ -24,7 +24,6 @@
      **次の自分へ**: <次に着手すべきこと・先に確認すべきこと>
      **気になっていること**: <未解決の不確実性・前提・違和感。なければ「なし」>
      ```
-   - 「日記」という語彙の意図（「遺書」を使わない理由）は `docs/guides/development-process.md` 参照
    - ブランチ checkpoint が「何がコミットされたか（事実）」を残すのに対し、日記は「なぜそうしたか・次に何を考えていたか（文脈）」を残す。両方で前任者の靴に履き替えられる
    - 日記の自動生成フックは導入しない。書くこと自体が思考の整理であり、次の自分への手紙として人格を持って書く
 4. 実装フェーズの最終サブタスク完了時、以下の知見を `/addf-knowhow` で記録する（既存 knowhow の更新も含む）:
@@ -74,7 +73,48 @@
 
 ## タスク
 
-（現在タスクなし）
+### 現在のタスク: 計画01 プロジェクト全体探索と CLAUDE.repo.md / knowhow 整備
 
-> 新しいタスク開始時は以下の構造で記録する:
-> `### 現在のタスク: <Plan 名>` → `#### サブタスクチェックリスト` → `#### 日記`（運用ルール 3.5 の4項目書式）
+Plan: `docs/plans/01-プロジェクト全体探索とrepo-knowhow整備.md`（trust: full / relaxed / balanced）
+成果物はドキュメントのみ。コード変更なし。
+
+#### サブタスクチェックリスト
+
+- フェーズ1+2: 並列探索（Explore エージェント、読み取りのみ）
+  - [x] A. 全体構造・開発フロー・MISTEMS固有改造の棚卸し
+  - [x] B. レートリミット機構
+  - [x] C. ロール／ポリシー機構＋サインアップ制御（招待・承認）
+  - [x] D. 非ログインユーザーへの可視性制御（UI/API）
+  - [x] E. チャンネル機能
+  - [x] F. 連合（ActivityPub）の有効/無効切り替えと停止影響
+  - [x] G. モデレーション機構
+- フェーズ3: 永続化
+  - [x] knowhow エントリー執筆（9本: repo-structure / mistems-integration-flow / mistems-feature-inventory / rate-limit-mechanics / role-policy-mechanics / channel-mechanics / federation-shutdown / visitor-visibility-mechanics / moderation-mechanics）
+  - [x] `/addf-knowhow-index reindex` で INDEX 更新（9本すべて掲載・全🟢確認済み）
+  - [x] CLAUDE.repo.md 更新（構想への言及・アーキテクチャ土地勘・ブランチ運用の使い捨て警告）
+- 品質ゲート
+  - [ ] `/addf-lint`（ドキュメントのみの変更のため、pnpm build/test の代わりに ADDF 整合性検査を適用）
+  - [ ] addf-code-review-agent（単体）
+  - [ ] addf-contribution-agent
+- 完了処理（Progress 運用ルール 9〜15）
+  - [ ] Plan へ完了状況反映・総括 knowhow・Feedback 記録・アーカイブ・コミット
+
+#### 日記
+
+##### 2026-07-03 — タスク開始
+**やったこと**: /addf-dev で計画01を選択（計画02のブロッカー、若番）。knowhow サブエージェントはプロジェクトエントリーが空のためスキップ。探索を7本の Explore エージェントに分割。
+**今の見立て**: 読み取りのみの低リスクタスク。品質ゲートは pnpm build/test ではなく /addf-lint が適切と判断（コード変更ゼロのため）。
+**次の自分へ**: 探索結果が揃ったら knowhow は1関心事1ファイルで書く。CLAUDE.repo.md は既存の規約セクションを壊さず追記する。
+**気になっていること**: MISTEMS固有改造の棚卸しは upstream との diff が巨大な可能性がある。コミット履歴（MISTEMS.96 まで版が進んでいる）ベースの方が現実的かもしれない。
+
+##### 2026-07-03 — 探索・永続化完了、品質ゲート進行中
+**やったこと**: 探索7本完了、knowhow 9本執筆、INDEX 再構築、CLAUDE.repo.md 更新、Plan/TODO へ完了反映。/addf-lint 実行（ペア1・3はダウンストリーム誤検知と診断、ペア6は実装状況ヘッダ付与で対応済み）。addf-code-review-agent と addf-contribution-agent を並列起動した。
+**今の見立て**: 成果物は全て Markdown。knowhow の主要な断定（デフォルト値等）は grep で抜き打ち検証済みで正確性に自信あり。棚卸しは git log ベースで行い、懸念していた巨大 diff 問題は回避できた。
+**次の自分へ**: レビュー2本の結果を受けて指摘対応 → Feedback 記録 → 総括 knowhow → Progress アーカイブ（.claude/Progresses/2026-07-03-計画01-*.md）→ コミット、の順で完了処理を進める。コミットは mistems-main 直コミットになるが、ADDF 関連ファイルは統合スクリプト外の管理なのでオーナーの運用確認が必要かもしれない（下記参照）。
+**気になっていること**: mistems-main は使い捨てブランチ（reset --hard で作り直し）なのに、ADDF ファイル群・knowhow・構想文書は mistems-main 上に直接置かれている。次回の main-統合.sh 実行で消えるリスクがある。統合スクリプトへの組み込みか別ブランチ管理か、オーナーに確認する価値がある。
+
+##### 2026-07-03 — タスク完了
+**やったこと**: レビュー指摘6件（High 1 / Medium 2 / Low 3）を全件修正（Retry-After 誤認の訂正が最重要だった）。コントリビューション候補3件を Feedback に確定記録。品質ゲート知見を exp に、総括を investigation-plan-pattern.md に記録。Plan/TODO/INDEX 完了反映済み。この直後にアーカイブとコミットを行う。
+**今の見立て**: 計画01は完了条件を満たした。knowhow 10本 + INDEX + CLAUDE.repo.md が次の計画02の足場になる。
+**次の自分へ**: 次タスクは計画02（構想の実装計画策定）。着手時は knowhow フィルタで全10本のうち関連分を拾うこと。分解表（計画02内の A〜I）と各 knowhow の「変更ポイント候補」を突き合わせれば、計画書の骨格はほぼ機械的に組める。
+**気になっていること**: ①mistems-main 使い捨て問題（Feedback 記録済み、オーナー確認待ち）②addf-lint ペア1・3の誤検知は未解消のまま（upstream 修正待ち。次回 lint で ERROR が出ても既知）。
