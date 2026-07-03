@@ -6,8 +6,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <div style="position: relative;">
 	<ul style="display:flex">
-		<div>★：お気に入り済み　</div>
-		<div>↑：フォロー済み　</div>
+		<div>★：お気に入り済み&#12288;</div>
+		<div>↑：フォロー済み&#12288;</div>
 		<div>▲：センシティブ</div>
 	</ul>
 
@@ -21,7 +21,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<MkSwitch v-model="showSensitive"> センシティブチャンネルも表示する</MkSwitch>
 	
-	<div  :style="{display: viewMode === 'legacy' ? 'flex': 'block', flexWrap: viewMode === 'legacy' ? 'wrap' : 'nowrap'}">
+	<div :style="{display: viewMode === 'legacy' ? 'flex': 'block', flexWrap: viewMode === 'legacy' ? 'wrap' : 'nowrap'}">
 		<div v-for="channel in viewChannels" :key="channel.id" style="margin-right: 8px">
 			<MkA v-if="viewMode !== 'modern'" :to="`/channels/${channel.id}`">
 				<span v-if="channel.isSensitive">▲</span><span v-if="channel.isFavorited">★</span><span v-if="channel.isFollowing">↑</span>
@@ -42,9 +42,7 @@ import MkSwitch from '@/components/MkSwitch.vue';
 const viewMode = ref<'legacy' | 'listed' | 'modern'>('legacy');
 const showSensitive = ref(false);
 
-
 const allChannels = ref<Channel[]>([]);
-const hashTags = ref<Record<string, number>>({});
 
 const viewChannels = computed(() => {
 	return allChannels.value.filter((channel) => {
@@ -57,7 +55,6 @@ const viewChannels = computed(() => {
 		return new Date(b.lastNotedAt).getTime() - new Date(a.lastNotedAt).getTime();
 	});
 });
-
 
 onMounted(async () => {
 	// SessionStorageからキャッシュをチェック
