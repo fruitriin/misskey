@@ -8,8 +8,7 @@
 | 鮮度 | ファイル | 要約 | キーワード |
 |---|---|---|---|
 | 🟢 2026-07-03 | [repo-structure.md](repo-structure.md) | pnpm monorepo のパッケージ構成と backend/frontend の責務地図。CI は mistems-main push では発火しない | packages/backend, packages/frontend, misskey-js, NoteCreateService, RoleService, FanoutTimelineService, ApiCallService, endpoints, core/activitypub, router.definition.ts, os.ts, build-misskey-js-with-types |
-| 📜 retired | [mistems-integration-flow.md](mistems-integration-flow.md) | 【旧運用の歴史的記録】upstream 追従は 2026-07-03 に放棄され統合サイクルは停止。mistems-main は長寿命ブランチ化。過去の squash 統合フロー（main-統合.sh・MISVER 採番）の記録 | mistems-main, main-統合.sh, upstream追従放棄, 統合停止, git merge --squash, MISVER, レガシー, 歴史的記録 |
-| 🟢 2026-07-03 | [mistems-feature-inventory.md](mistems-feature-inventory.md) | MISTEMS.96 時点の upstream に無い独自機能・修正の棚卸し。改造が厚い領域（チャンネルUI・投稿フォーム・絵文字ピッカー・検索）の衝突注意 | MkChannelIndex.vue, channelIndex, FavstarAndTimemachine, mkPostFormExtend, search-enhance, hashtag-mutable, mkNoteExtend, use-timemachine, block-mentions-from-unfamiliar, 独自改造一覧 |
+| 🟢 2026-07-03 | [mistems-feature-inventory.md](mistems-feature-inventory.md) | MISTEMS.96 時点の upstream に無い独自機能・修正の棚卸し（統合停止後の最終形スナップショット）。改造が厚い領域（チャンネルUI・投稿フォーム・絵文字ピッカー・検索）の衝突注意 | MkChannelIndex.vue, channelIndex, FavstarAndTimemachine, mkPostFormExtend, search-enhance, hashtag-mutable, mkNoteExtend, use-timemachine, block-mentions-from-unfamiliar, 独自改造一覧 |
 
 ## Misskey 機構調査（イヴの時間）
 
@@ -18,7 +17,7 @@
 | 🟢 2026-07-03 | [channel-mechanics.md](channel-mechanics.md) | チャンネルは強制 public + localOnly で LTL/GTL 非混入・連合非搭乗。空間分割への適性は高い。削除はノート CASCADE 物理削除 | MiChannel, channelId, localOnly強制, channelTimeline, canCreateChannel, isArchived, ChannelFollowing, requireCredential: false, channel-column.vue, CASCADE削除 |
 | 🟢 2026-07-03 | [federation-shutdown.md](federation-shutdown.md) | Meta.federation: 'none' で連合は既存設定でほぼ完全停止できる。nodeinfo 直リンク・deliver enqueue・管理UIからの再有効化が残る抜け穴。追従放棄後は物理削除も選択肢（設定で閉鎖→段階削除の段取り） | Meta.federation, isFederationAllowedHost, ActivityPubServerService, WellKnownServerService, NodeinfoServerService, ApDeliverManagerService, ugcVisibilityForVisitor, update-meta, 閉鎖インスタンス, AP物理削除 |
 | 🟢 2026-07-03 | [visitor-visibility-mechanics.md](visitor-visibility-mechanics.md) | 非ログイン閲覧の現状は穴だらけ（ugcVisibilityForVisitor 参照は5経路のみ）。API レベル制限は allowVisitor 中央ゲート方式が本命。embed/feed/キャッシュの抜け道一覧 | requireCredential, ugcVisibilityForVisitor, allowVisitor, ApiCallService.call, getUserPolicies(null), ltlAvailable, embed, atom/rss, Cache-Control: public, requireSigninToViewContents, 中央ゲート |
-| 🟢 2026-07-03 | [rate-limit-mechanics.md](rate-limit-mechanics.md) | RateLimiterService は固定ウィンドウの薄いラッパで dev 環境無効。意図POST予算制は ApiCallService.call に共有バケットを足す。残量照会 API は不在 | RateLimiterService, ratelimiter, minInterval, IEndpointMeta.limit, rateLimitFactor（大きいほど厳しい）, factor=0免除, RATE_LIMIT_EXCEEDED, 429, 残量照会, notes/reactions/create無制限, 固定ウィンドウ, Retry-After |
+| 🟢 2026-07-03 | [rate-limit-mechanics.md](rate-limit-mechanics.md) | RateLimiterService は固定ウィンドウの薄いラッパで dev 環境無効。意図POST予算制は ApiCallService.call に共有バケットを足す。Retry-After は機能する。残量照会 API は不在（自前カウンタが定石） | RateLimiterService, ratelimiter, minInterval, IEndpointMeta.limit, rateLimitFactor（大きいほど厳しい）, factor=0免除, RATE_LIMIT_EXCEEDED, 429, Retry-After, 残量照会, notes/reactions/create無制限, 固定ウィンドウ |
 | 🟢 2026-07-03 | [role-policy-mechanics.md](role-policy-mechanics.md) | conditional ロール（createdMoreThan 等）は JIT 評価で成熟モデルに使える。ポリシー集約は OR / Math.max で「厳しくする」には priority 必須。canCreateNote 不在・承認制サインアップ不在 | MiRole, condFormula, createdMoreThan, evalCond, getUserPolicies, DEFAULT_POLICIES, priority集約, canPublicNote, disableRegistration, MiRegistrationTicket, canInvite, rootバイパス |
 | 🟢 2026-07-03 | [moderation-mechanics.md](moderation-mechanics.md) | AI モデレーターは bot + moderator ロール + admin stream 購読で既存機構のみで組める。suspend はフォロー関係を不可逆破壊——追放刑は可逆な exile フラグも検討 | isModerator, MiAccessToken, admin stream, newAbuseUserReport, read:admin:stream, MiAbuseUserReport, suspend, isSuspended, UserSuspendService, moderation_log, exile, 追放刑, resolve-abuse-user-report |
 
@@ -28,6 +27,12 @@
 |---|---|---|---|
 | 🟢 2026-07-03 | [investigation-plan-pattern.md](investigation-plan-pattern.md) | 調査計画の実行パターン。機構単位分割×改造意図の注入×事実/推測区別。正確性の信頼境界（リポ内=信頼可、外部パッケージ・集計値=要自前検証） | 調査計画, 並列探索, Explore, 機構単位, 事実と推測, 信頼境界, knowhow化, squash merge棚卸し, 計画01 |
 | 🟢 2026-07-03 | [parallel-plan-drafting.md](parallel-plan-drafting.md) | 計画書の並列起草パターン。共有接続点はインターフェース所有者を1計画に固定し合成規則を親計画に先置き。並列起草後の相互整合レビューは省略不可 | 並列起草, 計画書, 接続点, インターフェース所有者, 合成規則, 相互整合レビュー, resolveLimit, 要オーナー確認, 計画02 |
+
+## 📜 棚（superseded / retired）
+
+| 鮮度 | ファイル | 要約 | キーワード |
+|---|---|---|---|
+| 📜 retired | [mistems-integration-flow.md](mistems-integration-flow.md) | 【旧運用の歴史的記録】upstream 追従は 2026-07-03 に放棄され統合サイクルは停止。mistems-main は長寿命ブランチ化。過去の squash 統合フロー（main-統合.sh・MISVER 採番）の記録 | mistems-main, main-統合.sh, upstream追従放棄, 統合停止, git merge --squash, MISVER, レガシー, 歴史的記録 |
 
 ## 鮮度レポート
 

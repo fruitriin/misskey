@@ -24,6 +24,7 @@ depends_on: []
 - **対象**: `.claude/addfTools/lint-template-sync.py`（ペア1: `check_pair1()` / ペア3: `check_boot_pair()`）、`.claude/commands/addf-init.md`
 - **問題**: lint が `ProgressTemplate.addf.md` の**ファイル存在**で「ADDF 本体」と判定するが、`addf-init.md` は `.claude/templates/` を丸ごと（`.addf.md` 含む）ダウンストリームへコピーする。結果、**ADDF/ 配布を受けた全ダウンストリームで構造的に誤検知**する。ペア3も同様に、ダウンストリームが独自の `AGENTS.md`（本リポジトリでは Misskey 由来）を持つケースで「ブートシーケンス見出しなし」ERROR を誤報する
 - **修正案**: `.claude/addf-lock.json` の存在を一次シグナルにする（addf-init / addf-migrate が既に採用している判定方法と統一）。lock あり → ダウンストリーム確定 → ペア1は `ProgressTemplate.md` を正とし、ペア3は SKIP
+- **追加の実例（2026-07-03 の v0.4.0 migrate で確認）**: ①この誤検知は v0.4.0 でも未修正 ②名前衝突は AGENTS.md だけでなく **CONTRIBUTING.md でも発生**する（本リポジトリでは Misskey 由来。migrate のスキル手順どおりに上書きすると Misskey のコントリビューションガイドが消えるため手動除外した）。PR では「配布ファイル名とダウンストリーム既存ファイルの衝突」として両方を挙げる
 - **副次修正案**: `addf-init.md` のカテゴリ1コピーから `*.addf.md` を除外（分離規約に従い、ダウンストリームに `.addf.md` を物理的に置かない根治策）
 - **回帰テスト**: `.claude/tests/tools/test-template-sync.sh` に「addf-lock.json ありダウンストリームで `.addf.md` / 独自 `AGENTS.md` が存在するケース」を追加（`docs/knowhow/ADDF/sync-lint-design.md` の mktemp サンドボックス+ドリフト注入パターンをそのまま使う）
 
@@ -68,7 +69,7 @@ depends_on: []
 
 ## 要オーナー確認
 
-1. **ADDF 上流リポジトリの場所と PR の出し方**（URL・ブランチ規約・PR 言語）。エージェントからは特定できていない
+1. **PR の出し方**（ブランチ規約・PR 言語）。リポジトリ自体は `addf-lock.json` から `https://github.com/fruitriin/ADDF.git` と判明済み（2026-07-03 の migrate 実行で確認）
 2. PR 分割の粒度（3本案でよいか、1本に束ねるか）
 3. 項目4（PlanTemplate）は機能提案なので、上流の受け入れ方針次第では Issue で意見を聞いてから PR にする選択肢もある——どちらから入るか
 
