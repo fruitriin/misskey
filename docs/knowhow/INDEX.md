@@ -27,7 +27,8 @@
 | 鮮度 | ファイル | 要約 | キーワード |
 |---|---|---|---|
 | 🟢 2026-07-03 | [investigation-plan-pattern.md](investigation-plan-pattern.md) | 調査計画の実行パターン。機構単位分割×改造意図の注入×事実/推測区別。正確性の信頼境界（リポ内=信頼可、外部パッケージ・集計値=要自前検証） | 調査計画, 並列探索, Explore, 機構単位, 事実と推測, 信頼境界, knowhow化, squash merge棚卸し, 計画01 |
+| 🟢 2026-07-03 | [parallel-plan-drafting.md](parallel-plan-drafting.md) | 計画書の並列起草パターン。共有接続点はインターフェース所有者を1計画に固定し合成規則を親計画に先置き。並列起草後の相互整合レビューは省略不可 | 並列起草, 計画書, 接続点, インターフェース所有者, 合成規則, 相互整合レビュー, resolveLimit, 要オーナー確認, 計画02 |
 
 ## 鮮度レポート
 
-🔴 stale / needs-review のファイルはなし（直下10ファイルすべて 🟢 fresh）。
+🔴 stale / needs-review のファイルはなし（直下11ファイル: 🟢 fresh 10 + 📜 retired 1）。
