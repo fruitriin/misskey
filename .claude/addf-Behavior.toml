@@ -9,6 +9,12 @@
 enable = false
 machine = "mac" # "mac" | "linux" | "windows" — プラットフォーム固有ツールの選択に使用
 
+[speculation]
+# アイドル時の worktree 投機開発（/addf-speculate）。オプトイン式
+# 投機は speculative/ ブランチに隔離され、本流への自動マージ経路は存在しない
+enable = true
+max_worktrees = 3
+
 [context-reminder]
 # 能動コンパクション促しの発火閾値（実測トークン数）。0 で無効化。
 # 公称ウィンドウではなく「実効コンテキスト」（文脈の取り違えが増え始める手前）基準
