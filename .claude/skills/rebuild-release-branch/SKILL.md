@@ -96,6 +96,10 @@ push 後:
 ## 経験の記録
 （実行時に任意で追記）
 
-- 2026-07-21: `riin/release/FavstarAndTimemachine` が `packages/frontend/src/utility/paginator.ts` でコンフリクト（FTTL 修正の itemRemovalDelay と favstar 側の allowPartial が同位置に追加）。このときは統合ブランチ上で両方残す解決を行い rerere に記録したが、本来はこのスキルの手順で release を再構成すべきケース。
+- 2026-07-21: `riin/release/FavstarAndTimemachine` が `packages/frontend/src/utility/paginator.ts` でコンフリクト（**本家 develop の itemRemovalDelay (#17708, TransitionGroup 廃止)** と timemachine 側の allowPartial が同位置に追加。当初 FTTL 修正由来と誤記していたが `git log -S itemRemovalDelay` で本家由来と確認済み）。このときは統合ブランチ上で両方残す解決を行い rerere に記録したが、本来はこのスキルの手順で release を再構成すべきケース。
 - 2026-07-21: `riin/release/mkPages-mkDraggable` を本スキルの手順で再構成。機能同士の真のコンフリクト（page-editor/common.ts と page-editor.el.text.vue の `dragStartCallback` → `pointerStartCallback` 改名 × mkPages のツールバー追加）は rerere の過去解決が正しく適用された。統合側で後から当てた fix（navbar @click ラムダ化のような vue-tsc 対応）は rerere の解決に含まれないので、再構成時に織り込み忘れないこと。
-- 2026-07-22: FavstarAndTimemachine の paginator.ts コンフリクトが予告通り再発（前日に統合側で解決したのみで release 未再構成だったため）。rerere は自動解決するがファイルをステージしないため、統合スクリプトは「未解決」として停止する。この再発を受けて手順 0（統合続行 + release 再構成の両方を必須化）を追加。
+- 2026-07-22: FavstarAndTimemachine の paginator.ts コンフリクトが予告通り再発（前日に統合側で解決したのみで release 未再構成だったため）。rerere は自動解決するがファイルをステージしないため、統合スクリプトは「未解決」として停止する。この再発を受けて手順 0（統合続行 + release 再構成の両方を必須化）を追加。同日の再構成作業で得た教訓:
+	- **コンフリクト解決後は必ずツリー全体でマーカー残存を grep する** (`git grep -l '^<<<<<<<' -- packages`)。1ファイルに複数のコンフリクト領域があることがあり、1箇所だけ直して add するとマーカーごとコミットされる（timemachine の MkNote.vue で実際に発生、amend + cherry-pick で復旧）
+	- 解決の正しさは「旧 diff と新 diff の `--numstat` を per-file で突き合わせ」で機械的に検証できる。行数が数十行ずれたファイルはマーカー混入や解決ミスのシグナル
+	- rerere の解決に「統合ブランチでしか入らないはずの変更」が見えても、`git log -S <識別子>` で出所を確認してから汚染と断定する（itemRemovalDelay は本家 develop 由来で rerere は正しかった。誤って `rerere forget` してしまった）
+	- `git apply -3` はコンフリクト時に unmerged index を作り、その瞬間 rerere が再発火して記録済み解決を上書き適用してくる。rerere を迂回して手動解決したい場合は index を経由せずファイルを直接構成して `git add` する
