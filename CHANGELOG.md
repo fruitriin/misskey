@@ -1,3 +1,14 @@
+## Unreleased
+
+### General
+-
+
+### Client
+- Fix: Android でドロワー型の絵文字ピッカーを開きキーボード表示中に、新着ノート等の再レイアウトでピッカーの表示位置がずれる問題を修正 (viewport に interactive-widget=resizes-content を指定)
+
+### Server
+-
+
 ## 2026.7.0
 
 ### Note
