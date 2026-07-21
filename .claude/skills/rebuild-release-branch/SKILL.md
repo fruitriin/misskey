@@ -27,6 +27,13 @@ mistems-main 上でコンフリクトを解決すると rerere に記録され�
 
 ## 処理フロー
 
+### 0. 統合の続行と release 作り直しは両方やる
+
+統合中に release がコンフリクトしてこのスキルが起動された場合、「統合をその場で通す」と「release を作り直す」は二者択一ではなく**両方実施する**。
+
+- コンフリクトが rerere で自動解決されている場合（マーカー残存なし・unstaged のまま停止）は、解決内容を検証したうえで `git add` → スクリプト記載のコミットを実行し、当日の統合はそのまま通してよい
+- ただしそれで終わりにせず、**必ず手順 1〜6 で release ブランチを作り直す**。作り直さない限り release は古い develop ベースのままなので、次回の統合で同じコンフリクトが再発する
+
 ### 1. 構成ブランチの特定
 
 release ブランチがどの機能ブランチから構成されているかを以下の順で調べる:
@@ -90,3 +97,5 @@ push 後:
 （実行時に任意で追記）
 
 - 2026-07-21: `riin/release/FavstarAndTimemachine` が `packages/frontend/src/utility/paginator.ts` でコンフリクト（FTTL 修正の itemRemovalDelay と favstar 側の allowPartial が同位置に追加）。このときは統合ブランチ上で両方残す解決を行い rerere に記録したが、本来はこのスキルの手順で release を再構成すべきケース。
+- 2026-07-21: `riin/release/mkPages-mkDraggable` を本スキルの手順で再構成。機能同士の真のコンフリクト（page-editor/common.ts と page-editor.el.text.vue の `dragStartCallback` → `pointerStartCallback` 改名 × mkPages のツールバー追加）は rerere の過去解決が正しく適用された。統合側で後から当てた fix（navbar @click ラムダ化のような vue-tsc 対応）は rerere の解決に含まれないので、再構成時に織り込み忘れないこと。
+- 2026-07-22: FavstarAndTimemachine の paginator.ts コンフリクトが予告通り再発（前日に統合側で解決したのみで release 未再構成だったため）。rerere は自動解決するがファイルをステージしないため、統合スクリプトは「未解決」として停止する。この再発を受けて手順 0（統合続行 + release 再構成の両方を必須化）を追加。
