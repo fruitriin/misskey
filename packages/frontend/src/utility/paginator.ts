@@ -17,6 +17,8 @@ export type MisskeyEntity = {
 	id: string;
 	createdAt: string;
 	_shouldInsertAd_?: boolean;
+	_shouldAnimateIn_?: boolean;
+	_shouldAnimateOut_?: boolean;
 };
 
 type AbsEndpointType = {
@@ -54,6 +56,7 @@ export interface IPaginator<T = unknown, _T = T & MisskeyEntity> {
 	noPaging: boolean;
 	searchQuery: Ref<null | string>;
 	order: Ref<'newest' | 'oldest'>;
+	allowPartial: boolean;
 
 	init(): Promise<void>;
 	reload(): Promise<void>;
@@ -107,6 +110,9 @@ export class Paginator<
 	private canFetchDetection: 'safe' | 'limit' | null = null;
 	private aheadQueue: T[] = [];
 	private useShallowRef: SRef;
+	public allowPartial: boolean;
+	private itemRemovalDelay: number | false;
+	private removalTimers = new Map<string, number>();
 
 	// 配列内の要素をどのような順序で並べるか
 	// newest: 新しいものが先頭 (default)
@@ -137,6 +143,10 @@ export class Paginator<
 		canFetchDetection?: 'safe' | 'limit';
 
 		useShallowRef?: SRef;
+		allowPartial?: boolean;
+
+		// アイテム削除時にアニメーションを待つ時間 (ms)
+		itemRemovalDelay?: number | false;
 
 		canSearch?: boolean;
 		searchParamName?: keyof E['req'];
@@ -160,7 +170,9 @@ export class Paginator<
 		this.noPaging = props.noPaging ?? false;
 		this.offsetMode = props.offsetMode ?? false;
 		this.canSearch = props.canSearch ?? false;
+		this.itemRemovalDelay = props.itemRemovalDelay ?? false;
 		this.searchParamName = props.searchParamName ?? 'search';
+		this.allowPartial = props.allowPartial ?? true
 
 		this.getNewestId = this.getNewestId.bind(this);
 		this.getOldestId = this.getOldestId.bind(this);
@@ -191,6 +203,7 @@ export class Paginator<
 	}
 
 	public async init(): Promise<void> {
+		this.clearRemovalTimers();
 		this.items.value = [];
 		this.aheadQueue = [];
 		this.queuedAheadItemsCount.value = 0;
@@ -201,7 +214,7 @@ export class Paginator<
 			...(this.computedParams ? this.computedParams.value : {}),
 			...(this.searchQuery.value != null && this.searchQuery.value.trim() !== '' ? { [this.searchParamName]: this.searchQuery.value } : {}),
 			limit: this.limit ?? FIRST_FETCH_LIMIT,
-			allowPartial: true,
+			allowPartial: this.allowPartial,
 			...((this.initialId == null && this.initialDate == null) && this.initialDirection === 'newer' ? {
 				sinceId: '0',
 			} : this.initialDirection === 'newer' ? {
@@ -384,6 +397,8 @@ export class Paginator<
 
 	public prepend(item: T): void {
 		if (this.items.value.some(x => x.id === item.id)) return;
+		item._shouldAnimateIn_ = true;
+		item._shouldAnimateOut_ = false;
 		this.items.value.unshift(item);
 		this.trim(false);
 		if (this.useShallowRef) triggerRef(this.items);
@@ -399,6 +414,9 @@ export class Paginator<
 
 	public releaseQueue(): void {
 		if (this.aheadQueue.length === 0) return; // これやらないと余計なre-renderが走る
+		for (const item of this.aheadQueue) {
+			item._shouldAnimateIn_ = true;
+		}
 		this.unshiftItems(this.aheadQueue);
 		this.aheadQueue = [];
 		this.queuedAheadItemsCount.value = 0;
@@ -407,11 +425,41 @@ export class Paginator<
 	public removeItem(id: string): void {
 		// TODO: queueからも消す
 
+		if (this.itemRemovalDelay === false) {
+			const index = this.items.value.findIndex(x => x.id === id);
+			if (index !== -1) {
+				this.items.value.splice(index, 1);
+				if (this.useShallowRef) triggerRef(this.items);
+			}
+			return;
+		}
+
 		const index = this.items.value.findIndex(x => x.id === id);
 		if (index !== -1) {
-			this.items.value.splice(index, 1);
 			if (this.useShallowRef) triggerRef(this.items);
+
+			const item = this.items.value[index]!;
+			item._shouldAnimateOut_ = true;
+			if (this.useShallowRef) triggerRef(this.items);
+
+			if (this.removalTimers.has(id)) return;
+
+			this.removalTimers.set(id, window.setTimeout(() => {
+				this.removalTimers.delete(id);
+				const currentIndex = this.items.value.findIndex(x => x.id === id);
+				if (currentIndex !== -1) {
+					this.items.value.splice(currentIndex, 1);
+					if (this.useShallowRef) triggerRef(this.items);
+				}
+			}, this.itemRemovalDelay + 20)); // アニメーション終了からやや余裕をもたせる
 		}
+	}
+
+	private clearRemovalTimers(): void {
+		for (const timer of this.removalTimers.values()) {
+			window.clearTimeout(timer);
+		}
+		this.removalTimers.clear();
 	}
 
 	public updateItem(id: string, updater: (item: T) => T): void {

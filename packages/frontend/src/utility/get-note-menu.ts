@@ -25,6 +25,7 @@ import { genEmbedCode } from '@/utility/get-embed-code.js';
 import { prefer } from '@/preferences.js';
 import { getPluginHandlers } from '@/plugin.js';
 import { globalEvents } from '@/events.js';
+import { timemachineAvailable } from '@/utility/check-permissions.js';
 
 const isInBrowserTranslationAvailable = (
 	'LanguageDetector' in window &&
@@ -33,7 +34,7 @@ const isInBrowserTranslationAvailable = (
 
 export async function getNoteClipMenu(props: {
 	note: Misskey.entities.Note;
-	currentClip?: Misskey.entities.Clip;
+	currentClip?: Misskey.entities.Clip | null;
 }) {
 	function getClipName(clip: Misskey.entities.Clip) {
 		if ($i && clip.userId === $i.id && clip.notesCount != null) {
@@ -181,8 +182,8 @@ export function getNoteMenu(props: {
 	note: Misskey.entities.Note;
 	translation: Ref<Misskey.entities.NotesTranslateResponse | null>;
 	translating: Ref<boolean>;
-	currentClip?: Misskey.entities.Clip;
-	currentAntenna?: Misskey.entities.Antenna;
+	currentClip?: Misskey.entities.Clip | null;
+	currentAntenna?: Misskey.entities.Antenna | null;
 }) {
 	const appearNote = getAppearNote(props.note) ?? props.note;
 	const link = appearNote.url ?? appearNote.uri;
@@ -372,6 +373,25 @@ export function getNoteMenu(props: {
 			text: i18n.ts.copyContent,
 			action: copyContent,
 		}, getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink));
+
+	if (timemachineAvailable) {
+		menuItems.push({
+			icon: 'ti ti-clock-bolt',
+			text: i18n.ts.jumpToTimemachine,
+			action: () => {
+				// ノートの作成時刻から1分後の時刻を計算
+				const noteDate = new Date(new Date(appearNote.createdAt).getTime() + 60000);
+				const year = noteDate.getFullYear();
+				const month = String(noteDate.getMonth() + 1).padStart(2, '0');
+				const day = String(noteDate.getDate()).padStart(2, '0');
+				const hours = String(noteDate.getHours()).padStart(2, '0');
+				const minutes = String(noteDate.getMinutes()).padStart(2, '0');
+				const seconds = String(noteDate.getSeconds()).padStart(2, '0');
+				const gotoParam = `${year}${month}${day}${hours}${minutes}${seconds}`;
+				os.pageWindow(`/timemachine?goto=${gotoParam}`);
+			},
+		});
+	}
 
 		if (link) {
 			menuItems.push({
