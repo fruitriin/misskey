@@ -113,6 +113,19 @@ develop から派生しているが、ベースが古いブランチを最新 de
    - コンフリクト元のブランチに統合する（基本概念が既存 MISTEMS の拡張である場合）
    - 中止して元のコミットハッシュに復元
 
+## 特殊ケース
+
+### 統合ブランチ (mistems-main) の作り直しで riin/release/* がコンフリクトした場合
+
+mistems-main を最新 origin/develop から作り直す（main-統合.sh の実行・再実行に相当する）過程で `riin/release/*` ブランチの squash merge がコンフリクトしたら、その場しのぎで解決して終わりにせず **rebuild-release-branch スキル** を呼び出して release ブランチ自体を再構成する。
+
+### 上流が大きく破壊的な変更を加えていた場合
+
+rebase 対象ブランチが変更しているファイル・機能を、上流 (origin/develop) が削除・別実装への置き換えなどで大きく書き換えていた場合（例: MkImgPreviewDialog → MkLightbox 化）、その場でコンフリクトを解決し続けない。**そのブランチはスキップ（統合から除外）し、ユーザーとペアで統廃合の方針を決める**。
+
+- main-統合.sh の該当エントリはコメントアウトし、理由と復帰条件をコメントで残す
+- ローカルの rebase 途中成果は作り直しの素材として残してよい（push はしない）
+
 ## force push
 
 force push は破壊的操作なので、実行前に必ず:
@@ -130,6 +143,10 @@ git push riin <branch> --force-with-lease
 
 - 既存の PR がある場合は PR 番号とリンクを報告する
 - 一時 worktree を使った場合は削除する
+
+## スキル修正時の反映
+
+このスキルを修正したら、**claudeImplement worktree** (`misskey/worktrees/claudeImplement`、ブランチ `add-claude-github-actions-1762310148415`) の同ファイルにも反映してコミットし、riin へ push する。mistems-main は統合のたびに origin/develop へ reset されるため、統合ブランチ側の `.claude/` 変更はコミットしても次回統合で消える（スキルの本籍はこのブランチで、main-統合.sh 経由で mistems-main に取り込まれる）。
 
 ## 経験の記録
 （実行時に任意で追記）

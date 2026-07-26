@@ -56,6 +56,8 @@ git branch backup/release-<name>-$(date +%Y%m%d) riin/release/<name>
 
 構成ブランチのうちコンフリクトの原因になっているものだけでなく、**全構成ブランチを乗せ直す**。一部だけ新しいと release 再構成時に機能ブランチ同士のベース差でまたコンフリクトする。
 
+上流が構成ブランチの変更対象を大きく書き換えていた場合（ファイル削除・別実装への置き換え等）は、rebase-to-develop スキルの「上流が大きく破壊的な変更を加えていた場合」に従い、**そのブランチをスキップしてユーザーとペアで統廃合の方針を決める**（main-統合.sh の該当エントリはコメントアウトし、理由と復帰条件を残す）。
+
 ### 4. release ブランチの再構成
 
 最新 develop から作り直し、rebase 済みの機能ブランチを順にマージする:
@@ -92,6 +94,10 @@ push 後:
 - mistems-main 側の統合を再実行（またはコンフリクトした squash merge からやり直し）して、コンフリクトが解消されたことを確認する
 - rerere に旧解決が残っていて新しいマージ結果と食い違う場合は `git rerere forget <file>` で消す
 - 一時ブランチ・古い backup ref の削除はユーザーに確認してから行う
+
+## スキル修正時の反映
+
+このスキルを修正したら、**claudeImplement worktree** (`misskey/worktrees/claudeImplement`、ブランチ `add-claude-github-actions-1762310148415`) の同ファイルにも反映してコミットし、riin へ push する。mistems-main は統合のたびに origin/develop へ reset されるため、統合ブランチ側の `.claude/` 変更はコミットしても次回統合で消える（スキルの本籍はこのブランチで、main-統合.sh 経由で mistems-main に取り込まれる）。
 
 ## 経験の記録
 （実行時に任意で追記）
