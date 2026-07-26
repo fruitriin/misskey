@@ -103,3 +103,9 @@ push 後:
 	- 解決の正しさは「旧 diff と新 diff の `--numstat` を per-file で突き合わせ」で機械的に検証できる。行数が数十行ずれたファイルはマーカー混入や解決ミスのシグナル
 	- rerere の解決に「統合ブランチでしか入らないはずの変更」が見えても、`git log -S <識別子>` で出所を確認してから汚染と断定する（itemRemovalDelay は本家 develop 由来で rerere は正しかった。誤って `rerere forget` してしまった）
 	- `git apply -3` はコンフリクト時に unmerged index を作り、その瞬間 rerere が再発火して記録済み解決を上書き適用してくる。rerere を迂回して手動解決したい場合は index を経由せずファイルを直接構成して `git add` する
+- 2026-07-27: `riin/release/mkPages-mkDraggable` の MkUploaderItems.vue コンフリクト（develop の uploader 大改修 × MkDraggable 化）を統合側で解決後、本スキルの手順で構成ブランチ rebase → release 再構成を実施。同日 `riin/mkPostFormExtend` は上流の書き換わりが大きすぎたため統合からスキップ（あとで作り直す方針、main-統合.sh にコメントアウトで明記）。得た教訓:
+	- **本家がファイルを削除して置き換えた場合（例: MkImgPreviewDialog → MkLightbox）、機能ブランチ側の動的 import 参照は squash merge でコンフリクトにならず静かに壊れる**。マージ後に `pnpm --filter frontend typecheck` を回すと `TS2307 Cannot find module` で検出できる
+	- rerere の解決が「両側のほぼ同じ処理を重複採用」することがある（MkPostForm の quoteId 二重代入）。解決後は vue-component-reviewer agent で機械レビューすると残骸を拾える
+	- 上流の書き換わりが激しいブランチは、統合上で直し続けるより**スキップして作り直す**判断が有効。スクリプトには理由と復帰条件をコメントで残す
+	- 統合ブランチで `git switch -c` が失敗（既存 `tmp` ブランチと `tmp/xxx` 階層名の衝突）した直後に `&&` で繋いでいない merge が現在ブランチ上で走り、インデックスが汚れた。ブランチ作成とマージは必ず `&&` で連結する
+	- スキルへの経験追記や統合後 fixup は**コミットするまで `git reset --hard` で消える**。統合やり直しの巻き戻し前に、リポジトリ内の未コミット変更（.claude/ 含む）を確認する
