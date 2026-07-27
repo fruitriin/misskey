@@ -871,6 +871,21 @@ describe('CleanRemoteNotesProcessorService', () => {
 			await expect(notesRepository.findOneBy({ id: noteB.id })).resolves.toBeNull();
 			expect(result.resumedFromCursor).toBe(noteA.id);
 		});
+
+		test('persists cursor per batch and clears it on completion', async () => {
+			const oldTime = Date.now() - ms('91 days');
+			await createNote({}, bob, oldTime);
+
+			const setSpy = vi.spyOn(redisClient, 'set');
+
+			const result = await service.process(createMockJob() as any);
+
+			// バッチ処理でカーソルが SET され、完走時に DEL されている
+			expect(setSpy.mock.calls.some(([key]) => key === CLEAN_REMOTE_NOTES_CURSOR_KEY)).toBe(true);
+			await expect(redisClient.get(CLEAN_REMOTE_NOTES_CURSOR_KEY)).resolves.toBeNull();
+			expect(result.skipped).toBe(false);
+			setSpy.mockRestore();
+		});
 	});
 
 	// region note_reaction protection (NOT EXISTS subquery with INNER JOIN on user.host IS NULL)

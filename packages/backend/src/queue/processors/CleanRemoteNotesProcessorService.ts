@@ -116,6 +116,7 @@ export class CleanRemoteNotesProcessorService {
 
 		if (!minId) {
 			this.logger.info('No notes can possibly be deleted, skipping...');
+			await this.redisClient.del(CLEAN_REMOTE_NOTES_CURSOR_KEY);
 			return {
 				deletedCount: 0,
 				oldest: null,
@@ -214,6 +215,7 @@ export class CleanRemoteNotesProcessorService {
 			if (elapsed >= maxDuration) {
 				job.log(`Reached maximum duration of ${maxDuration}ms, stopping... (last cursor: ${cursorLeft}, final progress ${progress}%)`);
 				job.updateProgress(100);
+				await this.redisClient.set(CLEAN_REMOTE_NOTES_CURSOR_KEY, cursorLeft);
 				break;
 			}
 
@@ -263,6 +265,7 @@ export class CleanRemoteNotesProcessorService {
 
 						if (!lastId) {
 							job.log('No more notes to clean.');
+							await this.redisClient.del(CLEAN_REMOTE_NOTES_CURSOR_KEY);
 							break;
 						}
 
@@ -277,6 +280,7 @@ export class CleanRemoteNotesProcessorService {
 
 			if (noteIds.length === 0) {
 				job.log('No more notes to clean.');
+				await this.redisClient.del(CLEAN_REMOTE_NOTES_CURSOR_KEY);
 				break;
 			}
 
@@ -320,6 +324,8 @@ export class CleanRemoteNotesProcessorService {
 			}
 
 			cursorLeft = noteIds.filter(result => result.isBase).reduce((max, { id }) => id > max ? id : max, cursorLeft);
+
+			await this.redisClient.set(CLEAN_REMOTE_NOTES_CURSOR_KEY, cursorLeft);
 
 			job.log(`Deleted ${noteIds.length} notes; ${Date.now() - batchBeginAt}ms`);
 
