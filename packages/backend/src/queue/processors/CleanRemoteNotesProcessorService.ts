@@ -233,9 +233,21 @@ export class CleanRemoteNotesProcessorService {
 			let noteIds = null;
 
 			try {
-				noteIds = await candidateNotesQuery({ limit: currentLimit }).setParameters(
-					{ newestLimit, cursorLeft },
-				).getRawMany<{ id: MiNote['id'], isRemovable: boolean, isBase: boolean }>();
+				// The planner tends to grossly overestimate the row count of the id-range scan on `note`
+				// (tens of millions vs. the actual few hundred rows the LIMIT needs), and then picks a
+				// Merge Anti Join for the note_reaction NOT EXISTS whose inner side scans millions of
+				// reaction rows preceding the cursor position (measured 58.5s -> 96ms per batch on a
+				// 45M-note production instance). SET LOCAL pins this batch to index-probing Nested Loop
+				// Anti Joins instead. JIT is also disabled: this one-shot dynamic SQL only pays the
+				// compilation cost (~80ms) without ever reusing the compiled code.
+				noteIds = await this.db.transaction(async em => {
+					await em.query('SET LOCAL enable_mergejoin = off');
+					await em.query('SET LOCAL jit = off');
+					return await candidateNotesQuery({ limit: currentLimit })
+						.setParameters({ newestLimit, cursorLeft })
+						.setQueryRunner(em.queryRunner!)
+						.getRawMany<{ id: MiNote['id'], isRemovable: boolean, isBase: boolean }>();
+				});
 			} catch (e) {
 				if (e instanceof QueryFailedError && e.driverError?.code === '57014') {
 					// Statement timeout (maybe suddenly hit a large note tree), if possible, reduce the limit and try again
