@@ -48,6 +48,7 @@
 - Fix: ノートの詳細表示で削除された引用元が表示されない問題を修正
 
 ### Server
+- Enhance: `/api/stats` のリアクション数を全件カウントではなく統計情報 (`pg_class.reltuples`) による概算値で返すように (巨大なテーブルでの statement timeout を防止)
 - Feat: OpenTelemetryサポート
   - 詳細な設定はconfigファイルを参照してください。
   - Sentryとの併用も可能です。Sentry併用時は、PostgreSQL Query と Redis command は Sentry で計装されます。
