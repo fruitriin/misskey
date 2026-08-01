@@ -437,7 +437,12 @@ export class ApRendererService {
 		if (note.channelId != null) {
 			const channel = note.channel ?? await this.channelsRepository.findOneBy({ id: note.channelId });
 			const channelUrl = `${this.config.url}/channels/${note.channelId}`;
-			const namePart = channel != null ? `「${channel.name}」 ` : '';
+			// チャンネル名は source (MFM原文) にも載るため、改行/制御文字と MFM/メンション記号を潰して
+			// 受信側での「From:」行偽装やミュートアンカー汚染を防ぐ (URL 部分がアンカー本体)
+			const safeName = channel != null
+				? channel.name.replace(/[\r\n -]/g, ' ').replace(/[@#$`[\]]/g, '').trim()
+				: null;
+			const namePart = safeName ? `「${safeName}」 ` : '';
 			text = `${text}\n\nFrom: ${namePart}${channelUrl}`.trim();
 		}
 

@@ -106,12 +106,23 @@ describe('チャンネル連合 (federationPolicy)', () => {
 			assert.strictEqual(followers.status, 400);
 		});
 
-		test('アーカイブ済みチャンネルへはリプライ経由でも投稿できない (チャンネル外ノートに落ちる)', async () => {
+		test('アーカイブ済みチャンネルへのリプライはスコープ整合を優先しチャンネルに入る (公開ノートに漏れない)', async () => {
 			const channel = (await api('channels/create', { name: 'archived-reply', federationPolicy: 'public' }, alice)).body;
 			const parent = await post(alice, { text: 'parent', channelId: channel.id });
 			await api('channels/update', { channelId: channel.id, isArchived: true }, alice);
+			// channelId を送らずリプライしても、チャンネル外の通常公開ノートには化けずチャンネルに留まる
 			const reply = (await api('notes/create', { text: 'reply', replyId: parent.id }, alice)).body.createdNote;
-			assert.strictEqual(reply.channelId, null);
+			assert.strictEqual(reply.channelId, channel.id);
+		});
+
+		test('連合チャンネルで自分の followers ノートを引用しても連合されない (localOnly に落ちる)', async () => {
+			const channel = (await api('channels/create', { name: 'quote-followers', federationPolicy: 'public' }, alice)).body;
+			const followersNote = await post(alice, { text: 'secret', visibility: 'followers' });
+			// 引用 (renoteId + text) はチャンネルに入るが、followers 由来なので widening されず localOnly 止まり
+			// (public + localOnly = 従来のチャンネルノートと同形。連合はされない)
+			const quote = (await api('notes/create', { text: 'quote', channelId: channel.id, renoteId: followersNote.id }, alice)).body.createdNote;
+			assert.strictEqual(quote.localOnly, true);
+			assert.strictEqual(quote.visibility, 'public');
 		});
 	});
 

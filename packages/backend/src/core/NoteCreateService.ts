@@ -448,10 +448,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}, data: Option, silent = false): Promise<MiNote> {
 		// チャンネル外にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
-		// アーカイブ済みチャンネルには投稿させない (アーカイブを連合の緊急停止として機能させる)
+		// NOTE: リプライ還流はスコープ整合を優先しチャンネルに入れる (Plan §2.5-4)。
+		// チャンネルに入れず data.channel=null にすると applyChannelFederationPolicy が効かず、
+		// リプライが公開・連合の通常ノートとして LTL/GTL に漏れるため、ここでチャンネルを外さない。
+		// 連合の停止は federationPolicy='none' で行う (アーカイブは連合の緊急停止ではない)。
 		if (data.reply && data.channel && data.reply.channelId !== data.channel.id) {
 			if (data.reply.channelId) {
-				data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId, isArchived: false });
+				data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
 			} else {
 				data.channel = null;
 			}
@@ -460,7 +463,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		// チャンネル内にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
 		if (data.reply && (data.channel == null) && data.reply.channelId) {
-			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId, isArchived: false });
+			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
 		}
 
 		if (data.createdAt == null) data.createdAt = new Date();
@@ -547,13 +550,14 @@ export class NoteCreateService implements OnApplicationShutdown {
 			data.visibility = 'home';
 		}
 
-		// ローカルのみをRenoteしたらローカルのみにする
-		if (data.renote && data.renote.localOnly) {
+		// ローカルのみをRenoteしたらローカルのみにする (ローカルユーザーの投稿のみ。
+		// リモート由来ノートは parseAudience の結果を保持し localOnly を刻印しない)
+		if (data.renote && data.renote.localOnly && this.userEntityService.isLocalUser(user)) {
 			data.localOnly = true;
 		}
 
 		// ローカルのみにリプライしたらローカルのみにする
-		if (data.reply && data.reply.localOnly) {
+		if (data.reply && data.reply.localOnly && this.userEntityService.isLocalUser(user)) {
 			data.localOnly = true;
 		}
 
@@ -969,14 +973,18 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		data.visibleUsers = [];
 
-		if (!this.doesChannelFederate(data.channel)) {
+		// fail-closed: 連合できない条件は widening せず public + localOnly (従来のチャンネルノートと同形) に落とす。
+		// - 連合しないチャンネル
+		// - ノート単位/親からの localOnly 指定
+		// - followers/specified 可視性 (エンドポイントガードを迂回するリプライ還流・リノートナローイング経由で
+		//   ここに到達しうる。public に広げると DM/フォロワー限定ノートが連合公開化するため、必ずローカル止まりにする)
+		if (!this.doesChannelFederate(data.channel) || data.localOnly || data.visibility === 'followers' || data.visibility === 'specified') {
 			data.localOnly = true;
-			data.visibility = 'public';
-		} else if (data.localOnly) {
 			data.visibility = 'public';
 		} else if (data.channel.federationPolicy === 'unlisted') {
 			data.visibility = 'home';
 		} else if (data.visibility !== 'home') {
+			// public ポリシー: サイレンス等で home に降格済みなら維持、それ以外は public
 			data.visibility = 'public';
 		}
 	}

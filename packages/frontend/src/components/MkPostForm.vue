@@ -142,6 +142,7 @@ import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import type { UploaderItem } from '@/composables/use-uploader.js';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import MkChannelName from '@/components/MkChannelName.vue';
+import { isFederatedChannel } from '@/utility/channel.js';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
 import XTextCounter from '@/components/MkPostForm.TextCounter.vue';
 import MkPollEditor from '@/components/MkPollEditor.vue';
@@ -241,7 +242,7 @@ const textAreaReadOnly = ref(false);
  * チャンネル選択時はチャンネル側の連合設定 (federationPolicy) に従う (連合しないチャンネルは強制的にtrue)。
  * チャンネル選択有無を考慮する必要がある場面では{@link localOnly}ではなくこの値を使用する。
  */
-const actualLocalOnly = computed<boolean>(() => targetChannel.value ? (targetChannel.value.federationPolicy ?? 'none') === 'none' : localOnly.value);
+const actualLocalOnly = computed<boolean>(() => targetChannel.value ? !isFederatedChannel(targetChannel.value) : localOnly.value);
 /**
  * {@link visibility}が持つ値にチャンネル選択有無を加味した値を計算する。
  * チャンネル選択時はチャンネルの連合設定に従う（連合しない/publicなら'public'、unlistedなら'home'）。
@@ -250,8 +251,7 @@ const actualLocalOnly = computed<boolean>(() => targetChannel.value ? (targetCha
  */
 const actualVisibility = computed<typeof Misskey.noteVisibilities[number]>(() => {
 	if (targetChannel.value == null) return visibility.value;
-	const policy = targetChannel.value.federationPolicy ?? 'none';
-	return (policy === 'unlisted' && !actualLocalOnly.value) ? 'home' : 'public';
+	return (targetChannel.value.federationPolicy === 'unlisted' && !actualLocalOnly.value) ? 'home' : 'public';
 });
 const justEndedComposition = ref(false);
 const renoteTargetNote: ShallowRef<PostFormProps['renote'] | null> = shallowRef(props.renote);

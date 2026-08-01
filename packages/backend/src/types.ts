@@ -58,6 +58,13 @@ export const obsoleteNotificationTypes = ['pollVote', 'groupInvited'] as const;
 
 export const noteVisibilities = ['public', 'home', 'followers', 'specified'] as const;
 
+/**
+ * チャンネルノートの連合方針。noteVisibilities とは別語彙である点に注意。
+ * - none: 連合しない (ノートは public + localOnly のローカル限定チャンネルノートになる)
+ * - unlisted: 連合するが、実ノートの可視性は 'home' 相当 (Mastodon 等の unlisted と同じく
+ *   リモートの公開タイムラインには載らない)。'unlisted' という値名は noteVisibilities には無い
+ * - public: 連合し、実ノートの可視性も 'public'
+ */
 export const channelFederationPolicies = ['none', 'unlisted', 'public'] as const;
 
 export const noteReactionAcceptances = ['likeOnly', 'likeOnlyForRemote', 'nonSensitiveOnly', 'nonSensitiveOnlyForLocalLikeOnlyForRemote', null] as const;

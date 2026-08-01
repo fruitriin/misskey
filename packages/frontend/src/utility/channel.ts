@@ -4,9 +4,10 @@
  */
 
 /**
- * チャンネルが連合する設定 (federationPolicy が 'none' 以外) かどうか。
- * packed channel には federationPolicy が必ず含まれるが、古いキャッシュ等に備えて防御的に扱う。
+ * チャンネルが連合する設定かどうか。
+ * backend の NoteCreateService.doesChannelFederate と同じ allow-list 方式 (未知の値は連合しない側に倒す)
+ * にして、将来 federationPolicy に値を足したときに backend/frontend で判定がズレないようにする。
  */
 export function isFederatedChannel(channel: { federationPolicy?: 'none' | 'unlisted' | 'public' } | null | undefined): boolean {
-	return (channel?.federationPolicy ?? 'none') !== 'none';
+	return channel?.federationPolicy === 'unlisted' || channel?.federationPolicy === 'public';
 }
