@@ -4565,6 +4565,8 @@ export type components = {
                 color: string;
                 isSensitive: boolean;
                 allowRenoteToExternal: boolean;
+                /** @enum {string} */
+                federationPolicy: 'none' | 'unlisted' | 'public';
                 userId: string | null;
             } | null;
             localOnly: boolean;

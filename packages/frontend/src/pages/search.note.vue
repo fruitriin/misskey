@@ -136,7 +136,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<div v-else :class="$style.userSelectedButtons">
 							<div style="overflow: hidden; display: flex; align-items: center; gap: 8px;">
 								<i class="ti ti-device-tv"></i>
-								<span>{{ channel.name }}</span>
+								<MkChannelName :channel="channel"/>
 							</div>
 							<div>
 								<button
@@ -206,6 +206,7 @@ import { useRouter } from '@/router.js';
 import MkButton from '@/components/MkButton.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import MkInput from '@/components/MkInput.vue';
+import MkChannelName from '@/components/MkChannelName.vue';
 import MkNotesTimeline from '@/components/MkNotesTimeline.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import MkUserCardMini from '@/components/MkUserCardMini.vue';

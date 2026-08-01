@@ -429,7 +429,18 @@ export class ApRendererService {
 
 		const files = await getPromisedFiles(note.fileIds);
 
-		const text = note.text ?? '';
+		// チャンネルノートには、リモートの読者向けにチャンネル名とURLを本文へ付記する。
+		// この固定URLはリモートユーザーがチャンネル単位でワードミュートするためのアンカーを兼ねるため、
+		// content だけでなく _misskey_content / source (Misskey系受信側が優先する原文) にも必ず含める。
+		// チャンネル行が取得できなくても URL は落とさない (ミュートアンカーの省略条件を作らない)。
+		let text = note.text ?? '';
+		if (note.channelId != null) {
+			const channel = note.channel ?? await this.channelsRepository.findOneBy({ id: note.channelId });
+			const channelUrl = `${this.config.url}/channels/${note.channelId}`;
+			const namePart = channel != null ? `「${channel.name}」 ` : '';
+			text = `${text}\n\nFrom: ${namePart}${channelUrl}`.trim();
+		}
+
 		let poll: MiPoll | null = null;
 
 		if (note.hasPoll) {
@@ -445,19 +456,10 @@ export class ApRendererService {
 			extraHtml = `<br><br><span class="quote-inline">RE: <a href="${escapeHtml(quote)}">${escapeHtml(quote)}</a></span>`;
 		}
 
-		if (note.channelId != null) {
-			// 連合するチャンネルノートには、リモートの読者向けにチャンネル名とURLを付記する。
-			// この固定URLはリモートユーザーがチャンネル単位でワードミュートするためのアンカーも兼ねる。
-			const channel = note.channel ?? await this.channelsRepository.findOneBy({ id: note.channelId });
-			if (channel != null) {
-				const channelUrl = `${this.config.url}/channels/${note.channelId}`;
-				extraHtml = (extraHtml ?? '') + `<br><br><span>From: 「${escapeHtml(channel.name)}」 <a href="${escapeHtml(channelUrl)}">${escapeHtml(channelUrl)}</a></span>`;
-			}
-		}
-
 		const summary = note.cw === '' ? String.fromCharCode(0x200B) : note.cw;
 
-		const { content, noMisskeyContent } = this.apMfmService.getNoteHtml(note, extraHtml);
+		// text にチャンネル付記を反映した上で HTML を生成する (content にも URL が載る)
+		const { content, noMisskeyContent } = this.apMfmService.getNoteHtml({ ...note, text }, extraHtml);
 
 		const emojis = await this.getEmojis(note.emojis);
 		const apemojis = emojis.filter(emoji => !emoji.localOnly).map(emoji => this.renderEmoji(emoji));

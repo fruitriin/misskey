@@ -174,13 +174,24 @@ function removePinnedNote(id: string) {
 }
 
 async function save() {
-	// 非連合 → 連合への切り替え時は、サーバー外への公開を確認する
-	const prevFederationPolicy = channel.value?.federationPolicy ?? 'none';
-	if (federationPolicy.value !== 'none' && prevFederationPolicy === 'none') {
+	// 連合の露出度が変わる場合は確認する。
+	// 露出が上がる方向 (none < unlisted < public) は「外に出る」旨、
+	// 下がる方向 (連合 → none) は「配信済みは取り消せない」旨を伝える。
+	const rank = { none: 0, unlisted: 1, public: 2 } as const;
+	const prev = channel.value?.federationPolicy ?? 'none';
+	const next = federationPolicy.value;
+	if (rank[next] > rank[prev]) {
 		const { canceled } = await os.confirm({
 			type: 'warning',
 			title: i18n.ts._channel.federationPolicy,
-			text: i18n.ts._channel.federationPolicyEnableConfirm,
+			text: prev === 'none' ? i18n.ts._channel.federationPolicyEnableConfirm : i18n.ts._channel.federationPolicyEscalateConfirm,
+		});
+		if (canceled) return;
+	} else if (rank[next] < rank[prev]) {
+		const { canceled } = await os.confirm({
+			type: 'warning',
+			title: i18n.ts._channel.federationPolicy,
+			text: i18n.ts._channel.federationPolicyDisableConfirm,
 		});
 		if (canceled) return;
 	}
@@ -200,6 +211,9 @@ async function save() {
 			...params,
 			channelId: props.channelId,
 			pinnedNoteIds: pinnedNoteIds.value,
+		}).then(updated => {
+			// 保存後に手元の状態を更新し、続けて編集した場合に確認ダイアログの判定が古くならないようにする
+			channel.value = updated;
 		});
 	} else {
 		os.apiWithDialog('channels/create', params).then(created => {

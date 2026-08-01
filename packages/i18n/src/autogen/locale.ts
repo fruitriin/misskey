@@ -8954,6 +8954,14 @@ export interface Locale extends ILocale {
          * 今後このチャンネルに投稿されるノートはサーバーの外に配信されます。過去のノートは連合されません。よろしいですか？
          */
         "federationPolicyEnableConfirm": string;
+        /**
+         * 今後このチャンネルに投稿されるノートは、リモートサーバーの公開タイムラインにも表示されるようになります。よろしいですか？
+         */
+        "federationPolicyEscalateConfirm": string;
+        /**
+         * 今後このチャンネルに投稿されるノートは連合されなくなります。ただし、すでにリモートサーバーへ配信されたノートは取り消せません。よろしいですか？
+         */
+        "federationPolicyDisableConfirm": string;
         "_federationPolicy": {
             /**
              * 連合しない

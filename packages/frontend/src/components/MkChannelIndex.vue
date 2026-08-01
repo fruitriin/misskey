@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div v-for="channel in viewChannels" :key="channel.id" style="margin-right: 8px">
 			<MkA v-if="viewMode !== 'modern'" :to="`/channels/${channel.id}`">
 				<span v-if="channel.isSensitive">▲</span><span v-if="channel.isFavorited">★</span><span v-if="channel.isFollowing">↑</span>
-				{{ channel.name }}({{ channel.notesCount }})
+				<MkChannelName :channel="channel"/>({{ channel.notesCount }})
 			</MkA>
 			<MkChannelPreview v-else class="_margin" :channel="channel"/>
 		</div>
@@ -38,6 +38,7 @@ import { computed, onMounted, ref } from 'vue';
 import type { Channel } from '../../../misskey-js/built/autogen/models.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
 import MkChannelPreview from '@/components/MkChannelPreview.vue';
+import MkChannelName from '@/components/MkChannelName.vue';
 import MkSwitch from '@/components/MkSwitch.vue';
 const viewMode = ref<'legacy' | 'listed' | 'modern'>('legacy');
 const showSensitive = ref(false);

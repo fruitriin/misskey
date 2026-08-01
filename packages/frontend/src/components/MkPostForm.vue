@@ -29,7 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</button>
 				<button v-else class="_button" :class="[$style.headerRightItem, $style.visibility]" disabled>
 					<span><i class="ti ti-device-tv"></i></span>
-					<span :class="$style.headerRightButtonText"><span v-if="(targetChannel.federationPolicy ?? 'none') !== 'none'" :title="i18n.ts._channel._federationPolicy[targetChannel.federationPolicy ?? 'none']">🪐 </span>{{ targetChannel.name }}</span>
+					<span :class="$style.headerRightButtonText"><MkChannelName :channel="targetChannel"/></span>
 				</button>
 			</template>
 			<button v-if="visibility !== 'specified'" v-tooltip="i18n.ts._visibility.disableFederation" class="_button" :class="[$style.headerRightItem, { [$style.danger]: actualLocalOnly }]" :disabled="targetChannel != null" @click="toggleLocalOnly">
@@ -93,7 +93,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</button>
 		<div v-if="maxTextLength - textLength < 100" :class="['_acrylic', $style.textCount, { [$style.textOver]: textLength > maxTextLength }]">{{ maxTextLength - textLength }}</div>
 	</div>
-	<div v-if="targetChannel" :class="$style.channelName"><i class="ti ti-device-tv" style="margin-right: 4px;"></i>{{ targetChannel.name }}</div>
+	<div v-if="targetChannel" :class="$style.channelName"><i class="ti ti-device-tv" style="margin-right: 4px;"></i><MkChannelName :channel="targetChannel"/></div>
 	<input v-show="withHashtags" ref="hashtagsInputEl" v-model="hashtags" :class="$style.hashtags" :placeholder="i18n.ts.hashtags" list="hashtags">
 	<XPostFormAttaches v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName"/>
 	<div v-if="uploader.items.value.length > 0" style="padding: 12px;">
@@ -141,6 +141,7 @@ import type { MenuItem } from '@/types/menu.js';
 import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import type { UploaderItem } from '@/composables/use-uploader.js';
 import MkNotePreview from '@/components/MkNotePreview.vue';
+import MkChannelName from '@/components/MkChannelName.vue';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
 import XTextCounter from '@/components/MkPostForm.TextCounter.vue';
 import MkPollEditor from '@/components/MkPollEditor.vue';
@@ -242,10 +243,16 @@ const textAreaReadOnly = ref(false);
  */
 const actualLocalOnly = computed<boolean>(() => targetChannel.value ? (targetChannel.value.federationPolicy ?? 'none') === 'none' : localOnly.value);
 /**
- * {@link visibility}が持つ値にチャンネル選択有無を加味した値を計算する（チャンネル選択時は強制的にpublic）。
- * チャンネル選択有無を考慮する必要がある場面では{@link actualVisibility}ではなくこの値を使用する。
+ * {@link visibility}が持つ値にチャンネル選択有無を加味した値を計算する。
+ * チャンネル選択時はチャンネルの連合設定に従う（連合しない/publicなら'public'、unlistedなら'home'）。
+ * サーバー側 (NoteCreateService.applyChannelFederationPolicy) の決定と一致させ、UIが実態と食い違わないようにする。
+ * チャンネル選択有無を考慮する必要がある場面では{@link visibility}ではなくこの値を使用する。
  */
-const actualVisibility = computed<typeof Misskey.noteVisibilities[number]>(() => targetChannel.value ? 'public' : visibility.value);
+const actualVisibility = computed<typeof Misskey.noteVisibilities[number]>(() => {
+	if (targetChannel.value == null) return visibility.value;
+	const policy = targetChannel.value.federationPolicy ?? 'none';
+	return (policy === 'unlisted' && !actualLocalOnly.value) ? 'home' : 'public';
+});
 const justEndedComposition = ref(false);
 const renoteTargetNote: ShallowRef<PostFormProps['renote'] | null> = shallowRef(props.renote);
 const replyTargetNote: ShallowRef<PostFormProps['reply'] | null> = shallowRef(props.reply);
@@ -977,8 +984,10 @@ async function saveServerDraft(options: {
 		...(serverDraftId.value == null ? {} : { draftId: serverDraftId.value }),
 		text: text.value,
 		cw: useCw.value ? cw.value || null : null,
-		visibility: visibility.value,
-		localOnly: localOnly.value,
+		// チャンネル選択時はチャンネルの連合設定を反映した実効値を保存する
+		// (予約投稿の実体化時に生の localOnly が使われると表示と実挙動が食い違うため)
+		visibility: actualVisibility.value,
+		localOnly: actualLocalOnly.value,
 		hashtag: hashtags.value,
 		fileIds: files.value.map(f => f.id),
 		poll: poll.value,
@@ -1346,7 +1355,7 @@ async function openAccountMenu(ev: PointerEvent) {
 				replyTargetNote.value = draft.reply;
 				reactionAcceptance.value = draft.reactionAcceptance;
 				scheduledAt.value = draft.scheduledAt ?? null;
-				if (draft.channel) targetChannel.value = draft.channel as unknown as Misskey.entities.Channel;
+				if (draft.channel) targetChannel.value = draft.channel;
 
 				visibleUsers.value = [];
 				draft.visibleUserIds?.forEach(uid => {

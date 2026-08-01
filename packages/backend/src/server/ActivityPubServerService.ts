@@ -558,6 +558,14 @@ export class ActivityPubServerService {
 					.orWhere('note.visibility = \'home\'');
 			}))
 			.andWhere('note.localOnly = FALSE')
+			// 連合を 'none' に戻したチャンネルのノートは以後配信しない (channel を join して判定)。
+			// あわせて renderNote の N+1 (チャンネル名取得) を防ぐため channel を populate する。
+			.leftJoinAndSelect('note.channel', 'channel')
+			.andWhere(new Brackets(qb => {
+				qb
+					.where('note.channelId IS NULL')
+					.orWhere('channel.federationPolicy != \'none\'');
+			}))
 			.limit(ps.limit)
 			.getMany();
 	}
@@ -656,11 +664,18 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			const note = await this.notesRepository.findOneBy({
-				id: request.params.note,
-				visibility: In(['public', 'home']),
-				localOnly: false,
-			});
+			// 連合を 'none' に戻したチャンネルのノートは以後配信しない (channel を join して判定)
+			const note = await this.notesRepository.createQueryBuilder('note')
+				.where('note.id = :id', { id: request.params.note })
+				.andWhere('note.visibility IN (:...visibilities)', { visibilities: ['public', 'home'] })
+				.andWhere('note.localOnly = FALSE')
+				.leftJoinAndSelect('note.channel', 'channel')
+				.andWhere(new Brackets(qb => {
+					qb
+						.where('note.channelId IS NULL')
+						.orWhere('channel.federationPolicy != \'none\'');
+				}))
+				.getOne();
 
 			if (note == null) {
 				reply.code(404);
@@ -691,12 +706,19 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			const note = await this.notesRepository.findOneBy({
-				id: request.params.note,
-				userHost: IsNull(),
-				visibility: In(['public', 'home']),
-				localOnly: false,
-			});
+			// 連合を 'none' に戻したチャンネルのノートは以後配信しない (channel を join して判定)
+			const note = await this.notesRepository.createQueryBuilder('note')
+				.where('note.id = :id', { id: request.params.note })
+				.andWhere('note.userHost IS NULL')
+				.andWhere('note.visibility IN (:...visibilities)', { visibilities: ['public', 'home'] })
+				.andWhere('note.localOnly = FALSE')
+				.leftJoinAndSelect('note.channel', 'channel')
+				.andWhere(new Brackets(qb => {
+					qb
+						.where('note.channelId IS NULL')
+						.orWhere('channel.federationPolicy != \'none\'');
+				}))
+				.getOne();
 
 			if (note == null) {
 				reply.code(404);

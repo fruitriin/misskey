@@ -448,9 +448,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}, data: Option, silent = false): Promise<MiNote> {
 		// チャンネル外にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
+		// アーカイブ済みチャンネルには投稿させない (アーカイブを連合の緊急停止として機能させる)
 		if (data.reply && data.channel && data.reply.channelId !== data.channel.id) {
 			if (data.reply.channelId) {
-				data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
+				data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId, isArchived: false });
 			} else {
 				data.channel = null;
 			}
@@ -459,21 +460,24 @@ export class NoteCreateService implements OnApplicationShutdown {
 		// チャンネル内にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
 		if (data.reply && (data.channel == null) && data.reply.channelId) {
-			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
+			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId, isArchived: false });
 		}
 
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
-		if (data.channel != null && this.userEntityService.isLocalUser(user)) {
-			// 可視性はチャンネル側の連合設定 (federationPolicy) が決める。
-			// 連合するチャンネルでもノート単位の localOnly 指定は尊重する。
-			data.localOnly = data.channel.federationPolicy === 'none' ? true : data.localOnly;
-			data.visibility = (data.channel.federationPolicy === 'unlisted' && !data.localOnly) ? 'home' : 'public';
-			data.visibleUsers = [];
+
+		// リモート由来ノートがリプライ還流でチャンネルに入る場合、チャンネルの一覧性が壊れる
+		// 可視性 (followers/specified) ならチャンネルには入れない (parseAudience の結果は保持する)
+		if (data.channel != null && !this.userEntityService.isLocalUser(user)) {
+			if (data.visibility === 'followers' || data.visibility === 'specified') {
+				data.channel = null;
+			}
 		}
 
-		if (data.visibility === 'public' && data.channel == null) {
+		// チャンネルノートも、連合するチャンネル (localOnly でなくなる) ではサイレンス/センシティブ
+		// ワードによる home 降格の対象に含める。連合しないチャンネルは localOnly なので従来どおり対象外。
+		if (data.visibility === 'public' && (data.channel == null || this.doesChannelFederate(data.channel))) {
 			const sensitiveWords = this.meta.sensitiveWords;
 			if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
 				data.visibility = 'home';
@@ -552,6 +556,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.reply && data.reply.localOnly) {
 			data.localOnly = true;
 		}
+
+		// チャンネル投稿の連合方針を最終決定する (ローカルユーザーのみ)。
+		// ここまでの可視性/localOnly の決定 (サイレンス降格・親からの localOnly 伝播など) を
+		// 踏まえた上で、チャンネル側の federationPolicy を最終権限として適用する。
+		this.applyChannelFederationPolicy(data, user);
 
 		if (data.text) {
 			if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH) {
@@ -937,6 +946,39 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		// Register to search database
 		this.index(note);
+	}
+
+	/**
+	 * チャンネルが連合するか。未知の federationPolicy 値は「連合しない」側に倒す (fail-closed)。
+	 */
+	@bindThis
+	private doesChannelFederate(channel: MiChannel | null | undefined): boolean {
+		return channel != null && (channel.federationPolicy === 'unlisted' || channel.federationPolicy === 'public');
+	}
+
+	/**
+	 * チャンネル投稿の可視性・localOnly を、チャンネル側の federationPolicy を最終権限として確定する。
+	 * ローカルユーザーの投稿にのみ適用し、リモート由来ノートは parseAudience の結果を保持する (還流)。
+	 * - none: 必ず localOnly + public (連合しない・従来のチャンネルノート)
+	 * - unlisted: home で連合 (ノート単位/親からの localOnly 指定は尊重して public + localOnly に落ちる)
+	 * - public: public で連合 (ただし直前までにサイレンス等で home に降格済みなら home を維持)
+	 */
+	@bindThis
+	private applyChannelFederationPolicy(data: Option, user: { id: MiUser['id']; host: MiUser['host']; }): void {
+		if (data.channel == null || !this.userEntityService.isLocalUser(user)) return;
+
+		data.visibleUsers = [];
+
+		if (!this.doesChannelFederate(data.channel)) {
+			data.localOnly = true;
+			data.visibility = 'public';
+		} else if (data.localOnly) {
+			data.visibility = 'public';
+		} else if (data.channel.federationPolicy === 'unlisted') {
+			data.visibility = 'home';
+		} else if (data.visibility !== 'home') {
+			data.visibility = 'public';
+		}
 	}
 
 	@bindThis

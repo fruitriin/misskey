@@ -88,6 +88,31 @@ describe('チャンネル連合 (federationPolicy)', () => {
 			assert.strictEqual(note.visibility, 'public');
 			assert.strictEqual(note.localOnly, true);
 		});
+
+		test('連合チャンネルで localOnly ノートにリプライしても home + localOnly にならない (public + localOnly に落ちる)', async () => {
+			const channel = (await api('channels/create', { name: 'unlisted-reply-lo', federationPolicy: 'unlisted' }, alice)).body;
+			const parent = await post(alice, { text: 'parent', channelId: channel.id, localOnly: true });
+			const reply = (await api('notes/create', { text: 'reply', channelId: channel.id, replyId: parent.id }, alice)).body.createdNote;
+			assert.strictEqual(reply.visibility, 'public');
+			assert.strictEqual(reply.localOnly, true);
+		});
+
+		test('チャンネルノートに followers/specified の公開範囲は指定できない (400)', async () => {
+			const channel = (await api('channels/create', { name: 'reject-visibility', federationPolicy: 'public' }, alice)).body;
+			const specified = await api('notes/create', { text: 'a', channelId: channel.id, visibility: 'specified' }, alice);
+			assert.strictEqual(specified.status, 400);
+			assert.strictEqual(castAsError(specified.body as any).error.code, 'CANNOT_SPECIFY_VISIBILITY_FOR_CHANNEL_NOTE');
+			const followers = await api('notes/create', { text: 'a', channelId: channel.id, visibility: 'followers' }, alice);
+			assert.strictEqual(followers.status, 400);
+		});
+
+		test('アーカイブ済みチャンネルへはリプライ経由でも投稿できない (チャンネル外ノートに落ちる)', async () => {
+			const channel = (await api('channels/create', { name: 'archived-reply', federationPolicy: 'public' }, alice)).body;
+			const parent = await post(alice, { text: 'parent', channelId: channel.id });
+			await api('channels/update', { channelId: channel.id, isArchived: true }, alice);
+			const reply = (await api('notes/create', { text: 'reply', replyId: parent.id }, alice)).body.createdNote;
+			assert.strictEqual(reply.channelId, null);
+		});
 	});
 
 	describe('公開ノート一覧 (/api/notes) への露出', () => {

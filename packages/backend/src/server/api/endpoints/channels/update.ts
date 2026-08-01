@@ -6,6 +6,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { DriveFilesRepository, ChannelsRepository } from '@/models/_.js';
+import { MiChannel } from '@/models/Channel.js';
 import { ChannelEntityService } from '@/core/entities/ChannelEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { RoleService } from '@/core/RoleService.js';
@@ -100,13 +101,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.accessDenied);
 			}
 
-			// 更新後の組み合わせで「連合する × チャンネル外リノート禁止」にならないこと (連合先ではリノート制約を強制できないため)
-			const nextFederationPolicy = ps.federationPolicy ?? channel.federationPolicy;
-			const nextAllowRenoteToExternal = typeof ps.allowRenoteToExternal === 'boolean' ? ps.allowRenoteToExternal : channel.allowRenoteToExternal;
-			if (nextFederationPolicy !== 'none' && !nextAllowRenoteToExternal) {
-				throw new ApiError(meta.errors.federationIncompatibleWithRenoteRestriction);
-			}
-
 			// eslint:disable-next-line:no-unnecessary-initializer
 			let banner = undefined;
 			if (ps.bannerId != null) {
@@ -122,16 +116,35 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				banner = null;
 			}
 
-			await this.channelsRepository.update(channel.id, {
-				...(ps.name !== undefined ? { name: ps.name } : {}),
-				...(ps.description !== undefined ? { description: ps.description } : {}),
-				...(ps.pinnedNoteIds !== undefined ? { pinnedNoteIds: ps.pinnedNoteIds } : {}),
-				...(ps.color !== undefined ? { color: ps.color } : {}),
-				...(typeof ps.isArchived === 'boolean' ? { isArchived: ps.isArchived } : {}),
-				...(banner ? { bannerId: banner.id } : {}),
-				...(typeof ps.isSensitive === 'boolean' ? { isSensitive: ps.isSensitive } : {}),
-				...(typeof ps.allowRenoteToExternal === 'boolean' ? { allowRenoteToExternal: ps.allowRenoteToExternal } : {}),
-				...(ps.federationPolicy !== undefined && ps.federationPolicy !== null ? { federationPolicy: ps.federationPolicy } : {}),
+			// 「連合する × チャンネル外リノート禁止」の組み合わせを不変条件として守るため、
+			// read → validate → update を悲観ロック付きトランザクションで行う (並行更新による貫通を防ぐ)。
+			await this.channelsRepository.manager.transaction(async transactionalEntityManager => {
+				const lockedChannel = await transactionalEntityManager.findOne(MiChannel, {
+					where: { id: channel.id },
+					lock: { mode: 'pessimistic_write' },
+				});
+
+				if (lockedChannel == null) {
+					throw new ApiError(meta.errors.noSuchChannel);
+				}
+
+				const nextFederationPolicy = ps.federationPolicy ?? lockedChannel.federationPolicy;
+				const nextAllowRenoteToExternal = typeof ps.allowRenoteToExternal === 'boolean' ? ps.allowRenoteToExternal : lockedChannel.allowRenoteToExternal;
+				if (nextFederationPolicy !== 'none' && !nextAllowRenoteToExternal) {
+					throw new ApiError(meta.errors.federationIncompatibleWithRenoteRestriction);
+				}
+
+				await transactionalEntityManager.update(MiChannel, lockedChannel.id, {
+					...(ps.name !== undefined ? { name: ps.name } : {}),
+					...(ps.description !== undefined ? { description: ps.description } : {}),
+					...(ps.pinnedNoteIds !== undefined ? { pinnedNoteIds: ps.pinnedNoteIds } : {}),
+					...(ps.color !== undefined ? { color: ps.color } : {}),
+					...(typeof ps.isArchived === 'boolean' ? { isArchived: ps.isArchived } : {}),
+					...(banner ? { bannerId: banner.id } : {}),
+					...(typeof ps.isSensitive === 'boolean' ? { isSensitive: ps.isSensitive } : {}),
+					...(typeof ps.allowRenoteToExternal === 'boolean' ? { allowRenoteToExternal: ps.allowRenoteToExternal } : {}),
+					...(ps.federationPolicy !== undefined && ps.federationPolicy !== null ? { federationPolicy: ps.federationPolicy } : {}),
+				});
 			});
 
 			return await this.channelEntityService.pack(channel.id, me);
