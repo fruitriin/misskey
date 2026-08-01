@@ -448,7 +448,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}, data: Option, silent = false): Promise<MiNote> {
 		// チャンネル外にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
-		// NOTE: リプライ還流はスコープ整合を優先しチャンネルに入れる (Plan §2.5-4)。
+		// NOTE: リプライは元ノートと同じチャンネルに入れる (スコープ整合を優先、Plan §2.5-4)。
 		// チャンネルに入れず data.channel=null にすると applyChannelFederationPolicy が効かず、
 		// リプライが公開・連合の通常ノートとして LTL/GTL に漏れるため、ここでチャンネルを外さない。
 		// 連合の停止は federationPolicy='none' で行う (アーカイブは連合の緊急停止ではない)。
@@ -470,7 +470,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
 
-		// リモート由来ノートがリプライ還流でチャンネルに入る場合、チャンネルの一覧性が壊れる
+		// リモート由来ノートがリプライでチャンネルに入る場合、チャンネルの一覧性が壊れる
 		// 可視性 (followers/specified) ならチャンネルには入れない (parseAudience の結果は保持する)
 		if (data.channel != null && !this.userEntityService.isLocalUser(user)) {
 			if (data.visibility === 'followers' || data.visibility === 'specified') {
@@ -962,7 +962,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 	/**
 	 * チャンネル投稿の可視性・localOnly を、チャンネル側の federationPolicy を最終権限として確定する。
-	 * ローカルユーザーの投稿にのみ適用し、リモート由来ノートは parseAudience の結果を保持する (還流)。
+	 * ローカルユーザーの投稿にのみ適用する (リモートからの返信がチャンネルに戻る場合は parseAudience の結果を保持)。
 	 * - none: 必ず localOnly + public (連合しない・従来のチャンネルノート)
 	 * - home: 可視性 home で連合 (ノート単位/親からの localOnly 指定は尊重して public + localOnly に落ちる)
 	 * - public: 可視性 public で連合 (ただし直前までにサイレンス等で home に降格済みなら home を維持)
@@ -976,7 +976,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		// fail-closed: 連合できない条件は widening せず public + localOnly (従来のチャンネルノートと同形) に落とす。
 		// - 連合しないチャンネル
 		// - ノート単位/親からの localOnly 指定
-		// - followers/specified 可視性 (エンドポイントガードを迂回するリプライ還流・リノートナローイング経由で
+		// - followers/specified 可視性 (エンドポイントガードを迂回するリプライ・リノートナローイング経由で
 		//   ここに到達しうる。public に広げると DM/フォロワー限定ノートが連合公開化するため、必ずローカル止まりにする)
 		if (!this.doesChannelFederate(data.channel) || data.localOnly || data.visibility === 'followers' || data.visibility === 'specified') {
 			data.localOnly = true;
