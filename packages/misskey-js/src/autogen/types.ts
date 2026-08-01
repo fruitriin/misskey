@@ -4502,8 +4502,6 @@ export type components = {
                 color: string;
                 isSensitive: boolean;
                 allowRenoteToExternal: boolean;
-                /** @enum {string} */
-                federationPolicy: 'none' | 'unlisted' | 'public';
                 userId: string | null;
             } | null;
             localOnly?: boolean;
@@ -5040,8 +5038,6 @@ export type components = {
             notesCount: number;
             isSensitive: boolean;
             allowRenoteToExternal: boolean;
-            /** @enum {string} */
-            federationPolicy: 'none' | 'unlisted' | 'public';
             isFollowing?: boolean;
             isFavorited?: boolean;
             isMuting?: boolean;
@@ -14857,8 +14853,6 @@ export interface operations {
                     color?: string;
                     isSensitive?: boolean | null;
                     allowRenoteToExternal?: boolean | null;
-                    /** @enum {string|null} */
-                    federationPolicy?: 'none' | 'unlisted' | 'public' | null;
                 };
             };
         };
@@ -15861,8 +15855,6 @@ export interface operations {
                     color?: string;
                     isSensitive?: boolean | null;
                     allowRenoteToExternal?: boolean | null;
-                    /** @enum {string|null} */
-                    federationPolicy?: 'none' | 'unlisted' | 'public' | null;
                 };
             };
         };

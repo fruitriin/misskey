@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<MkA :to="`/channels/${channel.id}`" class="eftoefju _panel" @click="updateLastReadedAt">
 		<div class="banner" :style="bannerStyle">
 			<div class="fade"></div>
-			<div class="name"><i class="ti ti-device-tv"></i> <span v-if="(channel.federationPolicy ?? 'none') !== 'none'" :title="i18n.ts._channel._federationPolicy[channel.federationPolicy]">🪐 </span>{{ channel.name }}</div>
+			<div class="name"><i class="ti ti-device-tv"></i> {{ channel.name }}</div>
 			<div v-if="channel.isSensitive" class="sensitiveIndicator">{{ i18n.ts.sensitive }}</div>
 			<div class="status">
 				<div>

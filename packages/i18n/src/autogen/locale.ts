@@ -8942,32 +8942,6 @@ export interface Locale extends ILocale {
          * チャンネル外へのリノートと引用リノートを許可する
          */
         "allowRenoteToExternal": string;
-        /**
-         * ノートの連合
-         */
-        "federationPolicy": string;
-        /**
-         * 「連合する (ひかえめ)」はホーム扱いで連合し、リモートサーバーの公開タイムラインには表示されません。「連合する (公開)」はリモートの公開タイムラインにも表示され、見つけてもらいやすくなります。どちらもこのサーバー内での見え方 (タイムラインに載らない) は変わりません。チャンネル外へのリノートを禁止しているチャンネルは連合できません。
-         */
-        "federationPolicyDescription": string;
-        /**
-         * 今後このチャンネルに投稿されるノートはサーバーの外に配信されます。過去のノートは連合されません。よろしいですか？
-         */
-        "federationPolicyEnableConfirm": string;
-        "_federationPolicy": {
-            /**
-             * 連合しない
-             */
-            "none": string;
-            /**
-             * 連合する (ひかえめ)
-             */
-            "unlisted": string;
-            /**
-             * 連合する (公開)
-             */
-            "public": string;
-        };
     };
     "_menuDisplay": {
         /**

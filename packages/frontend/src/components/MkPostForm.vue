@@ -29,11 +29,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</button>
 				<button v-else class="_button" :class="[$style.headerRightItem, $style.visibility]" disabled>
 					<span><i class="ti ti-device-tv"></i></span>
-					<span :class="$style.headerRightButtonText"><span v-if="(targetChannel.federationPolicy ?? 'none') !== 'none'" :title="i18n.ts._channel._federationPolicy[targetChannel.federationPolicy ?? 'none']">🪐 </span>{{ targetChannel.name }}</span>
+					<span :class="$style.headerRightButtonText">{{ targetChannel.name }}</span>
 				</button>
 			</template>
-			<button v-if="visibility !== 'specified'" v-tooltip="i18n.ts._visibility.disableFederation" class="_button" :class="[$style.headerRightItem, { [$style.danger]: actualLocalOnly }]" :disabled="targetChannel != null" @click="toggleLocalOnly">
-				<span v-if="!actualLocalOnly"><i class="ti ti-rocket"></i></span>
+			<button v-if="visibility !== 'specified'" v-tooltip="i18n.ts._visibility.disableFederation" class="_button" :class="[$style.headerRightItem, { [$style.danger]: localOnly }]" :disabled="targetChannel != null" @click="toggleLocalOnly">
+				<span v-if="!localOnly"><i class="ti ti-rocket"></i></span>
 				<span v-else><i class="ti ti-rocket-off"></i></span>
 			</button>
 			<button ref="otherSettingsButton" v-tooltip="i18n.ts.other" class="_button" :class="$style.headerRightItem" @click="showOtherSettings"><i class="ti ti-dots"></i></button>
@@ -236,11 +236,10 @@ const showingOptions = ref(false);
 const textAreaReadOnly = ref(false);
 
 /**
- * {@link localOnly}が持つ値にチャンネル選択有無を加味した値を計算する。
- * チャンネル選択時はチャンネル側の連合設定 (federationPolicy) に従う (連合しないチャンネルは強制的にtrue)。
+ * {@link localOnly}が持つ値にチャンネル選択有無を加味した値を計算する（チャンネル選択時は強制的にfalse）
  * チャンネル選択有無を考慮する必要がある場面では{@link localOnly}ではなくこの値を使用する。
  */
-const actualLocalOnly = computed<boolean>(() => targetChannel.value ? (targetChannel.value.federationPolicy ?? 'none') === 'none' : localOnly.value);
+const actualLocalOnly = computed<boolean>(() => targetChannel.value ? true : localOnly.value);
 /**
  * {@link visibility}が持つ値にチャンネル選択有無を加味した値を計算する（チャンネル選択時は強制的にpublic）。
  * チャンネル選択有無を考慮する必要がある場面では{@link actualVisibility}ではなくこの値を使用する。
@@ -421,7 +420,10 @@ if ($i.isSilenced && visibility.value === 'public') {
 	visibility.value = 'home';
 }
 
-// チャンネル選択時の可視性/localOnlyはcomputed (actualVisibility / actualLocalOnly) が読み替えるため、ここでは変更しない
+if (targetChannel.value) {
+	visibility.value = 'public';
+	localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
+}
 
 // 公開以外へのリプライ時は元の公開範囲を引き継ぐ
 if (replyTargetNote.value && ['home', 'followers', 'specified'].includes(replyTargetNote.value.visibility)) {
@@ -567,7 +569,8 @@ function updateFileName(file: Misskey.entities.DriveFile, name: Misskey.entities
 
 function setVisibility() {
 	if (targetChannel.value) {
-		// チャンネル投稿の可視性はチャンネル側の連合設定が決めるため、ここでは何もしない
+		visibility.value = 'public';
+		localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
 		return;
 	}
 
@@ -595,7 +598,8 @@ function setVisibility() {
 
 async function toggleLocalOnly() {
 	if (targetChannel.value) {
-		// チャンネル投稿の連合有無はチャンネル側の連合設定が決めるため、ここでは何もしない
+		visibility.value = 'public';
+		localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
 		return;
 	}
 

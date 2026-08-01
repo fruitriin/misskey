@@ -4,7 +4,6 @@
  */
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, ManyToOne } from 'typeorm';
-import { channelFederationPolicies } from '@/types.js';
 import { id } from './util/id.js';
 import { MiUser } from './User.js';
 import { MiDriveFile } from './DriveFile.js';
@@ -99,11 +98,4 @@ export class MiChannel {
 		default: true,
 	})
 	public allowRenoteToExternal: boolean;
-
-	@Column('enum', {
-		enum: channelFederationPolicies,
-		default: 'none',
-		comment: 'How notes in this channel are federated.',
-	})
-	public federationPolicy: typeof channelFederationPolicies[number];
 }
