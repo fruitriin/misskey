@@ -75,9 +75,54 @@ to/cc の決定・配送先 (フォロワー recipe + public はリレー) は�
 
 ---
 
-## 2. yojo-art: 「チャンネルを Actor にする」本格実装
+## 2. yojo-art: 「チャンネルを Group Actor にする」本格実装
 
-<!-- yojo-art 詳細調査の結果をここに記載 -->
+yojo-art は 2024 年にいったんチャンネル機能を削除し (v0.2.0/v0.2.2)、**2026 年 7 月 (v1.8.0) に「連合対応版チャンネル」として再実装**した (CHANGELOG_YOJO: 「Feat: チャンネルを復活させる #838」「Feat: チャンネル連合 #1036」)。マージ元の縁側 (engawa) 由来ではなく yojo-art 独自実装。2 週間後の v1.8.1 で早速リノート配送などの修正が入っており、現在進行形で枯らしている段階である。
+
+### 2.1 中核設計: チャンネル = 隠しユーザーアカウント (1:1)
+
+```
+MiChannel.actorId ──1:1──▶ MiUser.id   (チャンネルアカウント, isBot)
+MiUser.channelId  ──1:1──▶ MiChannel.id (逆参照)
+```
+
+- チャンネル作成 (`channels/create`) は `SignupService.signupChannel()` を呼び、**RSA 鍵ペア・プロフィール・ユーザー名を持つ本物のローカルユーザー**を 1 トランザクションで作る (パスワードはランダム値: 「どうせログインしないのでパスワードは適当」)
+- AP 上は `renderPerson` がそのまま使われ、`type` だけが **`Group`** になる (`type: isSystem ? 'Application' : user.channelId ? 'Group' : ...`)。チャンネルオーナーは Actor の `attributedTo` で表現
+- 正規の AP ID は `/users/:actorId`。`/channels/:id` は AP アクセス時に `/users/...` へ**リダイレクトするだけ** (専用ルートを作らない)
+- WebFinger も通常ユーザーと同一 → `@channelname@host` で外部から発見可能
+- migration は **1 本だけ** (`1779795272287-Channel-Federation.js`: channel.host / channel.actorId / user.channelId 追加)。`channel_following` テーブルはコードから廃止され、**チャンネルフォロー = チャンネルアカウントへの通常の AP Follow** に統合された (`ChannelFollowingService.follow()` が `userFollowingService.follow()` へ委譲。`ApInboxService` の Follow 処理は無改変)
+
+既存のユーザー機構 (フォロー、inbox/outbox、鍵、配送、suspend/silence、featured コレクション) を**そのまま流用する**ことで、Actor 方式の実装コストを migration 1 本 + 約 20 ファイルの改修に抑えている。
+
+### 2.2 送信側: audience + cc + 「@メンション互換レイヤー」+ 自動 Announce
+
+チャンネルノートの AP 表現 (`ApRendererService`):
+
+1. to/cc は visibility ベースの本家構成のまま、**`cc` にチャンネル Actor URI を追加**し、AS2.0 標準の **`audience`** プロパティにも同じ URI を入れる (renderNote / renderCreate / renderAnnounce の 3 箇所)
+2. **本文の先頭に `@channelname@host ` メンションを挿入**し、`tag` にも `Mention` を追加する (DB 上のノート本文は不変。受信・編集時は `removeChannelMention()` で除去)。これにより**非対応実装 (本家 Misskey や Mastodon) からは「Group アカウントへのメンション付きノート」に見え、リモートユーザーはその Group にメンションを付けるだけでチャンネルに投稿できる** (CHANGELOG: 「リモートユーザーはGroupActorにメンションする事でそのチャンネルに投稿できます」)
+3. 投稿自体は投稿者のフォロワーへ通常配送し、加えて**チャンネルアカウントが自動リノート (`Announce`) を作成**してチャンネルアカウントのフォロワー (= チャンネルフォロワー) 全員へ配送する — FEP-1b12 と同型の Group-Announce 方式 (`NoteCreateService`: `['public','home'].includes(note.visibility)` のときのみ)
+4. **リモートチャンネルへの投稿**は、全購読者を知り得ないため **LD-Signature を付けてチャンネルのホストへ direct 配送**し、チャンネル側ホストがフォロワーへ転送する (`ApDeliverManagerService` の `ChannelFollowers` レシピ)
+
+visibility の扱いは本家と大きく異なる: **`data.visibility = 'public'` 強制も `localOnly = true` 強制も削除**され、さらにフォークの方針として localOnly 自体が全廃されている (「このフォークではローカルのみを認めない」)。チャンネル投稿は public / home / followers を選べる。
+
+### 2.3 受信側: 送信者判定とメンション判定 (audience は読まない)
+
+`ApNoteService.createNote` での channelId 解決は 2 系統:
+
+1. **送信者自身がチャンネルアカウント** (`actor.channelId != null`) → そのチャンネルの投稿とみなす
+2. それ以外 → `tag` の Mention と to/cc から解決したユーザーのうち **channelId を持つ最初のユーザー**のチャンネルに入れる (「最初に発見されたチャンネルに投稿」)
+
+注目すべきは、**送信時に書いている `audience` プロパティを受信時には一切読んでいない**こと (type 定義はあるが送信専用)。判定をメンション互換レイヤーに一本化することで、yojo-art 同士でも非対応実装からでも同じ経路で動く。
+
+リモートチャンネルの発見は `ApPersonService`: `type: 'Group'` の Actor を受信すると `MiChannel` (host 付き) を自動生成し、`attributedTo` からオーナーを解決、Group の featured コレクションをチャンネルのピン留めに同期する。リモートユーザーによるチャンネル内リノートは、LD-Signature が付いていればローカルチャンネルのフォロワーへ中継する (v1.8.1 での修正点)。
+
+### 2.4 未解決な点 (コードから確認できた範囲)
+
+- `isSensitive` / `allowRenoteToExternal` は**連合されない** (リモートチャンネルでは常に既定値)。チャンネル外リノート禁止はローカル判定のみで、リモートからの違反は検証されない
+- ノートの **Update / Delete がチャンネルフォロワーに配送されない** (`deliverToFollowers` のみで `ChannelFollowers` レシピを呼んでいない) — Announce 方式の落とし穴
+- チャンネルアカウントによるブロックの受信拒否は `TODO` コメントのまま
+- 「最初に発見されたチャンネル」方式は、単に Group アカウントにメンションしただけのノートが意図せずチャンネル投稿扱いになる余地がある
+- `ChannelFollowingService.list()` の非 idOnly 経路に `channel.id` と `channel.actorId` を取り違えた疑いのある JOIN があり、フォーク自体もまだ安定期ではない
 
 ---
 
@@ -101,4 +146,20 @@ to/cc の決定・配送先 (フォロワー recipe + public はリレー) は�
 
 ## 4. 本計画との比較表
 
-<!-- yojo-art 調査反映後に確定 -->
+| 観点 | 本計画 (01-plan 案 B→C) | Type4ny | yojo-art | 本家ドラフト (#289) |
+|---|---|---|---|---|
+| チャンネルの AP 表現 | 当面 URI のみ (`audience`)、Phase 3 で Group Actor | なし (本文に平文 URL) | **Group Actor = 隠しユーザー** | Application Actor (システムユーザー) |
+| ノートへの所属表現 | `audience` + `_misskey_channel` | 本文末尾の平文 | `audience` + `cc` + **@メンション挿入** | `_misskey_channel` プロパティ |
+| ノートの可視性 | DB は public 維持、AP 上は home (unlisted) 送出 | public のまま | 投稿者選択 (public/home/followers)、localOnly 全廃 | 通常どおり + isSensitive で受信側 home 降格 |
+| リモートの LTL/GTL 露出 | なし (unlisted) | **あり** | あり (public 時。対応実装間では channelId が付き除外) | 対応実装は制御可能 |
+| チャンネルフォロワーへの配送 | Phase 3 (Group + Announce) | なし (投稿者フォロワーのみ) | **チャンネル Actor の自動 Announce** | 規定なし (語彙のみ) |
+| リモートからの投稿参加 | Phase 2 はリプライ還流のみ | 不可 | **可 (Group へのメンション)** | 規定なし |
+| リモートチャンネルの表現 | Phase 3 (channel.host) | なし | **あり (Group 受信で MiChannel 自動生成)** | — |
+| チャンネルフォローの連合 | Phase 3 | なし | **通常の Follow に統合** | — |
+| isSensitive 等モデレーション情報の連合 | `_misskey_channel` で連合 | なし | **なし** | **あり (受信側義務まで規定)** |
+| 連合の既定値 | オプトイン (none) | **オプトアウト (連合する)** | 全チャンネル連合 (フォーク方針) | オプトイン前提 (#14048) |
+| 非対応実装からの見え方 | unlisted の通常ノート | public の通常ノート (URL 付き) | メンション付き通常ノート | 通常ノート |
+| スキーマ変更 | channel に enum 1 カラム | channel に boolean 1 カラム | channel 2 + user 1 カラム (migration 1 本) | — |
+| 実装規模 (backend) | Phase 1-2 で約 10 ファイル | 約 3 ファイル | 約 20 ファイル + フロント | — |
+
+両フォークから得られる最大の教訓は対照的である: Type4ny は「チャンネル所属を捨てれば連合は 3 ファイルで済む」ことを、yojo-art は「既存のユーザー/フォロー機構に 1:1 で相乗りすれば Actor 方式ですら migration 1 本で済む」ことを示した。比較を踏まえた設計判断の見直しは [03-consideration.md](03-consideration.md) で行う。
