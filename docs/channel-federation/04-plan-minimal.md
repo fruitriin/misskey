@@ -54,7 +54,7 @@ public federateNotes: boolean;
 - packed channel (`models/json-schema/channel.ts`, `ChannelEntityService`) に `federateNotes` を追加
 - API 変更につき `pnpm build-misskey-js-with-types` で autogen 再生成
 
-### 2.2 localOnly 強制の条件化 (送信側の核心)
+### 2.2 可視性と localOnly の決定 (送信側の核心)
 
 `packages/backend/src/core/NoteCreateService.ts:466-470` (現行):
 
@@ -67,36 +67,26 @@ if (data.channel != null) data.localOnly = true;
 変更後:
 
 ```ts
-if (data.channel != null) data.visibility = 'public';
-if (data.channel != null) data.visibleUsers = [];
 if (data.channel != null && this.userEntityService.isLocalUser(user)) {
 	data.localOnly = data.channel.federateNotes ? (data.localOnly ?? false) : true;
+	data.visibility = (data.channel.federateNotes && !data.localOnly) ? 'home' : 'public';
+	data.visibleUsers = [];
 }
 ```
 
-- **DB 上の visibility は `public` のまま維持する** (チャンネル TL・FTTL・可視性 4 実装の前提を一切崩さないため)。AP 上の見え方だけを §2.3 で home に変換する
+- **連合するチャンネルノートは DB の visibility 自体を `home` にする** (理由は §2.3)。連合しないノート (非連合チャンネル、またはノート単位 localOnly) は現行どおり `public + localOnly` で、既存データと同じ形
 - 連合チャンネルでも**ノート単位の `localOnly: true` は尊重**する (チャンネルは連合可でも、このノートだけはローカルに留めたい、を許す)
-- `isLocalUser` 条件は §2.5 の受信側整理と対 (リモート由来ノートに localOnly を立てない)
+- `isLocalUser` 条件は §2.5 の受信側整理と対 (リモート由来ノートには可視性強制も localOnly も適用せず、parseAudience の結果を保持する)
 
 localOnly が false になれば、Create / Delete / Like / 投票 Update / ピン留めの配送 12 箇所 (01 §1.2) はすべて既存コードのまま機能する。追加の配送実装は不要。
 
-### 2.3 AP 上の実効可視性: home 送出
+### 2.3 可視性はなぜ home か (followers でも public でもなく)
 
-チャンネルノートの AP 表現を決める箇所に「実効可視性」ヘルパーを 1 つ挟む:
-
-```ts
-// ApRendererService 内 (または misc/)
-function apEffectiveVisibility(note: MiNote): 'public' | 'home' | 'followers' | 'specified' {
-	if (note.channelId != null && note.visibility === 'public') return 'home';
-	return note.visibility;
-}
-```
-
-適用箇所 (いずれも visibility の分岐を実効可視性で行うだけ):
-
-- `ApRendererService.renderNote` の to/cc 決定 (`ApRendererService.ts:404-418`) → `to: [<author>/followers]`, `cc: ['as:Public', ...mentions]`
-- `ApRendererService.renderAnnounce` の to/cc 決定 (同 99-110) — チャンネル内リノートを連合させる場合も home 相当で
-- `NoteCreateService.ts:906` のリレー配送判定 — 実効 home なので**自動的にリレー対象外**になる (public のみリレーのため、コード変更不要なことをテストで固定する)
+- **followers は不可。** 可視性チェック (`NoteEntityService.shouldHideNote` 160-176 / `isVisibleForMe` 289-321) は followers ノートを非フォロワーから隠すため、チャンネル TL を見ている人のうち投稿者をフォローしていない人にはそのノートだけ見えない — **チャンネルという場の一覧性が歯抜けになる**。場の中では全員に見える、が崩れる可視性は使えない
+- **home はローカルで歯抜けを起こさない。** 可視性チェックは home を public と同様に全員可視として扱うので、チャンネル TL・リプライツリーは欠けない。LTL/GTL に載らないのは従来どおり channelId フィルタが担保する
+- **リモートに対しては unlisted として振る舞う。** 届く先は実質「投稿者のリモートフォロワーの HTL + URL 到達」であり、リモートからの到達がフォローした人中心になるのは要求どおり (フォロワー限定「程度の到達」を、歯抜けを起こす followers 可視性ではなく home の配送特性で実現する)
+- **DB から AP まで一貫して home にすることで実装が消える。** 当初案の「AP 上だけ home に変換する実効可視性ヘルパー」は不要になり、`renderNote` / `renderAnnounce` の to/cc 決定 (`ApRendererService.ts:404-418`, 99-110) は**無変更**で正しい表現 (`cc: as:Public`) を出す。リレー除外も自動 (`NoteCreateService.ts:906` は public のみリレー)。ローカル UI の可視性アイコンも「ホーム」を表示し、**このノートは家の外に出るがタイムラインには載らない、という実態がユーザーに正直に伝わる**
+- 副作用: 連合チャンネルノートを外部リノートすると、リノートの可視性は home 止まりになる (home ノートのリノート規則)。unlisted の意味論として妥当なのでそのまま受け入れる
 
 配送先は既存の followers recipe (`NoteCreateService.ts:902`) のまま = 投稿者のリモートフォロワーへ届く。チャンネルフォロワーという配送単位は作らない (場を輸出しないため)。
 
@@ -110,9 +100,13 @@ Type4ny は `renderNote` 内で `note.text` を**破壊的に**書き換えて�
 // ApRendererService.renderNote 内、getNoteHtml へ渡す直前
 let apText = note.text;
 if (note.channelId != null) {
-	apText = `${apText ?? ''}\n\nRE: ${this.config.url}/channels/${note.channelId}`.trim();
+	note.channel ??= await this.channelsRepository.findOneBy({ id: note.channelId });
+	const channelName = note.channel?.name;
+	apText = `${apText ?? ''}\n\nFrom: ${channelName ? `「${channelName}」 ` : ''}${this.config.url}/channels/${note.channelId}`.trim();
 }
 ```
+
+チャンネルタイトルを URL と併記する (リモートの読者は URL 文字列だけでは場の性質が分からないため)。タイトルはレンダリング時点の現在値であり、チャンネル改名は以後に配送されるノートから反映される (配送済みノートには遡及しない — 通常ノートの編集と同じ割り切り)。`ApRendererService` に `channelsRepository` の DI 追加が必要。
 
 - HTML (`content`) 側は既存の quote-inline と同様に `<span class="quote-inline">` 相当で装飾してもよい (Mastodon 側で折りたたみ表示される慣行に乗る)
 - `_misskey_content` / `source` (MFM 原文) には**付記しない** (Misskey 系受信側では原文が優先されるため、対応不要の受信側 = 非 Misskey にのみ届けばよい。Misskey 系はプレーンな URL 付き content を見る)
@@ -129,14 +123,15 @@ if (note.channelId != null) {
 
 ### 2.6 新規露出の遮断
 
-localOnly 解除により、匿名公開の新着一覧 `packages/backend/src/server/api/endpoints/notes.ts:55-56` (`visibility='public' AND localOnly=FALSE` のみ) に連合チャンネルノートが**新たに載ってしまう** (01 §4 Phase 1-5 で発見済みの唯一の露出点)。ここに `channelId IS NULL` を追加する。featured 系はチャンネル別ランキングに分離済みで影響なし (`ReactionService.ts:224-230`)。
+匿名公開の新着一覧 `packages/backend/src/server/api/endpoints/notes.ts:55-56` は `visibility='public' AND localOnly=FALSE` のみを見ており channelId を見ていない (01 §4 Phase 1-5 で発見済みの露出点)。§2.3 で連合チャンネルノートを home にしたことで**結果的にこの一覧には載らなくなった**が、可視性の決定ロジックと露出制御が 1 つの条件に相乗りしている状態は脆いので、防御的に `channelId IS NULL` を追加しておく。featured 系はチャンネル別ランキングに分離済みで影響なし (`ReactionService.ts:224-230`)。
 
 AP サーバー側は変更不要: `/notes/:note` は `visibility IN (public,home) AND localOnly=false` なので連合チャンネルノートを返すようになる (意図どおり)。outbox の既存フィルタも同様に通る。
 
 ### 2.7 フロントエンド
 
 - チャンネル作成・編集画面に「ノートを連合する」トグル (`federateNotes`) + `allowRenoteToExternal` オフとの排他をフォーム側でも表現
-- チャンネルヘッダと投稿フォームに連合状態を常時表示 (地球アイコン等)。**「連合中のチャンネルへの投稿はサーバー外に公開される」ことを投稿前に視認できる**こと (R5 の期待保護の要)
+- **連合オプトイン済みチャンネルのタイトルに 🪐 を付けて表示する。** Misskey では連合は宇宙的なつながりのイコノグラフィ (惑星アイコン) で表現されており、その言語に乗る。表示箇所はチャンネル名が出る場所すべてで統一する: チャンネルヘッダ、チャンネル一覧カード、ノート下部のチャンネルチップ、投稿フォームのチャンネル表示、検索結果。**保存された name に絵文字を書き込むのではなく、packed channel の `federateNotes` を見て表示時に付ける** (データ移行不要・オフに戻せば消える)。実装は共通のチャンネル名表示コンポーネント (なければこの機会に抽出) に寄せ、`ti ti-planet` アイコンでもよいがテキスト文脈 (一覧・チップ) では 🪐 の方が収まりがよい。なお名前に手で 🪐 を入れた非連合チャンネルと見分けが付かなくなる余地はある (悪用動機は薄いので許容し、ヘッダでは正式なアイコン+ツールチップを併用する)
+- チャンネルヘッダと投稿フォームに連合状態を常時表示 (🪐 + ツールチップ)。**「連合中のチャンネルへの投稿はサーバー外に公開される」ことを投稿前に視認できる**こと (R5 の期待保護の要)。投稿フォームの可視性表示も home アイコンになる (§2.3) ため、二重に伝わる
 - 設定切替時の確認ダイアログ: 「過去のノートには影響しません。今後のノートが連合されます」
 - `locales/ja-JP.yml` のみ編集 (他言語 yml は触らない)
 
@@ -149,7 +144,7 @@ AP サーバー側は変更不要: `/notes/:note` は `visibility IN (public,hom
 | `packages/backend/src/models/json-schema/channel.ts` | packed スキーマ |
 | `packages/backend/src/core/entities/ChannelEntityService.ts` | pack に追加 |
 | `packages/backend/src/core/NoteCreateService.ts` | §2.2 (466-470 付近) |
-| `packages/backend/src/core/activitypub/ApRendererService.ts` | §2.3 実効可視性 + §2.4 URL 付記 |
+| `packages/backend/src/core/activitypub/ApRendererService.ts` | §2.4 チャンネル名+URL 付記 (channelsRepository の DI 追加。to/cc は無変更) |
 | `packages/backend/src/server/api/endpoints/channels/create.ts` / `update.ts` | paramDef + R7 バリデーション |
 | `packages/backend/src/server/api/endpoints/notes.ts` | §2.6 `channelId IS NULL` |
 | `packages/misskey-js/src/autogen/*` | 再生成 |
@@ -161,12 +156,14 @@ backend 実質 8 ファイル + migration 1 本。Type4ny (3 ファイル) と�
 
 | 観点 | federateNotes: false (既定) | federateNotes: true |
 |---|---|---|
+| ノートの可視性 (DB / UI 表示) | public + localOnly (現行どおり) | **home** (ノート単位 localOnly 時は public + localOnly) |
+| 自サーバーでの可視範囲 | 全員 (チャンネル経由) | 全員 (チャンネル経由、歯抜けなし) |
 | 自サーバー LTL/STL/GTL | 載らない | 載らない (変更なし) |
 | チャンネル TL / フォロワー HTL | 載る | 載る (変更なし) |
 | リモートへの配送 | なし | 投稿者のリモートフォロワー + メンション/リプライ先 |
 | リレー | なし | なし (実効 home のため) |
 | リモートの LTL/GTL | — | 載らない (unlisted) |
-| リモートでの見え方 | — | 「チャンネル URL 付きの unlisted ノート」 |
+| リモートでの見え方 | — | 「チャンネル名+URL 付きの unlisted ノート」 |
 | リモートからのリプライ | — | チャンネルスレッドに還流 |
 | リモートからのリノートの自サーバーへの還流 | — | **起こりうる** (通常のリモートノートとして STL/HTL に載る。§5-2) |
 | ノート単位 localOnly | 常に true 扱い | ユーザー指定を尊重 |
@@ -175,12 +172,13 @@ backend 実質 8 ファイル + migration 1 本。Type4ny (3 ファイル) と�
 
 1. **紳士協定の上限**: unlisted は受信側実装が尊重して成立する慣行であり、連合した瞬間にノートは技術的に公開情報になる。保証は「見られない」ではなく「積極的に見せて回らない」まで。UI 文言もこの線で書く
 2. **還流は防げない**: リモートユーザーがリノートすれば、それは通常のリモートノートとして自サーバーの STL/HTL に載りうる (リノート自体に channelId は付かない)。home 送出は確率を下げるだけで、ゼロにはしない
-3. **チャンネル文脈は人間可読情報のみ**: リモート側 UI にチャンネル名が出ることはなく、本文の URL だけが手がかり。機械可読な所属表現は意図的に捨てている (§0)
+3. **チャンネル文脈は人間可読情報のみ**: リモート側 UI が構造としてチャンネルを表示することはなく、本文に付記されたチャンネル名と URL だけが手がかり。機械可読な所属表現は意図的に捨てている (§0)
 4. **本家との将来衝突は最小**: 独自語彙を出さないため、本家がチャンネル連合を実装しても衝突するのは `federateNotes` カラム名程度。追従は migration 1 本で済む見込み
 
 ## 6. テスト計画
 
-- unit (`pnpm --filter backend test`): `NoteCreateService` の localOnly 決定 (federateNotes × ノート単位 localOnly × リモートユーザーの組合せ)、`ApRendererService` の実効可視性 (to/cc が home 構成になること・URL 付記が非破壊であること)
+- unit (`pnpm --filter backend test`): `NoteCreateService` の visibility / localOnly 決定 (federateNotes × ノート単位 localOnly × リモートユーザーの組合せ)、`ApRendererService` のチャンネル名+URL 付記が非破壊であること (note.text が変異しない)
+- 歯抜け回帰: 連合チャンネルの home ノートが、投稿者をフォローしていない閲覧者からもチャンネル TL / リプライツリーで見えること (followers 可視性を誤って使った場合に検出できるテスト)
 - fed (`pnpm --filter backend test:fed`): 「連合チャンネルノート配送 → 受信側で unlisted 表示 → リプライ還流でチャンネル入り (localOnly が立たないこと)」「federateNotes: false チャンネルが一切配送されないこと」「リレーに流れないこと」
 - 回帰: 既存チャンネル (federateNotes: false) の全挙動が無変更であること、`/api/notes` に連合チャンネルノートが出ないこと
 - 手動: 本家 Misskey / Mastodon 相手に、unlisted ノートとして表示されリプライが還流することを確認
@@ -189,6 +187,6 @@ backend 実質 8 ファイル + migration 1 本。Type4ny (3 ファイル) と�
 
 1. migration + entity + packed schema + autogen (§2.1)
 2. NoteCreateService の localOnly 条件化 + notes.ts の露出遮断 (§2.2, §2.6) — この時点で unit テスト
-3. ApRendererService の実効可視性 + URL 付記 (§2.3, §2.4) — fed テスト
+3. ApRendererService のチャンネル名+URL 付記 (§2.4) — fed テスト
 4. channels/create・update のバリデーションと frontend (§2.1, §2.7)
 5. shipping-misskey-change チェックリスト (lint / autogen / check-migrations / CHANGELOG の `### General` に Feat 1 行 / ja-JP.yml のみ確認) を通して PR
