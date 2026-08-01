@@ -465,9 +465,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
-		if (data.channel != null) data.visibility = 'public';
-		if (data.channel != null) data.visibleUsers = [];
-		if (data.channel != null) data.localOnly = true;
+		if (data.channel != null && this.userEntityService.isLocalUser(user)) {
+			// 可視性はチャンネル側の連合設定 (federationPolicy) が決める。
+			// 連合するチャンネルでもノート単位の localOnly 指定は尊重する。
+			data.localOnly = data.channel.federationPolicy === 'none' ? true : data.localOnly;
+			data.visibility = (data.channel.federationPolicy === 'unlisted' && !data.localOnly) ? 'home' : 'public';
+			data.visibleUsers = [];
+		}
 
 		if (data.visibility === 'public' && data.channel == null) {
 			const sensitiveWords = this.meta.sensitiveWords;
@@ -540,12 +544,12 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		// ローカルのみをRenoteしたらローカルのみにする
-		if (data.renote && data.renote.localOnly && data.channel == null) {
+		if (data.renote && data.renote.localOnly) {
 			data.localOnly = true;
 		}
 
 		// ローカルのみにリプライしたらローカルのみにする
-		if (data.reply && data.reply.localOnly && data.channel == null) {
+		if (data.reply && data.reply.localOnly) {
 			data.localOnly = true;
 		}
 

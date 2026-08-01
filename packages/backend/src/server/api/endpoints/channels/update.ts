@@ -42,6 +42,12 @@ export const meta = {
 			code: 'NO_SUCH_FILE',
 			id: 'e86c14a4-0da2-4032-8df3-e737a04c7f3b',
 		},
+
+		federationIncompatibleWithRenoteRestriction: {
+			message: 'Federation cannot be enabled for a channel that disallows renote to external.',
+			code: 'FEDERATION_INCOMPATIBLE_WITH_RENOTE_RESTRICTION',
+			id: '28f70990-cc45-4866-b4a2-73bf16d288b1',
+		},
 	},
 } as const;
 
@@ -62,6 +68,7 @@ export const paramDef = {
 		color: { type: 'string', minLength: 1, maxLength: 16 },
 		isSensitive: { type: 'boolean', nullable: true },
 		allowRenoteToExternal: { type: 'boolean', nullable: true },
+		federationPolicy: { type: 'string', nullable: true, enum: ['none', 'unlisted', 'public', null] },
 	},
 	required: ['channelId'],
 } as const;
@@ -93,6 +100,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.accessDenied);
 			}
 
+			// 更新後の組み合わせで「連合する × チャンネル外リノート禁止」にならないこと (連合先ではリノート制約を強制できないため)
+			const nextFederationPolicy = ps.federationPolicy ?? channel.federationPolicy;
+			const nextAllowRenoteToExternal = typeof ps.allowRenoteToExternal === 'boolean' ? ps.allowRenoteToExternal : channel.allowRenoteToExternal;
+			if (nextFederationPolicy !== 'none' && !nextAllowRenoteToExternal) {
+				throw new ApiError(meta.errors.federationIncompatibleWithRenoteRestriction);
+			}
+
 			// eslint:disable-next-line:no-unnecessary-initializer
 			let banner = undefined;
 			if (ps.bannerId != null) {
@@ -117,6 +131,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				...(banner ? { bannerId: banner.id } : {}),
 				...(typeof ps.isSensitive === 'boolean' ? { isSensitive: ps.isSensitive } : {}),
 				...(typeof ps.allowRenoteToExternal === 'boolean' ? { allowRenoteToExternal: ps.allowRenoteToExternal } : {}),
+				...(ps.federationPolicy !== undefined && ps.federationPolicy !== null ? { federationPolicy: ps.federationPolicy } : {}),
 			});
 
 			return await this.channelEntityService.pack(channel.id, me);

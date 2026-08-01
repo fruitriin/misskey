@@ -35,7 +35,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 			<div class="renoted-from-channel" style="line-height: normal;margin-top:-4px;">
 				<MkA v-if="note.channel" style="text-decoration: underline; margin-left: 16px; font-size: 12px; line-height: 12px;" :to="`/channels/${note.channelId}`">
-					<i class="ti ti-device-tv"/>{{ note.channel.name }}
+					<i class="ti ti-device-tv"/><span v-if="(note.channel.federationPolicy ?? 'none') !== 'none'" :title="i18n.ts._channel._federationPolicy[note.channel.federationPolicy]">🪐 </span>{{ note.channel.name }}
 				</MkA>
 			</div>
 		</div>
@@ -64,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div>
 					<Mfm :text="getNoteSummary(appearNote)" :plain="true" :nowrap="true" :author="appearNote.user" :nyaize="'respect'" :class="$style.collapsedRenoteTargetText" @click="renoteCollapsed = false"/>
 				</div>
-				<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</MkA>
+				<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> <span v-if="(appearNote.channel.federationPolicy ?? 'none') !== 'none'" :title="i18n.ts._channel._federationPolicy[appearNote.channel.federationPolicy]">🪐 </span>{{ appearNote.channel.name }}</MkA>
 			</div>
 		</div>
 		<div>
@@ -140,7 +140,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<span :class="$style.showLessLabel">{{ i18n.ts.showLess }}</span>
 					</button>
 				</div>
-				<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</MkA>
+				<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> <span v-if="(appearNote.channel.federationPolicy ?? 'none') !== 'none'" :title="i18n.ts._channel._federationPolicy[appearNote.channel.federationPolicy]">🪐 </span>{{ appearNote.channel.name }}</MkA>
 			</div>
 			<MkReactionsViewer
 				v-if="appearNote.reactionAcceptance !== 'likeOnly'"

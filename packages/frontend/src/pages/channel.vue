@@ -22,6 +22,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<div v-if="$i != null && channel != null && $i.id === channel.userId" style="color: var(--MI_THEME-warn)"><i class="ti ti-user-star ti-fw"></i><span style="margin-left: 4px;">{{ i18n.ts.youAreAdmin }}</span></div>
 					</div>
 					<div v-if="channel.isSensitive" :class="$style.sensitiveIndicator">{{ i18n.ts.sensitive }}</div>
+					<div v-if="(channel.federationPolicy ?? 'none') !== 'none'" v-tooltip="i18n.ts._channel._federationPolicy[channel.federationPolicy]" :class="$style.federationIndicator">🪐 {{ i18n.ts._channel._federationPolicy[channel.federationPolicy] }}</div>
 					<div :class="$style.bannerFade"></div>
 				</div>
 				<div v-if="channel.description" :class="$style.description">
@@ -357,7 +358,7 @@ const headerTabs = computed(() => [{
 }]);
 
 definePage(() => ({
-	title: channel.value ? channel.value.name : i18n.ts.channel,
+	title: channel.value ? ((channel.value.federationPolicy ?? 'none') !== 'none' ? `🪐 ${channel.value.name}` : channel.value.name) : i18n.ts.channel,
 	icon: 'ti ti-device-tv',
 }));
 </script>
@@ -438,6 +439,19 @@ definePage(() => ({
 	left: 16px;
 	background: rgba(0, 0, 0, 0.7);
 	color: var(--MI_THEME-warn);
+	border-radius: 6px;
+	font-weight: bold;
+	font-size: 1em;
+	padding: 4px 7px;
+}
+
+.federationIndicator {
+	position: absolute;
+	z-index: 1;
+	bottom: 16px;
+	right: 16px;
+	background: rgba(0, 0, 0, 0.7);
+	color: #fff;
 	border-radius: 6px;
 	font-weight: bold;
 	font-size: 1em;

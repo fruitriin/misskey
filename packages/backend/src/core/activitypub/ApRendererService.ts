@@ -23,7 +23,7 @@ import { MfmService } from '@/core/MfmService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import type { MiUserKeypair } from '@/models/UserKeypair.js';
-import type { UsersRepository, UserProfilesRepository, NotesRepository, DriveFilesRepository, PollsRepository, MiMeta } from '@/models/_.js';
+import type { UsersRepository, UserProfilesRepository, NotesRepository, DriveFilesRepository, PollsRepository, ChannelsRepository, MiMeta } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { CustomEmojiService } from '@/core/CustomEmojiService.js';
 import { IdService } from '@/core/IdService.js';
@@ -57,6 +57,9 @@ export class ApRendererService {
 
 		@Inject(DI.pollsRepository)
 		private pollsRepository: PollsRepository,
+
+		@Inject(DI.channelsRepository)
+		private channelsRepository: ChannelsRepository,
 
 		private customEmojiService: CustomEmojiService,
 		private userEntityService: UserEntityService,
@@ -440,6 +443,16 @@ export class ApRendererService {
 			// the class name `quote-inline` is used in non-misskey clients for styling quote notes.
 			// For compatibility, the span part should be kept as possible.
 			extraHtml = `<br><br><span class="quote-inline">RE: <a href="${escapeHtml(quote)}">${escapeHtml(quote)}</a></span>`;
+		}
+
+		if (note.channelId != null) {
+			// 連合するチャンネルノートには、リモートの読者向けにチャンネル名とURLを付記する。
+			// この固定URLはリモートユーザーがチャンネル単位でワードミュートするためのアンカーも兼ねる。
+			const channel = note.channel ?? await this.channelsRepository.findOneBy({ id: note.channelId });
+			if (channel != null) {
+				const channelUrl = `${this.config.url}/channels/${note.channelId}`;
+				extraHtml = (extraHtml ?? '') + `<br><br><span>From: 「${escapeHtml(channel.name)}」 <a href="${escapeHtml(channelUrl)}">${escapeHtml(channelUrl)}</a></span>`;
+			}
 		}
 
 		const summary = note.cw === '' ? String.fromCharCode(0x200B) : note.cw;
