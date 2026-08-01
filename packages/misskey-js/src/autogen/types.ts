@@ -4503,7 +4503,7 @@ export type components = {
                 isSensitive: boolean;
                 allowRenoteToExternal: boolean;
                 /** @enum {string} */
-                federationPolicy: 'none' | 'unlisted' | 'public';
+                federationPolicy: 'none' | 'home' | 'public';
                 userId: string | null;
             } | null;
             localOnly?: boolean;
@@ -4566,7 +4566,7 @@ export type components = {
                 isSensitive: boolean;
                 allowRenoteToExternal: boolean;
                 /** @enum {string} */
-                federationPolicy: 'none' | 'unlisted' | 'public';
+                federationPolicy: 'none' | 'home' | 'public';
                 userId: string | null;
             } | null;
             localOnly: boolean;
@@ -5043,7 +5043,7 @@ export type components = {
             isSensitive: boolean;
             allowRenoteToExternal: boolean;
             /** @enum {string} */
-            federationPolicy: 'none' | 'unlisted' | 'public';
+            federationPolicy: 'none' | 'home' | 'public';
             isFollowing?: boolean;
             isFavorited?: boolean;
             isMuting?: boolean;
@@ -14860,7 +14860,7 @@ export interface operations {
                     isSensitive?: boolean | null;
                     allowRenoteToExternal?: boolean | null;
                     /** @enum {string|null} */
-                    federationPolicy?: 'none' | 'unlisted' | 'public' | null;
+                    federationPolicy?: 'none' | 'home' | 'public' | null;
                 };
             };
         };
@@ -15864,7 +15864,7 @@ export interface operations {
                     isSensitive?: boolean | null;
                     allowRenoteToExternal?: boolean | null;
                     /** @enum {string|null} */
-                    federationPolicy?: 'none' | 'unlisted' | 'public' | null;
+                    federationPolicy?: 'none' | 'home' | 'public' | null;
                 };
             };
         };

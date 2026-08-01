@@ -588,7 +588,7 @@ export class ActivityPubServerService {
 			.andWhere(new Brackets(qb => {
 				qb
 					.where('note.channelId IS NULL')
-					.orWhere('channel.federationPolicy IN (:...federatingPolicies)', { federatingPolicies: ['unlisted', 'public'] });
+					.orWhere('channel.federationPolicy IN (:...federatingPolicies)', { federatingPolicies: ['home', 'public'] });
 			}))
 			.limit(ps.limit)
 			.getMany();

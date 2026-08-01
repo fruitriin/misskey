@@ -80,7 +80,7 @@ export const packedChannelSchema = {
 		federationPolicy: {
 			type: 'string',
 			optional: false, nullable: false,
-			enum: ['none', 'unlisted', 'public'],
+			enum: ['none', 'home', 'public'],
 		},
 		isFollowing: {
 			type: 'boolean',

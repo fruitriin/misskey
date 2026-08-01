@@ -15,7 +15,7 @@ import { isFederatedChannel } from '@/utility/channel.js';
 const props = defineProps<{
 	channel: {
 		name: string;
-		federationPolicy?: 'none' | 'unlisted' | 'public';
+		federationPolicy?: 'none' | 'home' | 'public';
 	};
 }>();
 

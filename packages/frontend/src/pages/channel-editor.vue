@@ -111,10 +111,10 @@ const {
 } = useMkSelect({
 	items: [
 		{ label: i18n.ts._channel._federationPolicy.none, value: 'none' },
-		{ label: i18n.ts._channel._federationPolicy.unlisted, value: 'unlisted' },
+		{ label: i18n.ts._channel._federationPolicy.home, value: 'home' },
 		{ label: i18n.ts._channel._federationPolicy.public, value: 'public' },
 	],
-	initialValue: 'none' as 'none' | 'unlisted' | 'public',
+	initialValue: 'none' as 'none' | 'home' | 'public',
 });
 const pinnedNoteIds = ref<Misskey.entities.Note['id'][]>([]);
 
@@ -175,9 +175,9 @@ function removePinnedNote(id: string) {
 
 async function save() {
 	// 連合の露出度が変わる場合は確認する。
-	// 露出が上がる方向 (none < unlisted < public) は「外に出る」旨、
+	// 露出が上がる方向 (none < home < public) は「外に出る」旨、
 	// 下がる方向 (連合 → none) は「配信済みは取り消せない」旨を伝える。
-	const rank = { none: 0, unlisted: 1, public: 2 } as const;
+	const rank = { none: 0, home: 1, public: 2 } as const;
 	const prev = channel.value?.federationPolicy ?? 'none';
 	const next = federationPolicy.value;
 	if (rank[next] > rank[prev]) {

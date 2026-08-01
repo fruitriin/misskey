@@ -245,13 +245,13 @@ const textAreaReadOnly = ref(false);
 const actualLocalOnly = computed<boolean>(() => targetChannel.value ? !isFederatedChannel(targetChannel.value) : localOnly.value);
 /**
  * {@link visibility}が持つ値にチャンネル選択有無を加味した値を計算する。
- * チャンネル選択時はチャンネルの連合設定に従う（連合しない/publicなら'public'、unlistedなら'home'）。
+ * チャンネル選択時はチャンネルの連合設定に従う（連合しない/publicなら'public'、homeなら'home'）。
  * サーバー側 (NoteCreateService.applyChannelFederationPolicy) の決定と一致させ、UIが実態と食い違わないようにする。
  * チャンネル選択有無を考慮する必要がある場面では{@link visibility}ではなくこの値を使用する。
  */
 const actualVisibility = computed<typeof Misskey.noteVisibilities[number]>(() => {
 	if (targetChannel.value == null) return visibility.value;
-	return (targetChannel.value.federationPolicy === 'unlisted' && !actualLocalOnly.value) ? 'home' : 'public';
+	return (targetChannel.value.federationPolicy === 'home' && !actualLocalOnly.value) ? 'home' : 'public';
 });
 const justEndedComposition = ref(false);
 const renoteTargetNote: ShallowRef<PostFormProps['renote'] | null> = shallowRef(props.renote);

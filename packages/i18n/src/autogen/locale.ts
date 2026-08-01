@@ -8970,7 +8970,7 @@ export interface Locale extends ILocale {
             /**
              * 連合する (ひかえめ)
              */
-            "unlisted": string;
+            "home": string;
             /**
              * 連合する (公開)
              */

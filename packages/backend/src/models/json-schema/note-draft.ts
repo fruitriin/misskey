@@ -150,7 +150,7 @@ export const packedNoteDraftSchema = {
 				federationPolicy: {
 					type: 'string',
 					optional: false, nullable: false,
-					enum: ['none', 'unlisted', 'public'],
+					enum: ['none', 'home', 'public'],
 				},
 				userId: {
 					type: 'string',
