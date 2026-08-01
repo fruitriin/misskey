@@ -4,6 +4,7 @@
 
 - 成果物 2: [02-fork-comparison.md](02-fork-comparison.md) — チャンネル連合を達成したフォークとの比較
 - 成果物 3: [03-consideration.md](03-consideration.md) — 比較を踏まえた追加考察
+- **改訂版: [04-plan-minimal.md](04-plan-minimal.md) — 比較・考察後の議論で採用した実行計画 (Type4ny 系最小方式)。本書と 03 は検討過程の記録**
 
 ---
 
