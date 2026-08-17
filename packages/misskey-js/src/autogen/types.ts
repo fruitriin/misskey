@@ -616,7 +616,7 @@ export type paths = {
          * admin/queue/stats
          * @description No description provided.
          *
-         *     **Credential required**: *Yes* / **Permission**: *read:admin:emoji*
+         *     **Credential required**: *Yes* / **Permission**: *read:admin:queue*
          */
         post: operations['admin___queue___stats'];
     };
@@ -4163,6 +4163,7 @@ export type components = {
             hasUnreadChatMessages: boolean;
             hasUnreadNotification: boolean;
             hasPendingReceivedFollowRequest: boolean;
+            /** @description Saturates at 100. The actual number of unread notifications may be larger. */
             unreadNotificationsCount: number;
             mutedWords: string[][];
             hardMutedWords: string[][];
