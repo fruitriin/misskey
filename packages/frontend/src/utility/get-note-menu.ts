@@ -373,28 +373,6 @@ export function getNoteMenu(props: {
 			action: copyContent,
 		}, getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink));
 
-<<<<<<< Updated upstream
-=======
-		if (timemachineAvailable) {
-			menuItems.push({
-				icon: 'ti ti-clock-bolt',
-				text: i18n.ts.jumpToTimemachine,
-				action: () => {
-				// ノートの作成時刻から1分後の時刻を計算
-					const noteDate = new Date(new Date(appearNote.createdAt).getTime() + 60000);
-					const year = noteDate.getFullYear();
-					const month = String(noteDate.getMonth() + 1).padStart(2, '0');
-					const day = String(noteDate.getDate()).padStart(2, '0');
-					const hours = String(noteDate.getHours()).padStart(2, '0');
-					const minutes = String(noteDate.getMinutes()).padStart(2, '0');
-					const seconds = String(noteDate.getSeconds()).padStart(2, '0');
-					const gotoParam = `${year}${month}${day}${hours}${minutes}${seconds}`;
-					os.pageWindow(`/timemachine?goto=${gotoParam}`);
-				},
-			});
-		}
-
->>>>>>> Stashed changes
 		if (link) {
 			menuItems.push({
 				icon: 'ti ti-link',

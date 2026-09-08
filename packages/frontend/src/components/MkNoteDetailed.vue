@@ -636,13 +636,6 @@ function blur() {
 
 const repliesLoaded = ref(false);
 
-<<<<<<< Updated upstream
-=======
-if (note.repliesCount > 0) {
-	loadReplies();
-}
-
->>>>>>> Stashed changes
 function loadReplies() {
 	repliesLoaded.value = true;
 	misskeyApi('notes/children', {
