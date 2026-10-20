@@ -9,7 +9,7 @@ mistems-readme ブランチの README.md と `main-統合.sh` を最新の MISTE
 
 ## 前提
 
-- worktree パス: `/Users/riin/workspace/misskey-worktrees/misskey/worktrees/mistems-readme`
+- worktree パス: `/Users/riin/workspace/misskey-worktrees/mistems-readme`
   - ブランチ `mistems-readme` がチェックアウトされている
   - `README.md` と `main-統合.sh` の 2 ファイルだけが存在する
 - ソース: `/Users/riin/workspace/misskey-worktrees/mistems-main/main-統合.sh` (mistems-main worktree の最新版)
@@ -22,7 +22,7 @@ mistems-main worktree の `main-統合.sh` を mistems-readme worktree にその
 
 ```bash
 cp /Users/riin/workspace/misskey-worktrees/mistems-main/main-統合.sh \
-   /Users/riin/workspace/misskey-worktrees/misskey/worktrees/mistems-readme/main-統合.sh
+   /Users/riin/workspace/misskey-worktrees/mistems-readme/main-統合.sh
 ```
 
 ### 2. README.md の更新
@@ -48,7 +48,7 @@ README.md 内のコードブロックに埋め込まれているスクリプト�
 mistems-readme worktree 内で:
 
 ```bash
-cd /Users/riin/workspace/misskey-worktrees/misskey/worktrees/mistems-readme
+cd /Users/riin/workspace/misskey-worktrees/mistems-readme
 git add -A
 git commit -m "README.md と main-統合.sh を最新に更新"
 git push riin mistems-readme
