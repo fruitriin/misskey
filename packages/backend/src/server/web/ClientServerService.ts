@@ -12,6 +12,7 @@ import { In, IsNull } from 'typeorm';
 import fastifyStatic from '@fastify/static';
 import fastifyProxy from '@fastify/http-proxy';
 import vary from 'vary';
+import { escapeHtml } from '@kitajs/html';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import * as Acct from '@/misc/acct.js';
@@ -45,6 +46,7 @@ import { FeedService } from './FeedService.js';
 import { UrlPreviewService } from './UrlPreviewService.js';
 import { ClientLoggerService } from './ClientLoggerService.js';
 import { HtmlTemplateService } from './HtmlTemplateService.js';
+import { buildVariantCookie, isValidVariantName, listVariants, readSkippedVariants } from './frontend-variant.js';
 
 import { BasePage } from './views/base.js';
 import { htmlToPlainText } from '@/misc/html-to-plain-text.js';
@@ -207,6 +209,15 @@ export class ClientServerService {
 	public createServer(fastify: FastifyInstance, options: FastifyPluginOptions, done: (err?: Error) => void) {
 		const configUrl = new URL(this.config.url);
 
+		// variant 表示中の HTML を共有キャッシュに載せない
+		fastify.addHook('onSend', async (request, reply, payload) => {
+			const contentType = String(reply.getHeader('Content-Type') ?? '');
+			if (contentType.startsWith('text/html') && this.htmlTemplateService.resolveVariant(request.headers.cookie) != null) {
+				reply.header('Cache-Control', 'private, no-store');
+			}
+			return payload;
+		});
+
 		fastify.addHook('onRequest', (request, reply, done) => {
 			// クリックジャッキング防止のためiFrameの中に入れられないようにする
 			reply.header('X-Frame-Options', 'DENY');
@@ -216,9 +227,20 @@ export class ClientServerService {
 		//#region vite assets
 		if (this.config.frontendEmbedManifestExists) {
 			this.clientLoggerService.logger.info(`[ClientServerService] Using built frontend vite assets. ${this.frontendViteOut}`);
+			// 本線が先頭なので、ハッシュなしのファイル（loader/boot.js など）は本線のものが返る
+			let variantRoots: string[] = [];
+			try {
+				const variantsRoot = this.htmlTemplateService.frontendVariantsRoot;
+				variantRoots = listVariants(variantsRoot).map(name => resolve(variantsRoot, name));
+			} catch (err) {
+				this.clientLoggerService.logger.warn(`[ClientServerService] Failed to list frontend variants: ${err instanceof Error ? err.message : String(err)}`);
+			}
 			fastify.register((fastify, options, done) => {
 				fastify.register(fastifyStatic, {
-					root: this.frontendViteOut,
+					root: [
+						this.frontendViteOut,
+						...variantRoots,
+					],
 					prefix: '/vite/',
 					maxAge: ms('30 days'),
 					immutable: true,
@@ -436,13 +458,41 @@ export class ClientServerService {
 
 		//#endregion
 
+		//#region frontend variants
+		fastify.get('/__fe', async (request, reply) => {
+			const variants = await this.htmlTemplateService.getAvailableVariants();
+			const current = this.htmlTemplateService.resolveVariant(request.headers.cookie);
+			const items = variants.map(name => `<li><a href="/__fe/switch?v=${name}">${name}</a>${name === current ? '（表示中）' : ''}</li>`).join('');
+			const skipped = readSkippedVariants(this.htmlTemplateService.frontendVariantsRoot)
+				.map(s => `<li>${escapeHtml(s.name)}（${escapeHtml(s.branch)}）: ${escapeHtml(s.reason)}</li>`).join('');
+			reply.header('Cache-Control', 'private, no-store');
+			reply.header('Content-Type', 'text/html; charset=utf-8');
+			return `<!doctype html><meta charset="utf-8"><title>Frontend variants</title><h1>Frontend variants</h1><ul><li><a href="/__fe/switch">本線に戻す</a>${current == null ? '（表示中）' : ''}</li>${items}</ul>${skipped !== '' ? `<h2>ビルドできなかった variant</h2><ul>${skipped}</ul>` : ''}`;
+		});
+
+		fastify.get<{ Querystring: { v?: string } }>('/__fe/switch', async (request, reply) => {
+			const v = request.query.v ?? '';
+			const secure = this.config.url.startsWith('https://');
+			if (v === '') {
+				reply.header('Set-Cookie', buildVariantCookie(null, secure));
+			} else if (isValidVariantName(v) && (await this.htmlTemplateService.getAvailableVariants()).includes(v)) {
+				reply.header('Set-Cookie', buildVariantCookie(v, secure));
+			} else {
+				reply.code(404);
+				return 'unknown variant';
+			}
+			reply.header('Cache-Control', 'private, no-store');
+			return reply.redirect('/');
+		});
+		//#endregion
+
 		const renderBase = async (reply: FastifyReply, data: Partial<Parameters<typeof BasePage>[0]> = {}) => {
 			reply.header('Cache-Control', 'public, max-age=30');
 			return await HtmlTemplateService.replyHtml(reply, BasePage({
 				img: this.meta.bannerUrl ?? undefined,
 				title: this.meta.name ?? 'Misskey',
 				desc: this.meta.description == null ? undefined : htmlToPlainText(this.meta.description),
-				...(await this.htmlTemplateService.getCommonData()),
+				...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				...data,
 			}));
 		};
@@ -548,7 +598,7 @@ export class ClientServerService {
 					user: _user,
 					profile,
 					sub: request.params.sub,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 					clientCtxJson: htmlSafeJsonStringify({
 						user: _user,
 					}),
@@ -610,7 +660,7 @@ export class ClientServerService {
 				return await HtmlTemplateService.replyHtml(reply, NotePage({
 					note: _note,
 					profile,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 					clientCtxJson: htmlSafeJsonStringify({
 						note: _note,
 					}),
@@ -650,7 +700,7 @@ export class ClientServerService {
 				return await HtmlTemplateService.replyHtml(reply, PagePage({
 					page: _page,
 					profile,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				}));
 			} else {
 				return await renderBase(reply);
@@ -674,7 +724,7 @@ export class ClientServerService {
 				return await HtmlTemplateService.replyHtml(reply, FlashPage({
 					flash: _flash,
 					profile,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				}));
 			} else {
 				return await renderBase(reply);
@@ -698,7 +748,7 @@ export class ClientServerService {
 				return await HtmlTemplateService.replyHtml(reply, ClipPage({
 					clip: _clip,
 					profile,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 					clientCtxJson: htmlSafeJsonStringify({
 						clip: _clip,
 					}),
@@ -723,7 +773,7 @@ export class ClientServerService {
 				return await HtmlTemplateService.replyHtml(reply, GalleryPostPage({
 					galleryPost: _post,
 					profile,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				}));
 			} else {
 				return await renderBase(reply);
@@ -741,7 +791,7 @@ export class ClientServerService {
 				reply.header('Cache-Control', 'public, max-age=15');
 				return await HtmlTemplateService.replyHtml(reply, ChannelPage({
 					channel: _channel,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				}));
 			} else {
 				return await renderBase(reply);
@@ -759,7 +809,7 @@ export class ClientServerService {
 				reply.header('Cache-Control', 'public, max-age=3600');
 				return await HtmlTemplateService.replyHtml(reply, ReversiGamePage({
 					reversiGame: _game,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				}));
 			} else {
 				return await renderBase(reply);
@@ -778,7 +828,7 @@ export class ClientServerService {
 				reply.header('Cache-Control', 'public, max-age=3600');
 				return await HtmlTemplateService.replyHtml(reply, AnnouncementPage({
 					announcement: _announcement,
-					...(await this.htmlTemplateService.getCommonData()),
+					...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				}));
 			} else {
 				return await renderBase(reply);
@@ -814,7 +864,7 @@ export class ClientServerService {
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
 				title: this.meta.name ?? 'Misskey',
-				...(await this.htmlTemplateService.getCommonData()),
+				...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				embedCtxJson: htmlSafeJsonStringify({
 					user: _user,
 				}),
@@ -844,7 +894,7 @@ export class ClientServerService {
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
 				title: this.meta.name ?? 'Misskey',
-				...(await this.htmlTemplateService.getCommonData()),
+				...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				embedCtxJson: htmlSafeJsonStringify({
 					note: _note,
 				}),
@@ -865,7 +915,7 @@ export class ClientServerService {
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
 				title: this.meta.name ?? 'Misskey',
-				...(await this.htmlTemplateService.getCommonData()),
+				...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 				embedCtxJson: htmlSafeJsonStringify({
 					clip: _clip,
 				}),
@@ -878,7 +928,7 @@ export class ClientServerService {
 			reply.header('Cache-Control', 'public, max-age=3600');
 			return await HtmlTemplateService.replyHtml(reply, BaseEmbed({
 				title: this.meta.name ?? 'Misskey',
-				...(await this.htmlTemplateService.getCommonData()),
+				...(await this.htmlTemplateService.getCommonData(reply.request.headers.cookie)),
 			}));
 		});
 
