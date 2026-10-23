@@ -95,6 +95,9 @@ git reset origin/develop --hard
 
 
 squash_merge riin/add-claude-github-actions-1762310148415
+# MISTEMS は CLAUDE.md を規約にしていて、上流の AGENTS.md / CONTRIBUTING.md は使わない。
+# 上流がこれらを更新すると「こちらは削除・上流は変更」の衝突になり、squash_merge が上流の版を残してしまうので、ここで必ず消す
+git rm -q --ignore-unmatch -- AGENTS.md CONTRIBUTING.md
 git commit -a -m "Add Claude Code GitHub Workflow(Issue, PRでClaudeが反応), mistems skill"
 
 
@@ -118,8 +121,11 @@ git commit -a -m "絵文字検索ひらカナ大統一"
 squash_merge riin/emojiChotMiel
 git commit -a -m "絵文字ちょっと見えてほしい"
 
-squash_merge riin/hashtag-mutable
-git commit -a -m "ハッシュタグでミュートできるようにする"
+# NOTE: 2026-10-23 統合から一時除外。上流 misskey-dev#17995「MFM描画部を共通化」で MkMfm.ts が
+#       createMfmRenderer を使う形に全面的に書き換わり、本ブランチの MkMfm.ts の変更が当たらなくなった。
+#       復帰条件: 本ブランチを最新 develop の createMfmRenderer の構造に合わせて作り直すこと (方針はユーザーと相談)。
+#squash_merge riin/hashtag-mutable
+#git commit -a -m "ハッシュタグでミュートできるようにする"
 
 # 検索を本文のみと 本文+CWにできるように
 squash_merge riin/search-enhance
@@ -332,7 +338,7 @@ echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を�
 # backend 変更と fork 側の別変更が混在するため除外: claude/issue-26-20260510-1119, claude/misskey-pr-34-continue-5YwvL, claude/remote-emoji-refetch-2nbU9' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 113
+set MISVER 114
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -389,7 +395,7 @@ exit
 [統合済み] mkNoteExtend — チャンネル Renote の出所表示 + リノートティッカー
 [統合済み] MkNoteDetailed-loadReplies — ノート詳細で返信を自動読み込み
 [統合待ち（要チェック）] claude/renote-lock-feature-7J0NA — リノートロック [上流#17554 CLOSED → MISTEMS 向け。2026-09-08 squash 時のマーカー混入を修復済]
-[統合済み] hashtag-mutable — ハッシュタグをメニューからミュート
+[保留] hashtag-mutable — ハッシュタグをメニューからミュート (2026-10-23 上流の MFM 描画部共通化と衝突して統合から一時除外。createMfmRenderer に合わせて作り直しが必要)
 [保留] safer-rss — RSS の安全化 (コンフリクトで統合保留中)
 
 ◇ 絵文字・リアクション
