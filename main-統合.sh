@@ -7,6 +7,44 @@
 
 git fetch origin
 git fetch riin
+
+# 統合を始める前に、squash するブランチに push し忘れたコミットがないかを確かめる。
+# `squash_merge <remote>/<name>` の各行について、同名のローカルブランチ (<name> または <remote>/<name>) に
+# リモートにないコミットがあれば一覧を出して止める (mistems-main を reset する前に止まる)。
+# ローカルの方が古いだけ (リモートが先に進んでいる) なら問題ないので止めない。
+# party/* のような remote 名で始まらないローカルブランチは対象外。
+function check_unpushed_branches
+    set -l remotes (command git remote)
+    set -l failed 0
+    # exit 行より前の、コメントアウトされていない squash_merge 行だけを見る
+    for ref in (command sed -n '/^exit$/q; s/^squash_merge[[:space:]]\{1,\}\([^[:space:]#]*\).*/\1/p' (status filename))
+        set -l parts (string split -m1 / -- $ref)
+        if not contains -- $parts[1] $remotes
+            continue
+        end
+        set -l remote_ref refs/remotes/$ref
+        if not command git rev-parse --verify -q $remote_ref >/dev/null
+            continue
+        end
+        for local_ref in refs/heads/$parts[2] refs/heads/$ref
+            if not command git rev-parse --verify -q $local_ref >/dev/null
+                continue
+            end
+            set -l ahead (command git rev-list --count $remote_ref..$local_ref)
+            if test $ahead -gt 0
+                echo "エラー: ローカルの $local_ref に、$ref へ push されていないコミットが $ahead 件あります:" >&2
+                command git log --oneline $remote_ref..$local_ref >&2
+                set failed 1
+            end
+        end
+    end
+    if test $failed -ne 0
+        echo "push するか、ローカルブランチを直してから再実行してください。mistems-main は変更していません。スクリプトを終了します。" >&2
+        exit 1
+    end
+end
+check_unpushed_branches
+
 git switch mistems-main
 git reset origin/develop --hard
 
