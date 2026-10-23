@@ -1,5 +1,10 @@
 #!/usr/bin/env fish
 
+# コミットメッセージの書式:
+# - コミットメッセージに PR / Issue 番号 (misskey-dev#12345 など) を含めない。
+#   push のたびに該当 PR へ参照通知が飛んでしまうため。
+# - 参照先は squash_merge の直前にコメントで URL を書いておく。
+
 git fetch origin
 git fetch riin
 git switch mistems-main
@@ -92,8 +97,9 @@ git commit -a -m "MkNoteDetailedで返信を読み込む"
 squash_merge kakkokari-gtyih/fix-stream-indicator
 git commit -a -m "WSが再開したらサーバー切断メッセージを閉じる"
 
+# https://github.com/MisskeyIO/misskey/issues/462
 squash_merge riin/block-mentions-from-unfamiliar
-git commit -a -m "無名のユーザーからの通知を拒否する(MisskeyIO/misskey/#462)"
+git commit -a -m "無名のユーザーからの通知を拒否する"
 
 
 squash_merge riin/annoy-logs-goneto-debuglevel
@@ -226,37 +232,37 @@ git commit -a -m "fix(frontend): ダークテーマ時にX (Twitter) ポスト�
 # iPhone PWA で音が鳴らないのを解消する必要がある
 # https://github.com/misskey-dev/misskey/pull/16974
 # squash_merge party/16974-multitab-sound
-# git commit -a -m "複数タブでMisskeyを開いている場合、そのうちの一つだけでサウンドを再生するように (misskey-dev#16974)"
+# git commit -a -m "複数タブでMisskeyを開いている場合、そのうちの一つだけでサウンドを再生するように"
 
 # https://github.com/misskey-dev/misskey/pull/17770
 squash_merge party/17770-reversi-timer
-git commit -a -m "リバーシの制限時間がバックグラウンドで遅れる問題を修正 (misskey-dev#17770)"
+git commit -a -m "リバーシの制限時間がバックグラウンドで遅れる問題を修正"
 
 # https://github.com/misskey-dev/misskey/pull/17158
 squash_merge party/17158-htl-onboarding
-git commit -a -m "ホームタイムラインが空のとき「みつける」やローカルに誘導するように (misskey-dev#17158)"
+git commit -a -m "ホームタイムラインが空のとき「みつける」やローカルに誘導するように"
 
 # https://github.com/misskey-dev/misskey/pull/15049
 squash_merge party/15049-announce-reset-reads
-git commit -a -m "お知らせの既読をリセットできるように (misskey-dev#15049)"
+git commit -a -m "お知らせの既読をリセットできるように"
 
 # https://github.com/misskey-dev/misskey/pull/17474
 #squash_merge party/17474-drafts-menu
-#git commit -a -m "投稿フォームの下書き・予約投稿メニューを整理 (misskey-dev#17474)"
+#git commit -a -m "投稿フォームの下書き・予約投稿メニューを整理"
 
 # https://github.com/misskey-dev/misskey/pull/14933
 squash_merge party/14933-bsky-embed
-git commit -a -m "blueskyの投稿埋め込み表示に対応 (misskey-dev#14933)"
+git commit -a -m "blueskyの投稿埋め込み表示に対応"
 
 # https://github.com/misskey-dev/misskey/pull/16891
 #squash_merge party/16891-follow-search
-#git commit -a -m "フォロー・フォロワーを検索できるように (misskey-dev#16891)"
+#git commit -a -m "フォロー・フォロワーを検索できるように"
 
 # https://github.com/misskey-dev/misskey/pull/17758
 # NOTE: custom-emojis.ts で「絵文字検索ひらカナ大統一」とコンフリクトする。
 #       解消方針: PR の新 fetchCustomEmojis を採用し、ひらカナ正規化は setCustomEmojis 内に移設 (rerere 学習済)
 squash_merge party/17758-emoji-cache
-git commit -a -m "カスタム絵文字の更新をサーバーに確認してクライアントキャッシュを更新するように (misskey-dev#17758)"
+git commit -a -m "カスタム絵文字の更新をサーバーに確認してクライアントキャッシュを更新するように"
 
 # ---- 仮氏パーティ ここまで ----
 
@@ -270,7 +276,25 @@ git commit -a -m "fix(backend): チャート UPDATE 失敗時にバッファが�
 pnpm run build-misskey-js-with-types
 git commit -a -m "misskey-js autogen 再生成 (仮氏パーティ統合後の整合)"
 
-set MISVER 110
+squash_merge riin/emojiDropUpload
+git commit -a -m "feat(frontend): カスタム絵文字管理画面(β)の登録タブにドロップで絵文字を登録できるエリアを追加"
+
+# 複数ブランチのフロントエンドを本番に同居させ、管理画面 (/admin/frontend-variants) から切り替えて確認する
+# 運用手順: docs/frontend-variants.md / サーバーでは pnpm build の後、再起動の前に FRONTEND_VARIANTS_REMOTE=riin node scripts/build-frontend-variants.mjs を実行する
+squash_merge riin/feat/frontend-variants
+git commit -a -m "feat: 複数ブランチのフロントエンドを本番に同居させ、管理画面から切り替えられるように"
+
+# 本番で確認するフロントエンド variant の一覧。下の台帳の [統合待ち（要チェック）] から、frontend だけを変えるブランチを選ぶ。
+# branch は riin (fruitriin/misskey) 上のブランチ名。mode を省略すると、この時点の HEAD に squash merge してビルドする。
+# backend の変更を含むブランチは、本番の backend に反映されないので variant では正しく確認できない (コメントアウトして理由を残す)。
+echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を直すこと。
+- name: clips-pagination
+  branch: fix-clips-pagination
+# backend 変更あり (新 API) のため除外: claude/renote-lock-feature-7J0NA
+# backend 変更と fork 側の別変更が混在するため除外: claude/issue-26-20260510-1119, claude/misskey-pr-34-continue-5YwvL, claude/remote-emoji-refetch-2nbU9' > frontend-variants.yml
+git commit -a -m "フロントエンド variant の一覧を更新"
+
+set MISVER 113
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -438,9 +462,6 @@ exit
 [統合待ち（要チェック）] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 (fork PR#34 続き)
 [統合待ち（要チェック）] claude/remote-emoji-refetch-2nbU9 — リモートノート再取得の改善 (fork PR#35 レビュー反映)
 [統合待ち（要チェック）] fix-clips-pagination — my/clips ページネーション末尾判定の修正
-[統合待ち（要チェック）] fix/timeline-moreview — タイムライン自動「もっと見る」
-[統合待ち（要チェック）] fix-channel-menu — チャンネルメニュー修正
-[統合待ち（要チェック）] fix/mkpoll-ReferenceError — MkPoll の ReferenceError 修正
 [保留] readble-message-ratelimitservice — レートリミットメッセージの可読化 (統合スクリプトでコメントアウト中・要コンフリクト修正)
 
 ◇ 吸収済み・置換済み (リモート削除候補)
@@ -450,7 +471,7 @@ exit
 [残骸] dragable-attachfile-mkpostform / claude/issue-25-20251122-1244 — 添付ファイル並べ替えの旧版
 [残骸] claude/exciting-keller-rkmsvy — 絵文字ピッカー修正の旧版 (統合済み版の前身)
 [残骸] claude/fix-database-queries-i0dvC — fix/clean-remote-notes-delete-timeout へ cherry-pick 済み
-[残骸] claude/issue-19-20251105-0248 / -0535 — 自動「もっと見る」の試行 (fix/timeline-moreview が後継)
+[残骸] claude/issue-19-20251105-0248 / -0535 — 自動「もっと見る」の試行 (後継の fix/timeline-moreview は本家 misskey-dev#16754 でマージ済み。栄誉の殿堂を参照)
 [残骸] claude/issue-21-20251105-0636 / -1607 — タイムマシン初期実装 (現行 timemachine に置換)
 [残骸] claude/issue-23-20251121-0356 / -0425 / -20251122-1241 / -1247 — クリップページネーションの試行 (fix-clips-pagination が後継)
 [残骸] claude/readme-mistems-main-sync-ac8grd — README 同期の旧作業 (mistems-readme 運用に置換)
@@ -482,6 +503,15 @@ exit
 ■ 栄誉の殿堂
 本家の方に入ったのでもう不要
 
+
+riin/fix/timeline-moreview — タイムライン自動「もっと見る」
+  → 本家 misskey-dev#16754「一部のページでもっと見るが自動で行われないバグの修正」で同じ内容がマージ済み。
+riin/fix-channel-menu — チャンネルメニューの「新規作成」の遷移先修正
+  → 本家 misskey-dev#16816「ヘッダーメニューのチャンネルからチャンネルを新規作成の遷移先修正」で同じ内容がマージ済み。
+riin/fix/mkpoll-ReferenceError — MkPoll の集計完了後の挙動と ReferenceError の修正
+  → 本家 misskey-dev#16646「MkPollの集計完了後の挙動がおかしいのを修正」で同じ内容がマージ済み。
+  上の 3 本は統合待ちのまま残っていたが、2026-10-23 の確認で上流に入っていると判明。リモートブランチは削除済み。
+  ローカルに refs/backup/2026-10-23-merged-upstream/ 以下の ref として退避してある。
 
 riin/perf/clean-remote-notes-cursor + riin/fix/clean-remote-notes-delete-timeout
   cleanRemoteNotes のカーソル永続化 + タイムアウト耐性強化。
