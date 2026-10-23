@@ -35,6 +35,10 @@ MISTEMS 開発全体で使うファイル (規約、スキル、開発ツール�
 5. **互いにコンフリクトする機能**は、`riin/release/*` の統合ブランチにまとめてから squash merge する。`riin/release/*` 自体がコンフリクトしたときは、`rebuild-release-branch` スキルで元の機能ブランチから作り直す
 6. 上流が同じ課題を解決したら、そのブランチは統合から外し、`main-統合.sh` の台帳の「栄誉の殿堂」に移す
 
+### force push
+
+develop への rebase や作り直しを日常的に行う開発スタイルなので、`riin` の自分のブランチ (機能ブランチ、`riin/release/*`、claudeImplement など) への force push は日常的に使ってよい。**ユーザーへの許可取りは不要**である。他人の push を上書きしないよう `--force-with-lease` を使う。`origin` (misskey-dev) へは、force push も通常の push もしない。
+
 ### 上流のファイルとの関係
 
 規約や開発用ドキュメント (本ファイル、`.claude/` 配下、`.github/copilot-instructions.md` など) は、上流で変更があっても**原則として MISTEMS 側の内容を採用する**。更新頻度が低く、上書きしても失うものが少ないためである。統合でコンフリクトしたら、MISTEMS 側を残して解消する。
@@ -70,7 +74,7 @@ MISTEMS 開発全体で使うファイル (規約、スキル、開発ツール�
 
 ### Issue / PR / 外部送信
 
-4. **ユーザーの明示指示なしに PR を merge / close / force-push しない**
+4. **ユーザーの明示指示なしに PR を merge / close しない** (ブランチへの force push は「force push」の節のとおり許可不要)
 5. **ユーザーの明示指示なしに external service (GitHub comments / Slack / メール 等) へ送信しない**
 6. **secrets / 認証情報をリポジトリにコミットしない** (`.config/*.yml` の本番値、`.env` ファイル、API token、private key 等)
 7. **misskey-dev/misskey へは書き込まない**
