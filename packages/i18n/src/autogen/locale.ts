@@ -9734,6 +9734,10 @@ export interface Locale extends ILocale {
          */
         "write:admin:user-note": string;
         /**
+         * ノートのリノートロックを操作する
+         */
+        "write:admin:note-renote-lock": string;
+        /**
          * ロールを操作する
          */
         "write:admin:roles": string;
@@ -11747,6 +11751,14 @@ export interface Locale extends ILocale {
          * プロキシアカウントの説明を更新
          */
         "updateProxyAccountDescription": string;
+        /**
+         * ノートのリノートをロック
+         */
+        "lockNoteRenote": string;
+        /**
+         * ノートのリノートのロックを解除
+         */
+        "unlockNoteRenote": string;
     };
     "_fileViewer": {
         /**
@@ -13337,6 +13349,28 @@ export interface Locale extends ILocale {
      * 下書き
      */
     "drafts": string;
+    "_renoteLock": {
+        /**
+         * 他の人によるリノートを禁止
+         */
+        "lockRenoteByOthersInPost": string;
+        /**
+         * リノートを禁止する
+         */
+        "prohibitRenote": string;
+        /**
+         * リノートを許可する
+         */
+        "allowRenote": string;
+        /**
+         * リノートをロックする (モデレーション)
+         */
+        "lockByModeration": string;
+        /**
+         * リノートのロックを解除する (モデレーション)
+         */
+        "unlockByModeration": string;
+    };
     "_drafts": {
         /**
          * 下書きを選択
