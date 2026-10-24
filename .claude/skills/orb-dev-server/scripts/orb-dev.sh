@@ -129,6 +129,11 @@ build_nm_entries() {
 }
 
 generate() {
+	# variant の worktree で普通の up を実行して、variant の compose.yml を上書きしないようにする
+	if grep -q 'orb-dev.variant.branch' "$state_dir/compose.yml" 2>/dev/null; then
+		echo "$project は variant の環境です。'$0 variant up <branch>' で起動してください。何も変更せずに終了します。" >&2
+		exit 1
+	fi
 	mkdir -p "$state_dir"
 	local node_ver pnpm_ver
 	node_ver="$(tr -d '[:space:]' < "$wt/.node-version")"
@@ -840,6 +845,11 @@ variant_up() {
 	echo "起動しました: $url  (ブランチ: ${v_branch}、種類: $v_category)"
 }
 
+# vdb だけを消してやり直す手順を表示する。down -v は node_modules の volume も消し、依存のインストールからやり直しになるので使わない
+print_vdb_retry_steps() {
+	echo "'$0 variant down $v_branch' で止め、docker volume rm '${project}_vdb-data' で vdb だけを消してから、もう一度 '$0 variant up $v_branch' を実行してください" >&2
+}
+
 # 種類 3 の vdb を先に起動し、seed が入っていることを確かめる。
 # 初回の restore が失敗すると、データディレクトリは初期化済みの空の DB のまま残り、次の起動では initdb.d を実行しない。
 # そのまま web を起動すると、空の DB に migrate がかかって seed の無い環境が正常に起動したように見えるので、ここで止める
@@ -849,7 +859,7 @@ start_vdb() {
 	if ! compose up -d --wait vdb; then
 		echo "vdb が起動しませんでした。ログ:" >&2
 		compose logs --tail 30 vdb >&2
-		echo "'$0 variant down $v_branch -v' で vdb を消してから、もう一度 '$0 variant up $v_branch' を実行してください" >&2
+		print_vdb_retry_steps
 		exit 1
 	fi
 	# seed には管理者 admin がいる。表が無い (restore されていない) ときも 0 とみなす
@@ -857,7 +867,7 @@ start_vdb() {
 		"SELECT count(*) FROM \"user\" WHERE \"usernameLower\" = 'admin' AND host IS NULL" 2>/dev/null || true)"
 	if [ "$admins" != "1" ]; then
 		echo "vdb に seed が入っていません (初回の restore が失敗した可能性があります)。web は起動しません。" >&2
-		echo "'$0 variant down $v_branch -v' で vdb を消してから、もう一度 '$0 variant up $v_branch' を実行してください" >&2
+		print_vdb_retry_steps
 		exit 1
 	fi
 }
@@ -879,7 +889,8 @@ variant_projects() {
 		docker ps -a --filter label=orb-dev.variant.branch --format '{{.Label "com.docker.compose.project"}}'
 		local f
 		for f in "$cache_root"/variant-*/compose.yml; do
-			[ -f "$f" ] && basename "$(dirname "$f")"
+			# 名前が variant- で始まる普通の worktree の環境は含めない
+			if grep -q 'orb-dev.variant.branch' "$f" 2>/dev/null; then basename "$(dirname "$f")"; fi
 		done
 	} | sort -u
 }
