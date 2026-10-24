@@ -5,7 +5,11 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyFiles, findForkPoint, slugOf } from './classify.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { classifyBranch, classifyFiles, findForkPoint, slugOf } from './classify.mjs';
 
 test('classifyFiles: migration の追加があれば migration', () => {
 	const changed = [
@@ -78,4 +82,47 @@ test('slugOf: 最後の / 以降を小文字にし、[a-z0-9-] 以外を - に�
 	assert.equal(slugOf('claude/issue-26-20260510-1119'), 'issue-26-20260510-1119');
 	assert.equal(slugOf('fix-clips-pagination'), 'fix-clips-pagination');
 	assert.equal(slugOf('feat/foo_bar.baz'), 'foo-bar-baz');
+});
+
+// 一時リポジトリで、差分とコミットの範囲の取り方 (三点と二点) を確かめる
+function makeRepo() {
+	const repo = mkdtempSync(join(tmpdir(), 'classify-test-'));
+	const env = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.com' };
+	const git = (...args) => execFileSync('git', ['-C', repo, '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', env }).trim();
+	const commit = (subject, files) => {
+		for (const f of files) {
+			mkdirSync(join(repo, dirname(f)), { recursive: true });
+			writeFileSync(join(repo, f), `${subject}\n`);
+		}
+		git('add', '-A');
+		git('commit', '-q', '--allow-empty', '-m', subject);
+		return git('rev-parse', 'HEAD');
+	};
+	git('init', '-q', '-b', 'main');
+	return { repo, git, commit };
+}
+
+test('classifyBranch: develop が後から進んだ変更は数えず、Version updated to: のコミットを起点にする', t => {
+	const { repo, git, commit } = makeRepo();
+	t.after(() => rmSync(repo, { recursive: true, force: true }));
+	const base = commit('init', ['README.md']);
+	git('checkout', '-q', '-b', 'feature');
+	const version = commit('Version updated to: 2026.1.0-MISTEMS.1', ['packages/frontend/src/old.vue']);
+	commit('feat: x', ['packages/frontend/src/a.vue']);
+	git('checkout', '-q', 'main');
+	// develop だけが backend を変えた。三点の範囲なら feature の種類に影響しない
+	commit('develop: backend', ['packages/backend/src/b.ts']);
+	git('update-ref', 'refs/remotes/origin/develop', 'HEAD');
+	assert.deepEqual(classifyBranch(repo, 'feature', 'claude/Feature_X'), { category: 'frontend', forkPoint: version, slug: 'feature-x' });
+	assert.notEqual(version, base);
+});
+
+test('classifyBranch: Version updated to: のコミットが無ければ merge-base を起点にし、migration の追加を見分ける', t => {
+	const { repo, git, commit } = makeRepo();
+	t.after(() => rmSync(repo, { recursive: true, force: true }));
+	const base = commit('init', ['README.md']);
+	git('update-ref', 'refs/remotes/origin/develop', 'HEAD');
+	git('checkout', '-q', '-b', 'feature');
+	commit('feat: migration', ['packages/backend/migration/1-a.js', 'packages/backend/src/a.ts']);
+	assert.deepEqual(classifyBranch(repo, 'feature', 'feature'), { category: 'migration', forkPoint: base, slug: 'feature' });
 });
