@@ -81,6 +81,33 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - `restore` が途中で失敗すると、DB が空のまま残ることがある。復旧は `up` → `restore`、または `up --seed` である。それでも失敗するなら `down -v` → `up --seed` で作り直す
 - スナップショットの名前を指定するときは worktree も書く (例: `restore . before-x`)。1 つ目の位置引数は常に worktree として扱う
 
+## variant (統合待ちのブランチの確認)
+
+統合待ちのブランチを、ベース環境 (既定は mistems-main の worktree) の DB・Redis を使う別のコンテナで動かす。呼び出しの順序と報告の形は `variant-prep` スキルに書いてある。ここではコマンドと注意点だけを書く。
+
+```bash
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant classify <branch>        # frontend / backend / migration / other を表示する
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant prepare  <branch> [base] # worktree を作り、ブランチ固有の差分を当てる (コンフリクトは終了コード 2)
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant up       <branch> [base] # 本番ビルドで起動し、応答するまで待つ
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant down     <branch> [-v]   # 止める。-v で vdb・node_modules の volume も消す
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant status                    # ブランチ・種類・URL・DB・状態・応答を一覧する
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant up-all   <branch>...      # prepare と up を 1 本ずつ順に行う (ベースは既定のものだけ)
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant down-all [-v]
+```
+
+`<branch>` は riin のブランチ名 (例: `claude/renote-lock-feature-7J0NA`) である。
+
+- 種類は origin/develop との差分で決める。migration を追加するものは `vdb` (自分専用の DB)、backend を変えるものはベース環境の DB を使う。frontend だけのものは `prepare` / `up` を断る (frontend-variants.yml で確認する)
+- variant の worktree は `<ベースの親>/variant-<slug>`、ブランチは `variant/<slug>` (ローカルのみ)、compose のプロジェクトは `variant-<slug>`、URL は `http://web.variant-<slug>.orb.local:3000/` である。slug はブランチ名の最後の `/` 以降を小文字にし、`[a-z0-9-]` 以外を `-` にしたものである
+- `prepare` は、起点 (件名が `Version updated to:` の最新のコミット、無ければ merge-base) からブランチ先端までの差分を、ベースの HEAD に 3-way で当ててコミットする。コンフリクトの解消のコミットは、rerere の記録が `main-統合.sh` に影響しないよう `git -c rerere.enabled=false commit` で行う
+- variant のコンテナは `MK_ONLY_SERVER=1` と `MK_NO_DAEMONS=1` で起動する。キューのワーカーとデーモンが動かないので、積まれたジョブ (配送・通知の後処理など) は処理されず、定期ジョブも動かない。配送や通知の後処理を伴う動作は確認できない
+- Redis はベース環境のものを共有するが、キーの接頭辞は URL のホスト名から決まるので variant ごとに分かれる。接頭辞を揃えると、variant のコードがベース環境の定期ジョブを書き換えたり消したりするため、揃えてはならない
+- `files/` と pnpm のストア (`<base>_pnpm-store`) はベース環境のものを共有する
+- seed のスナップショットにはベース環境の URL (`http://web.<ベース>.orb.local:3000/`) が入っている。**ベース環境を止めると、variant の画像 (アバター・絵文字・添付・インスタンスのアイコン) も表示されなくなり、variant の起動もできない**。確認が終わるまでベース環境を止めない
+- `vdb` の初回は、ベースの seed のスナップショットを restore してから migrate を当てる。seed が無いときは web を起動せずに止まる。やり直すときは `variant down <branch> -v` → `variant up <branch>` である
+- `up` の前に空きメモリ (VM 全体からコンテナの使用量の合計を引いた値) を確かめ、4GB 未満なら起動せずに内訳を表示して止まる。他のコンテナを止めて空けることはしない
+- pnpm install / build が重なるので、`up` は 1 本ずつ実行し、前の web が応答してから次へ進む
+
 # 経験の記録
 （実施したときの注意点などを自由に記載）
 
