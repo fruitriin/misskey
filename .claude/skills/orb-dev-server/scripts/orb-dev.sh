@@ -461,8 +461,38 @@ warn_if_old_base() {
 	base_head="$(git -C "$base_wt" rev-parse HEAD)"
 	if ! git -C "$v_wt" merge-base --is-ancestor "$base_head" HEAD; then
 		echo "注意: $v_wt は、今のベース環境の HEAD ($(git -C "$base_wt" log -1 --format='%h %s')) を含まない、古いベースから作られています。" >&2
-		echo "  新しいベースで作り直すには: '$0 variant down $v_branch -v' → git worktree remove '$v_wt' → git branch -D '$v_local_branch' → '$0 variant prepare $v_branch'" >&2
+		print_rebuild_steps
 	fi
+}
+
+# variant を作り直す手順を表示する (標準エラー出力)
+print_rebuild_steps() {
+	echo "  作り直すには: '$0 variant down $v_branch -v' → git -C '$base_wt' worktree remove '$v_wt' → git -C '$base_wt' branch -D '$v_local_branch' → '$0 variant prepare $v_branch' → '$0 variant up $v_branch'" >&2
+}
+
+# 当てたときの riin/<branch> の sha を置くファイル。コンフリクトを解消するコミットの案内に使う
+applied_sha_file() {
+	echo "$(git -C "$v_wt" rev-parse --absolute-git-dir)/orb-dev-variant-sha"
+}
+
+# riin のブランチが、variant に当てた版より進んでいれば注意を表示する (止めはしない)
+# 当てたコミットの本文の「ブランチ: riin/<branch> (<sha>)」と比べる。
+# 本文に sha が無いコミット (以前の案内で手で解消したもの) は、コミットした時刻より新しいコミットがブランチにあるかで判断する
+warn_if_branch_moved() {
+	local c applied_sha now_sha newer
+	c="$(git -C "$v_wt" log --format='%H%x09%s' "origin/develop..HEAD" | awk -F'\t' -v s="variant: $v_branch" '$2 == s { print $1; exit }')"
+	[ -n "$c" ] || return 0
+	now_sha="$(git -C "$base_wt" rev-parse "riin/$v_branch")"
+	applied_sha="$(git -C "$v_wt" log -1 --format=%b "$c" | sed -nE 's/^ブランチ: riin\/.* \(([0-9a-f]+)\)$/\1/p' | head -1)"
+	if [ -n "$applied_sha" ]; then
+		[ "$applied_sha" = "$now_sha" ] && return 0
+		echo "注意: riin/$v_branch は、$v_wt に当てた版 (${applied_sha:0:10}) から進んでいます (今は ${now_sha:0:10})。variant は古い版のままです。" >&2
+	else
+		newer="$(git -C "$base_wt" rev-list -1 --since="$(git -C "$v_wt" log -1 --format=%cI "$c")" "riin/$v_branch")"
+		[ -n "$newer" ] || return 0
+		echo "注意: riin/$v_branch に、$v_wt に当てたあとのコミットがあります (今は ${now_sha:0:10})。variant は古い版のままの可能性があります。" >&2
+	fi
+	print_rebuild_steps
 }
 
 variant_report_conflicts() {
@@ -475,8 +505,11 @@ variant_report_conflicts() {
 	else
 		echo "$v_wt にコミットしていない変更があります。" >&2
 	fi
+	# 当てた版を本文に残し、ブランチが進んだことを warn_if_branch_moved で検出できるようにする
+	local sha
+	sha="$(cat "$(applied_sha_file)" 2>/dev/null || git -C "$base_wt" rev-parse "riin/$v_branch")"
 	# rerere は main-統合.sh と rr-cache を共有するので、variant の解消を記録させない (統合のときに勝手に当たるのを防ぐ)
-	echo "解消したら git -C '$v_wt' add -A && git -C '$v_wt' -c rerere.enabled=false commit -m 'variant: $v_branch' でコミットし、もう一度 '$0 variant prepare $v_branch' を実行してください。" >&2
+	echo "解消したら git -C '$v_wt' add -A && git -C '$v_wt' -c rerere.enabled=false commit -m 'variant: $v_branch' -m 'ブランチ: riin/$v_branch ($sha)' でコミットし、もう一度 '$0 variant prepare $v_branch' を実行してください。" >&2
 }
 
 # variant で動かすのは backend (種類 2) と migration (種類 3) だけ
@@ -515,6 +548,7 @@ variant_prepare() {
 	if variant_applied; then
 		echo "当て済みです: $v_wt ($v_local_branch)"
 		warn_if_old_base
+		warn_if_branch_moved
 		return 0
 	fi
 	if [ -n "$(git -C "$v_wt" status --porcelain)" ]; then
@@ -524,6 +558,7 @@ variant_prepare() {
 	fi
 
 	echo "ブランチ固有の差分を当てています: $(git -C "$base_wt" log -1 --format='%h %s' "$v_fork") .. riin/$v_branch"
+	git -C "$base_wt" rev-parse "riin/$v_branch" > "$(applied_sha_file)"
 	# rerere は main-統合.sh と rr-cache を共有する。variant のコンフリクトと解消を記録させないよう、apply と commit では無効にする
 	if git -C "$base_wt" diff --binary "$v_fork" "riin/$v_branch" | git -C "$v_wt" -c rerere.enabled=false apply --3way --index; then
 		# 差分がすべてベース環境に入っているときも、当て済みの印としてコミットする
@@ -720,6 +755,7 @@ variant_up() {
 	fi
 	require_no_slug_collision
 	warn_if_old_base
+	warn_if_branch_moved
 
 	use_env "$v_wt" "$v_project"
 	if web_ready; then
