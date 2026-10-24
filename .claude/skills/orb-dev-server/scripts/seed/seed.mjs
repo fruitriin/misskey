@@ -164,7 +164,9 @@ async function main() {
 	const adminLogin = await api.call('signin-flow', { username: 'admin', password: args.adminPassword });
 	if (!adminLogin?.finished || !adminLogin.i) throw new Error('admin でサインインできませんでした');
 	const adminToken = adminLogin.i;
-	const existing = await api.call('admin/show-users', { origin: 'local', limit: 100 }, adminToken);
+	// system.proxy などのシステムアカウント (ユーザー名に . を含む) は起動時などに自動で作られるので数えない
+	const existing = (await api.call('admin/show-users', { origin: 'local', limit: 100 }, adminToken))
+		.filter((u) => !u.username.includes('.'));
 	if (existing.length !== 1 || existing[0].username !== 'admin') {
 		console.error(`[seed] 既にデータがあります (ローカルのユーザーが ${existing.length} 人います)。`);
 		console.error('[seed] 作り直すには、orb-dev.sh down . -v で環境を消してから up し直すか、restore で戻してください。');
@@ -195,6 +197,8 @@ async function main() {
 			policies: {
 				rateLimitFactor: { useDefault: false, priority: 0, value: 0 },
 				clipLimit: { useDefault: false, priority: 0, value: 100 },
+				// ノート検索は既定で無効なので、seed の後に検索を確かめられるよう有効にする
+				canSearchNotes: { useDefault: false, priority: 0, value: true },
 			},
 		}, adminToken);
 		admin.roleId = role.id;
