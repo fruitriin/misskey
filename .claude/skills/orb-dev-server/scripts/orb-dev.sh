@@ -352,6 +352,7 @@ case "$cmd" in
 		;;
 	snapshot)
 		require_running
+		require_own_project
 		do_snapshot
 		;;
 	restore)
