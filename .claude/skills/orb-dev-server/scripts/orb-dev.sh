@@ -581,13 +581,28 @@ require_free_memory() {
 	echo "空きメモリ: $(fmt_gb "$free") (VM $(fmt_gb "$total") - コンテナ $(fmt_gb "$used"))"
 }
 
+# コンテナが今回起動してからのログに "Now listening" が出ているかどうか。
+# restart policy が no なので、止まったコンテナを起動し直すと前回のログが残っている。起動した時刻より前のログは見ない
+container_listening() {
+	local started
+	started="$(docker inspect -f '{{.State.StartedAt}}' "$1" 2>/dev/null)" || return 1
+	docker logs --since "$started" "$1" 2>&1 | grep "Now listening" > /dev/null
+}
+
+# 今の環境の web コンテナが動いていて、今回起動してからのログに "Now listening" が出ているかどうか
+web_listening() {
+	local id
+	id="$(compose ps -q web 2>/dev/null || true)"
+	[ -n "$id" ] && container_listening "$id"
+}
+
 # pnpm install / build を同時に 2 つ実行しないよう、ほかの variant がまだ起動の途中なら終了する
 require_no_variant_starting() {
 	local name proj
 	while IFS=$'\t' read -r name proj; do
 		[ -n "$name" ] || continue
 		[ "$proj" = "$v_project" ] && continue
-		if ! docker logs "$name" 2>&1 | grep "Now listening" > /dev/null; then
+		if ! container_listening "$name"; then
 			echo "variant のコンテナ $name がまだ起動の途中です。応答するまで待ってから、もう一度実行してください" >&2
 			exit 1
 		fi
@@ -689,11 +704,11 @@ generate_variant() {
 	sed -i '' '/^$/d' "$state_dir/compose.yml"
 }
 
-# web コンテナが動いていて、ログに "Now listening" が出ているかどうか
+# variant の web コンテナが動いていて、今回起動してからのログに "Now listening" が出ているかどうか
 web_ready() {
 	[ -f "$state_dir/compose.yml" ] || return 1
 	compose ps --status running --services 2>/dev/null | grep -x web > /dev/null || return 1
-	compose logs web 2>/dev/null | grep "Now listening" > /dev/null
+	web_listening
 }
 
 variant_up() {
@@ -716,7 +731,7 @@ variant_up() {
 	use_env "$base_wt"
 	require_running
 	require_own_project
-	if ! compose logs web 2>/dev/null | grep "Now listening" > /dev/null; then
+	if ! web_listening; then
 		echo "ベース環境 ($base_project) がまだ起動の途中です。応答するまで待ってから、もう一度実行してください" >&2
 		exit 1
 	fi
@@ -746,9 +761,12 @@ variant_up() {
 	if [ "$v_category" = "migration" ]; then
 		start_vdb
 	fi
+	# 止まっていた web を起動し直すときに、前回のログの "Now listening" を拾わないよう、起動する前の時刻から見る
+	local since
+	since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 	compose up -d
 	echo "起動を待っています (本番ビルドがあるので数分〜十数分かかります)..."
-	wait_ready
+	wait_ready "$since"
 	echo "起動しました: $url  (ブランチ: ${v_branch}、種類: $v_category)"
 }
 
