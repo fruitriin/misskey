@@ -256,6 +256,15 @@ async function main() {
 		}
 	});
 
+	// ---- 初期設定 (ログイン直後の MkUserSetupDialog) を済ませた状態にする ----
+	// frontend の store (Pizzax 'base') の accountSetupWizard はアカウントのレジストリに保存され、-1 が「完了」
+	await stage('初期設定の完了', users.length, async (tick) => {
+		for (const u of users) {
+			await api.call('i/registry/set', { scope: ['client', 'base'], key: 'accountSetupWizard', value: -1 }, u.token);
+			tick();
+		}
+	});
+
 	// ---- 添付用の画像 ----
 	const photos = [];
 	await stage('添付用の画像', PHOTO_OWNERS * PHOTOS_PER_OWNER, async (tick) => {
