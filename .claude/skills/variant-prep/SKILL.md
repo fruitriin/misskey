@@ -42,9 +42,11 @@ orb-dev.sh variant classify <branch>
 | frontend | frontend だけを変える | 手順 3 で frontend-variants.yml に追記する。コンテナは立てない |
 | backend | backend を変える (migration は無い) | ベース環境の DB を使うコンテナで動かす |
 | migration | migration を追加する | 自分専用の DB (`vdb`) を持つコンテナで動かす |
-| other | 上のどれでもない | 動かさず、報告に理由を書く |
+| other | 上のどれでもない | 動かさず、利用者に扱いを尋ねる (下の注を参照) |
 
 判定は origin/develop との差分で行う。`classify` は `origin/develop` を使うので、古いときは先に `git fetch origin` を実行する。
+
+frontend になるのは、変更が `packages/frontend*` だけのときである。`CHANGELOG.md` や `locales/ja-JP.yml` を一緒に変える frontend のブランチは other になる。`variant prepare` / `up` は other を断るので、other のブランチは報告に理由を書き、扱いを利用者に尋ねる。選べるのは、frontend-variants.yml に追記する (locale の変更が反映されるかは frontend-variants の作り次第) か、そのブランチの worktree で `orb-dev.sh up` する、のどちらかである。
 
 ### 3. frontend のブランチを frontend-variants.yml に追記する
 
@@ -61,6 +63,8 @@ orb-dev.sh variant classify <branch>
 - 追記したら `fish -n /Users/riin/workspace/misskey-worktrees/mistems-main/main-統合.sh` で構文を確かめる。失敗したら元に戻す
 
 ### 4. ベース環境を起動する
+
+`main-統合.sh` を実行したあとなら、先に下の「main-統合.sh のあとの再実行」を行う。
 
 ```bash
 orb-dev.sh status /Users/riin/workspace/misskey-worktrees/mistems-main
@@ -106,8 +110,10 @@ orb-dev.sh variant up <branch>
 
    ```bash
    git -C <variant の worktree> add -A
-   git -C <variant の worktree> -c rerere.enabled=false commit -m "variant: <branch>"
+   git -C <variant の worktree> -c rerere.enabled=false commit -m "variant: <branch>" -m "ブランチ: riin/<branch> (<sha>)"
    ```
+
+   - `<sha>` は `prepare` が表示したコマンドに入っている (当てたときの riin のブランチの sha)。表示されたコマンドをそのまま使うとよい
 
    - rerere の記録は、すべての worktree で共有される。variant での解消が記録されると、`main-統合.sh` が同じコンフリクトに当たったときに自動で適用されてしまう。そのため、解消のコミットでは必ず `-c rerere.enabled=false` を付ける
    - コミットの件名は `variant: <branch>` にする。`prepare` はこの件名で「当て済み」を判断する
@@ -115,6 +121,18 @@ orb-dev.sh variant up <branch>
 4. `orb-dev.sh variant up <branch>` へ進む
 
 解消できない、またはブランチの意図が分からないときは、そのブランチを飛ばして報告する。
+
+#### ブランチが進んだとき
+
+`prepare` (当て済みのとき) と `up` は、riin のブランチが当てた版より進んでいれば「注意: riin/<branch> は … 進んでいます」と表示する。止めはしないので、そのままでは古い版で確認することになる。新しい版で確認するときは、表示された手順で作り直す。
+
+```bash
+orb-dev.sh variant down <branch> -v
+git -C /Users/riin/workspace/misskey-worktrees/mistems-main worktree remove <variant の worktree>
+git -C /Users/riin/workspace/misskey-worktrees/mistems-main branch -D variant/<slug>
+orb-dev.sh variant prepare <branch>
+orb-dev.sh variant up <branch>
+```
 
 ### 6. URL の一覧を報告する
 
@@ -134,6 +152,36 @@ orb-dev.sh variant status
 起動できなかったブランチは、表の下に理由 (コンフリクトの未解消、メモリ不足など) を書く。
 管理者アカウントは `admin` / `admin1234` である。
 
+## main-統合.sh のあとの再実行
+
+`main-統合.sh` は mistems-main の worktree を `git reset --hard` するだけである。本番モードで動いているベースの web は古いビルドのまま動き続け、ベース DB にも新しい migration は当たらない。このまま手順 4 以降に進むと、次のことが起きる。
+
+- 新しく `prepare` した種類 2 の variant が、新しいコードを migrate していないベース DB で動かす (`variant up` は migration のずれを検出して起動を断る)
+- 既存の variant は古いベースのまま「当て済み」「既に起動しています」になる (古いベースの注意だけが出る)
+- 統合されて台帳から外れたブランチの variant が、メモリを使い続ける
+
+統合のあとに variant-prep を実行するときは、手順 4 の前に次を行う。
+
+1. ずれを確かめる。ベース DB の最新の migration と mistems-main の worktree の最新の migration、ベースの web を起動した時刻と mistems-main の HEAD のコミットの時刻 (どちらも UTC で表示する) を比べる
+
+   ```bash
+   docker compose -p mistems-main -f ~/.cache/misskey-orb-dev/mistems-main/compose.yml exec -T db \
+     psql -U example-misskey-user misskey -Atc 'SELECT name FROM migrations ORDER BY timestamp DESC LIMIT 1'
+   ls /Users/riin/workspace/misskey-worktrees/mistems-main/packages/backend/migration | sort -n | tail -1
+   docker inspect -f '{{.State.StartedAt}}' mistems-main-web-1
+   TZ=UTC git -C /Users/riin/workspace/misskey-worktrees/mistems-main log -1 --date=iso-strict-local --format=%cd
+   ```
+
+   migration の名前が同じ (ファイル名は `<時刻>-<名前>.js`、DB は `<名前><時刻>`) で、web の起動が HEAD のコミットより後なら、ずれていない。手順 4 へ進む
+2. ずれていれば、作り直してよいかを利用者に尋ねる。ベース DB を消す操作を含むので、指示なしに行わない
+3. 作り直す。順序を守る
+   1. `orb-dev.sh variant down-all -v` で variant をすべて止め、volume も消す。variant の web がベースの network と pnpm のストアを使っているので、先に止めないとベースの `down` が途中で失敗する。種類 3 の `vdb` は古いベースの seed から作ったので、作り直す
+   2. ベース環境を作り直す
+      - migration が進んだとき: `orb-dev.sh down /Users/riin/workspace/misskey-worktrees/mistems-main -v` → `orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod --seed`。`up --seed` は既存の DB に seed を重ねるので、`-v` で DB を消してから行う
+      - migration が同じでビルドだけが古いとき: `orb-dev.sh down /Users/riin/workspace/misskey-worktrees/mistems-main` → `orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod` (DB はそのまま使う)
+   3. 各 variant の worktree とブランチを消す (`git -C /Users/riin/workspace/misskey-worktrees/mistems-main worktree remove <variant の worktree>` と `git -C /Users/riin/workspace/misskey-worktrees/mistems-main branch -D variant/<slug>`)
+   4. 手順 1 から実行し直す。台帳の「統合待ち」に残っているブランチだけを `prepare` / `up` する。台帳から外れた (統合された、または栄誉の殿堂に移った) ブランチは作り直さない
+
 ## 後片付け
 
 ```bash
@@ -141,7 +189,9 @@ orb-dev.sh variant down <branch> [-v]
 orb-dev.sh variant down-all [-v]
 ```
 
-`-v` を付けると、`vdb` と node_modules の volume も消える。worktree (`variant-<slug>`) とブランチ (`variant/<slug>`) は自動では消えない。不要になったら `git worktree remove` で消す。
+`-v` を付けると、`vdb` と node_modules の volume も消える。worktree (`variant-<slug>`) とブランチ (`variant/<slug>`) は自動では消えない。不要になったら `git -C /Users/riin/workspace/misskey-worktrees/mistems-main worktree remove <variant の worktree>` と `git -C /Users/riin/workspace/misskey-worktrees/mistems-main branch -D variant/<slug>` で消す。
+
+ベース環境を止めるときは、先に `variant down-all` を実行する。variant が動いている間は、ベースの `down` / `down -v` が network と pnpm のストアを消せずに途中で失敗する。
 
 ## スキル修正時の反映
 
