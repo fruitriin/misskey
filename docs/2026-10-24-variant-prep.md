@@ -193,10 +193,18 @@ orb-dev.sh variant down-all [-v]
 | ブランチ | 種類 | URL | DB |
 | --- | --- | --- | --- |
 | fix-clips-pagination | 1. frontend | 本番の variant `clips-pagination` (frontend-variants.yml に記載済み) | ― |
+| claude/issue-26-20260510-1119 | 2. backend (固有の差分は frontend だけ) | 本番の variant `pages-mfm-toolbar` (`variant/issue-26-20260510-1119`、`mode: as-is`) | ― |
+| claude/misskey-pr-34-continue-5YwvL | 2. backend (固有の差分は frontend だけ) | 本番の variant `uploader-drag-handle` (`variant/misskey-pr-34-continue-5ywvl`、`mode: as-is`) | ― |
 | claude/issue-26-20260510-1119 | 2. backend | http://web.variant-issue-26-20260510-1119.orb.local:3000/ | ベース (mistems-main) |
 | claude/misskey-pr-34-continue-5YwvL | 2. backend | http://web.variant-misskey-pr-34-continue-5ywvl.orb.local:3000/ | ベース (mistems-main) |
 | claude/renote-lock-feature-7J0NA | 3. migration | http://web.variant-renote-lock-feature-7j0na.orb.local:3000/ | 専用 (vdb) |
 | claude/remote-emoji-refetch-2nbU9 | 3. migration | http://web.variant-remote-emoji-refetch-2nbu9.orb.local:3000/ | 専用 (vdb) |
+
+### 本番の variant への追加 (2026-10-24、利用者の指示)
+
+- issue-26 を frontend-variants.yml に加えた。pr-34 は、同じ目的の変更が本流 (origin/develop) に入っているかを確かめた。投稿フォームに添付済みのファイルの並べ替えは本流にもあるが、アップロード中の一覧 (MkUploaderItems) の並べ替えは本流に無いので、variant に加えた (mistems-main 114 には別のブランチ経由で入っている)
+- どちらも HEAD に squash merge するとコンフリクトするので、コンフリクトを解消した variant のブランチを riin に push し、`mode: as-is` で載せた。main-統合.sh の除外のコメントから 2 本を外した
+- `fish -n main-統合.sh` は通る。echo が書き出す yml を、本番と同じ `parseVariantList` で読み、3 件ともエラーが無いことを確かめた
 
 ### 確認したこと
 
@@ -220,7 +228,7 @@ orb-dev.sh variant down-all [-v]
 ### 機能ブランチ側で直すとよいこと (今回は直していない)
 
 - remote-emoji-refetch: misskey-js の自動生成をしていない (`notes/refetch` の型が無い)。frontend の型検査は失敗する
-- issue-26: `locales/en-US.yml` を変えている (Crowdin の配信先なので、手で変えない規約)
+- ~~issue-26: `locales/en-US.yml` を変えている (Crowdin の配信先なので、手で変えない規約)~~ → 2026-10-24 に消し込んだ。機能ブランチ自身のコミットによるもので、origin から派生したことが原因ではなかった。`claude/issue-26-20260510-1119` に b2d3821251 を足して push し、variant のブランチからも取り除いた
 - renote-lock・remote-emoji-refetch: 計画書をリポジトリのルートに置いている (`docs/planning/` に置く規約)
 
 ### 最終レビューのあとに直したこと

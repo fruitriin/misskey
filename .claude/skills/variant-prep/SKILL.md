@@ -13,7 +13,7 @@ description: main-統合.sh の台帳で「統合待ち（要チェック）」�
 ## 守ること
 
 - mistems-main のブランチにはコミットしない。`main-統合.sh` を実行しない。変えてよいのは、frontend-variants.yml を作る echo の中身だけである
-- variant のブランチ (`variant/<slug>`) はローカルだけに置き、push しない
+- variant のブランチ (`variant/<slug>`) は、原則としてローカルだけに置く。手順 3 で frontend-variants.yml に `mode: as-is` で載せるときだけ riin に push する
 - ベース環境と variant 以外の開発環境は、止めたり変えたりしない
 - 空きメモリが足りず `variant up` が止まったら、他のコンテナを止めて空けずに、使用量の内訳をそのまま報告する
 
@@ -59,6 +59,8 @@ frontend になるのは、変更が `packages/frontend*` だけのときであ�
 
 - `<slug>` は `node .claude/skills/orb-dev-server/scripts/variant/classify.mjs --slug <branch>` の出力を使う。既存の項目 (例: `name: clips-pagination`) に合わせて短くしてよい
 - `branch:` が既にあるブランチは追記しない
+- 機能ブランチを HEAD に squash merge するとコンフリクトするとき (古い mistems-main から派生したものなど) は、手順 5 の `variant prepare` でコンフリクトを解消した variant のブランチを riin に push し、`branch: variant/<slug>` と `mode: as-is` で載せる。本番のビルドは merge モードのコンフリクトをスキップするため
+- 種類 2 (backend) でも、起点からの固有の差分が frontend だけのものは、利用者が望めば同じ方法で yml にも載せる
 - 追記する位置は、最後の `- name:` / `branch:` の組の直後 (`#` で始まる除外のコメント行より前) である。echo の引用符は変えない
 - 追記したら `fish -n /Users/riin/workspace/misskey-worktrees/mistems-main/main-統合.sh` で構文を確かめる。失敗したら元に戻す
 
