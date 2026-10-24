@@ -151,13 +151,13 @@ orb-dev.sh variant down-all [-v]
 - Modify: `.claude/skills/orb-dev-server/scripts/orb-dev.sh`
 
 **手順:**
-- [ ] テストを先に書く。`classifyFiles(paths)` は、変更ファイルの一覧から `frontend` / `backend` / `migration` / `other` を返す (`packages/backend/migration/` への追加があれば migration、`packages/backend/src` か `packages/misskey-js/src/autogen` の変更があれば backend、`packages/frontend*` だけなら frontend、どれでもなければ other)。migration の判定には「追加されたファイル」の一覧を別に渡す。`findForkPoint(commits)` は、`origin/develop..<branch>` のコミット (新しい順、件名つき) から、件名が `Version updated to:` で始まる最新のコミットを返し、無ければ null を返す。`slugOf(branch)` は設計の「名前」の規則どおりにする
-- [ ] `classify.mjs` の CLI: `node classify.mjs <repo> <branch-ref>` で `{"category":…,"forkPoint":…,"slug":…}` を出力する。git は `child_process.execFileSync` で呼ぶ。起点は `findForkPoint` の結果、無ければ `git merge-base origin/develop <branch-ref>`
-- [ ] orb-dev.sh に `variant` サブコマンドを足す (設計の「orb-dev.sh のサブコマンド」の 7 つ)。ブランチの指定は riin のブランチ名 (`claude/…`、`fix-…`)。実行前に `git fetch riin <branch>` する
-- [ ] `prepare`: 起点からの差分を `git diff --binary <起点> riin/<branch> | git apply --3way --index` で当てる。コンフリクトしたファイルを一覧して終了コード 2。当て済みかどうかは、variant ブランチの最新コミットの件名 `variant: <branch>` で判断する
-- [ ] `up`: 設計の「compose.yml」のとおり。web に `orb-dev.variant.branch` / `orb-dev.variant.category` / `orb-dev.variant.base` のラベルを付ける。種類 3 の vdb には、初回 (volume が空のとき) だけベース環境の seed のスナップショットを `pg_restore` する。ベースのスナップショットのキーは、ベース環境のワークツリーの最新 migration 名
-- [ ] 確認: `variant classify` を統合待ちの 5 本に実行し、「調査で分かったこと」の表と一致すること。`bash -n orb-dev.sh`、`node --test` が通ること。実際の起動は Task 3 で行う (この Task では compose.yml の生成結果を目で確かめる)
-- [ ] commit
+- [x] テストを先に書く。`classifyFiles(paths)` は、変更ファイルの一覧から `frontend` / `backend` / `migration` / `other` を返す (`packages/backend/migration/` への追加があれば migration、`packages/backend/src` か `packages/misskey-js/src/autogen` の変更があれば backend、`packages/frontend*` だけなら frontend、どれでもなければ other)。migration の判定には「追加されたファイル」の一覧を別に渡す。`findForkPoint(commits)` は、`origin/develop..<branch>` のコミット (新しい順、件名つき) から、件名が `Version updated to:` で始まる最新のコミットを返し、無ければ null を返す。`slugOf(branch)` は設計の「名前」の規則どおりにする
+- [x] `classify.mjs` の CLI: `node classify.mjs <repo> <branch-ref>` で `{"category":…,"forkPoint":…,"slug":…}` を出力する。git は `child_process.execFileSync` で呼ぶ。起点は `findForkPoint` の結果、無ければ `git merge-base origin/develop <branch-ref>`
+- [x] orb-dev.sh に `variant` サブコマンドを足す (設計の「orb-dev.sh のサブコマンド」の 7 つ)。ブランチの指定は riin のブランチ名 (`claude/…`、`fix-…`)。実行前に `git fetch riin <branch>` する
+- [x] `prepare`: 起点からの差分を `git diff --binary <起点> riin/<branch> | git apply --3way --index` で当てる。コンフリクトしたファイルを一覧して終了コード 2。当て済みかどうかは、variant ブランチの最新コミットの件名 `variant: <branch>` で判断する
+- [x] `up`: 設計の「compose.yml」のとおり。web に `orb-dev.variant.branch` / `orb-dev.variant.category` / `orb-dev.variant.base` のラベルを付ける。種類 3 の vdb には、初回 (volume が空のとき) だけベース環境の seed のスナップショットを `pg_restore` する。ベースのスナップショットのキーは、ベース環境のワークツリーの最新 migration 名
+- [x] 確認: `variant classify` を統合待ちの 5 本に実行し、「調査で分かったこと」の表と一致すること。`bash -n orb-dev.sh`、`node --test` が通ること。実際の起動は Task 3 で行う (この Task では compose.yml の生成結果を目で確かめる)
+- [x] commit
 
 ### Task 2: SKILL.md
 
@@ -166,16 +166,16 @@ orb-dev.sh variant down-all [-v]
 - Modify: `.claude/skills/orb-dev-server/SKILL.md`
 
 **手順:**
-- [ ] variant-prep: 設計の「variant-prep スキル」の 6 つの手順。コンフリクトの解消の仕方 (autogen は生成し直す、CHANGELOG はどちらでもよい、解消したら variant ワークツリーでコミットしてから `prepare` をもう一度実行する)。報告の表の形
-- [ ] orb-dev-server: `variant` サブコマンドの一覧、variant ではキューのワーカーと定期処理が動かないこと、ベース環境を止めると variant の画像も出なくなること
-- [ ] commit
+- [x] variant-prep: 設計の「variant-prep スキル」の 6 つの手順。コンフリクトの解消の仕方 (autogen は生成し直す、CHANGELOG はどちらでもよい、解消したら variant ワークツリーでコミットしてから `prepare` をもう一度実行する)。報告の表の形
+- [x] orb-dev-server: `variant` サブコマンドの一覧、variant ではキューのワーカーと定期処理が動かないこと、ベース環境を止めると variant の画像も出なくなること
+- [x] commit
 
 ### Task 3: 実行と確認
 
-- [ ] ベース環境: `orb-dev.sh up <mistems-main> --prod --seed`
-- [ ] variant-prep の手順で、統合待ちの 4 本 (種類 2・3) を 1 本ずつ起動する。コンフリクトは variant ワークツリーで解消する
-- [ ] 全部が同時に動いた状態で、各 URL で次を確かめる: `admin` / `admin1234` でサインインできる、タイムラインにノートが出る、そのブランチの機能の画面が開く (種類 3 は追加された列が vdb にあること)
-- [ ] この計画書の「検証結果」に URL 一覧と確認結果を書く
+- [x] ベース環境: `orb-dev.sh up <mistems-main> --prod --seed`
+- [x] variant-prep の手順で、統合待ちの 4 本 (種類 2・3) を 1 本ずつ起動する。コンフリクトは variant ワークツリーで解消する
+- [x] 全部が同時に動いた状態で、各 URL で次を確かめる: `admin` / `admin1234` でサインインできる、タイムラインにノートが出る、そのブランチの機能の画面が開く (種類 3 は追加された列が vdb にあること)
+- [x] この計画書の「検証結果」に URL 一覧と確認結果を書く
 
 ## 完了条件
 
@@ -186,4 +186,46 @@ orb-dev.sh variant down-all [-v]
 
 ## 検証結果
 
-(実装後に記入する)
+### 実行した結果 (2026-10-24)
+
+ベース環境は mistems-main (MISTEMS.114、fb938700f2) を `up --prod --seed` で起動した。スナップショットのキーは `FollowApprovalByAccountAge1791109435844` である。
+
+| ブランチ | 種類 | URL | DB |
+| --- | --- | --- | --- |
+| fix-clips-pagination | 1. frontend | 本番の variant `clips-pagination` (frontend-variants.yml に記載済み) | ― |
+| claude/issue-26-20260510-1119 | 2. backend | http://web.variant-issue-26-20260510-1119.orb.local:3000/ | ベース (mistems-main) |
+| claude/misskey-pr-34-continue-5YwvL | 2. backend | http://web.variant-misskey-pr-34-continue-5ywvl.orb.local:3000/ | ベース (mistems-main) |
+| claude/renote-lock-feature-7J0NA | 3. migration | http://web.variant-renote-lock-feature-7j0na.orb.local:3000/ | 専用 (vdb) |
+| claude/remote-emoji-refetch-2nbU9 | 3. migration | http://web.variant-remote-emoji-refetch-2nbu9.orb.local:3000/ | 専用 (vdb) |
+
+### 確認したこと
+
+- 4 本とベース環境が同時に動き、いずれも応答する。全コンテナのメモリの合計は 5.2GB (VM は 11.7GB) だった
+- 4 本とも `admin` / `admin1234` でサインインでき、タイムラインにノートが出る
+- 種類 3 の vdb には、それぞれの migration (`NoteRenoteLock1780190369217`、`AddNoteLastFetchedAt1780148745000`) が当たっている。ベース環境の DB には、どちらも当たっていない
+- 各ブランチの機能の画面は次のとおりである
+  - issue-26: ページエディタのテキストブロックに、既存のツールバー ($MFM、他MFM、#、絵文字) に続けて、MFM の書式のボタンが並ぶ
+  - renote-lock: admin でノートのメニューを開くと「リノートをロックする (モデレーション)」が出る
+  - remote-emoji-refetch: リモートのノートに「リモートで表示 または再取得」が出る。リモートのアバターとインスタンスのティッカーも表示される
+  - pr-34: 機能は mistems-main にすでに入っていたので、variant は mistems-main と同じ動きになる
+- 種類 1 の clips-pagination は frontend-variants.yml にすでに入っていた。`fish -n main-統合.sh` は通る
+
+### コンフリクトの解消で手直ししたこと
+
+- issue-26: mistems-main の別の機能が足したツールバーと 1 つにまとめた
+- pr-34: 機能は mistems-main の a395976943 にすでに入っていたので、mistems-main の側を採用した (空のコミット)
+- renote-lock: mistems-main では `canRenote` が `composables/use-note.ts` に移っていたので、ロックの条件をそこに入れた。メニューでロックを切り替えても、リノートのボタンは再描画するまで変わらない場合がある
+- remote-emoji-refetch: `queue/types.ts` は両方の型を残した。ブランチが locale.ts を生成し直していなかったので、4 つのキーを足した
+
+### 機能ブランチ側で直すとよいこと (今回は直していない)
+
+- remote-emoji-refetch: misskey-js の自動生成をしていない (`notes/refetch` の型が無い)。frontend の型検査は失敗する
+- issue-26: `locales/en-US.yml` を変えている (Crowdin の配信先なので、手で変えない規約)
+- renote-lock・remote-emoji-refetch: 計画書をリポジトリのルートに置いている (`docs/planning/` に置く規約)
+
+### 最終レビューのあとに直したこと
+
+- 止まった web を起動し直すとき、前回のログの "Now listening" で起動済みと判定しないようにした
+- riin のブランチが当てた版より進んだら、注意を表示するようにした
+- 種類 2 は、ベース DB の migration と合わなければ起動しないようにした。main-統合.sh のあとにやり直す手順を SKILL.md に書いた
+- other に分類されたブランチの扱い (利用者に尋ねる) を SKILL.md に書いた
