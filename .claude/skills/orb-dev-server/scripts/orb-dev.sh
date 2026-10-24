@@ -79,10 +79,24 @@ generate() {
 	EOF
 
 	# vite は ../../.config/default.yml を固定パスで読むため、生成した設定をそのパスに重ねてマウントする
+	# allowedPrivateNetworks: 本番モード (NODE_ENV=production) の Misskey は private IP への取得を遮断する。
+	# seed のリモートのアバター・絵文字・添付・インスタンスのアイコンは、この環境自身の orb.local の URL
+	# (OrbStack のコンテナの IP は 192.168.x.x / fd07:… の private IP) を proxy 経由で取るので、その範囲を許可する
 	awk -v url="$url" -v setup="$setup_password" '
+		skip_list && /^#  - / { next }
+		{ skip_list = 0 }
 		/^[a-zA-Z]/ { section = $1 }
 		/^url: / { print "url: " url; next }
 		/^# setupPassword: / { print "setupPassword: " setup; next }
+		/^#allowedPrivateNetworks:/ {
+			print "allowedPrivateNetworks:"
+			print "  - \"127.0.0.0/8\""
+			print "  - \"192.168.0.0/16\""
+			print "  - \"172.16.0.0/12\""
+			print "  - \"fd00::/8\""
+			skip_list = 1
+			next
+		}
 		section == "db:" && /^  host: / { print "  host: db"; next }
 		section == "redis:" && /^  host: / { print "  host: redis"; next }
 		{ print }

@@ -34,7 +34,8 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 
 - compose プロジェクト名は worktree のディレクトリ名を小文字化したもの。生成物は `~/.cache/misskey-orb-dev/<project>/` に置き、worktree には何も書かない
 - `web` は `.node-version` の Node 公式イメージで `pnpm install → pnpm migrate → pnpm dev` を実行する。worktree はマウントするので、ファイル保存はそのまま HMR で反映される
-- `.config/default.yml` は `.config/example.yml` から生成し (URL・DB / Redis の接続先・setupPassword を差し替え)、コンテナ内の同じパスに重ねてマウントする。ホストの `.config/default.yml` は変更しない
+- `.config/default.yml` は `.config/example.yml` から生成し (URL・DB / Redis の接続先・setupPassword・allowedPrivateNetworks を差し替え)、コンテナ内の同じパスに重ねてマウントする。ホストの `.config/default.yml` は変更しない
+- `allowedPrivateNetworks` には OrbStack のコンテナが使う private IP の範囲 (`192.168.0.0/16` など) を入れる。本番モードの Misskey は private IP への取得を遮断するので、これが無いと seed のリモートのアバター・絵文字・添付・インスタンスのアイコン (この環境自身の orb.local の URL を proxy 経由で取る) が表示されない
 
 ## ハマりどころ
 
