@@ -149,12 +149,21 @@ function insertEmoji(ev: PointerEvent) {
 }
 
 function showFormatMenu(ev: PointerEvent) {
+	let applied = false;
 	const items: MenuItem[] = MFM_FORMATS.map(fmt => ({
 		text: fmt.label,
 		icon: fmt.icon,
-		action: () => applyFormat(fmt),
+		action: () => {
+			applied = true;
+			applyFormat(fmt);
+		},
 	}));
-	os.popupMenu(items, ev.currentTarget ?? ev.target);
+	// メニューは閉じるときにフォーカスをボタンへ戻すので、書式を当てたときはテキストエリアへ戻す (選択範囲は applyFormat で設定済み)
+	os.popupMenu(items, ev.currentTarget ?? ev.target, {
+		onClosed: () => {
+			if (applied) nextTick(() => inputEl.value?.focus());
+		},
+	});
 }
 
 function showMfmMenu(ev: PointerEvent) {
