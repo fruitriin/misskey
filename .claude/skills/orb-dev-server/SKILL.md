@@ -101,7 +101,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - variant の worktree は `<ベースの親>/variant-<slug>`、ブランチは `variant/<slug>` (ローカルのみ)、compose のプロジェクトは `variant-<slug>`、URL は `http://web.variant-<slug>.orb.local:3000/` である。slug はブランチ名の最後の `/` 以降を小文字にし、`[a-z0-9-]` 以外を `-` にしたものである
 - `prepare` は、起点 (件名が `Version updated to:` の最新のコミット、無ければ merge-base) からブランチ先端までの差分を、ベースの HEAD に 3-way で当ててコミットする。コンフリクトの解消のコミットは、rerere の記録が `main-統合.sh` に影響しないよう `git -c rerere.enabled=false commit` で行う
 - variant のコンテナは `MK_ONLY_SERVER=1` と `MK_NO_DAEMONS=1` で起動する。キューのワーカーとデーモンが動かないので、積まれたジョブ (配送・通知の後処理など) は処理されず、定期ジョブも動かない。配送や通知の後処理を伴う動作は確認できない
-- Redis はベース環境のものを共有するが、キーの接頭辞は URL のホスト名から決まるので variant ごとに分かれる。接頭辞を揃えると、variant のコードがベース環境の定期ジョブを書き換えたり消したりするため、揃えてはならない
+- Redis はベース環境のものを共有するが、キーの接頭辞は URL のホスト名から決まる (`packages/backend/src/config.ts` の `redis.prefix` の既定値) ので variant ごとに分かれる。接頭辞を揃えると、variant のコードがベース環境の定期ジョブを書き換えたり消したりするため、揃えてはならない
 - `files/` と pnpm のストア (`<base>_pnpm-store`) はベース環境のものを共有する
 - seed のスナップショットにはベース環境の URL (`http://web.<ベース>.orb.local:3000/`) が入っている。**ベース環境を止めると、variant の画像 (アバター・絵文字・添付・インスタンスのアイコン) も表示されなくなり、variant の起動もできない**。確認が終わるまでベース環境を止めない
 - `vdb` の初回は、ベースの seed のスナップショットを restore してから migrate を当てる。seed が無いときは web を起動せずに止まる。やり直すときは `variant down <branch> -v` → `variant up <branch>` である

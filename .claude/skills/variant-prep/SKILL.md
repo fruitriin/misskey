@@ -99,7 +99,7 @@ orb-dev.sh variant up <branch>
 
 1. その worktree で、コンフリクトしたファイルを解消する。自動生成のファイルは、手でマージせず生成し直す
    - misskey-js の `src/autogen/` (`types.ts` / `entities.ts` など): `pnpm build-misskey-js-with-types` を実行する
-   - `locale.ts` などの i18n の自動生成物: 該当ブランチの `locales/ja-JP.yml` を解消したうえで、i18n のビルド (`pnpm build-pre` など、リポジトリの手順に従う) で生成し直す
+   - `locale.ts` などの i18n の自動生成物: 該当ブランチの `locales/ja-JP.yml` を解消したうえで、`pnpm --filter i18n generate` で生成し直す。variant のワークツリーにはホストの node_modules が無いので、実行できないときは両側のキーを合わせて手で解消し、`locales/ja-JP.yml` のキーがすべて入っていることを確かめる
    - `CHANGELOG.md`: どちらを取ってもよい。variant の確認には影響しない
    - それ以外は、ブランチの変更とベースの変更の両方が残るよう、内容を読んで解消する
 2. 解消したファイルを `git add` し、**`rerere` を無効にして**コミットする
