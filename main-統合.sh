@@ -113,8 +113,11 @@ git commit -a -m "MkReactionViewer拡張（よみがなさっと見る）" # こ
 
 # ピッカーの入力補助機能拡張
 # MkEmojiPicker.vue と packages/frontend/src/custom-emojis.ts で カタカナをひらがなに寄せる
-squash_merge riin/emojiPickKanaConv
-git commit -a -m "絵文字検索ひらカナ大統一"
+# NOTE: feat/emoji-search-more-and-and は emojiPickKanaConv の上に積んだブランチで、emojiPickKanaConv の変更をすべて含む。
+#       2 行に分けて squash すると、積んだ側の squash で emojiPickKanaConv の変更が「両側の変更」として衝突するので、積んだブランチ 1 本で取り込む。
+#       emojiPickKanaConv を直したら、feat/emoji-search-more-and-and をその上に rebase し直してから統合すること。
+squash_merge riin/feat/emoji-search-more-and-and
+git commit -a -m "絵文字検索ひらカナ大統一 (大文字・全角も区別しない) + 絵文字の入力補助とピッカーで追加読み込みと AND 検索"
 
 # ピッカーのリストから選ぶ方の機能
 # packages/frontend/src/components/MkEmojiPicker.section.vue
@@ -219,8 +222,9 @@ squash_merge riin/claude/2fa-register-key-auth-error-w3c1m5
 git commit -a -m "fix(backend): パスワードレス+TOTP併用時のサインインをパスワード経由ではTOTPに統一"
 
 # https://github.com/fruitriin/misskey/pull/49
+# 2026-10-24 に fix-emojipicker-movebug-arrivenote (viewport の interactive-widget=resizes-content) を取り込んだ。両方そろわないと Android でピッカーが新着でずれる
 squash_merge riin/fix/emoji-picker-resize-when-arrive-new-note
-git commit -a -m "fix(frontend): 絵文字ピッカーを開いた後に背景更新で動かないようにする"
+git commit -a -m "fix: 絵文字ピッカーを開いた後に背景更新やキーボード表示中の新着で動かないようにする"
 
 squash_merge riin/claude/awesome-volta-vljoz9
 git commit -a -m "fix(frontend): 接続切断Tipがモーダル表示中にクリックできない問題を修正"
@@ -323,6 +327,16 @@ git commit -a -m "misskey-js autogen 再生成 (仮氏パーティ統合後の�
 squash_merge riin/emojiDropUpload
 git commit -a -m "feat(frontend): カスタム絵文字管理画面(β)の登録タブにドロップで絵文字を登録できるエリアを追加"
 
+# https://github.com/fruitriin/misskey/pull/56
+# NOTE: migration あり (note.userRenoteLock / note.moderationRenoteLock)。新 API (notes/renote-lock/*、admin/notes/renote-lock/*) の misskey-js autogen はブランチに含めてある
+squash_merge riin/feat/renote-lock
+git commit -a -m "feat: リノートロック (投稿者・モデレーターがノートのリノートと引用を禁止できるように)"
+
+# https://github.com/fruitriin/misskey/pull/57
+# NOTE: migration あり (note.lastFetchedAt / note.refetchedCount)。新 API (notes/refetch) の misskey-js autogen はブランチに含めてある
+squash_merge riin/feat/remote-note-refetch
+git commit -a -m "feat: リモートノートを TTL 付きで再取得し、リモート絵文字の更新を反映する"
+
 # 複数ブランチのフロントエンドを本番に同居させ、管理画面 (/admin/frontend-variants) から切り替えて確認する
 # 運用手順: docs/frontend-variants.md / サーバーでは pnpm build の後、再起動の前に FRONTEND_VARIANTS_REMOTE=riin node scripts/build-frontend-variants.mjs を実行する
 squash_merge riin/feat/frontend-variants
@@ -334,11 +348,17 @@ git commit -a -m "feat: 複数ブランチのフロントエンドを本番に�
 echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を直すこと。
 - name: clips-pagination
   branch: fix-clips-pagination
-# backend 変更あり (新 API) のため除外: claude/renote-lock-feature-7J0NA
-# backend 変更と fork 側の別変更が混在するため除外: claude/issue-26-20260510-1119, claude/misskey-pr-34-continue-5YwvL, claude/remote-emoji-refetch-2nbU9' > frontend-variants.yml
+# 古い mistems-main から派生していて HEAD に squash merge できないので、コンフリクトを解消した variant のブランチ (mistems-main 114 が土台) をそのままビルドする
+- name: pages-mfm-toolbar
+  branch: variant/issue-26-20260510-1119
+  mode: as-is
+# 投稿フォームのアップロード中の一覧をハンドルで並べ替える。mistems-main 114 には別のブランチ経由で同じ機能が入っており、本流 (origin/develop) には無い
+- name: uploader-drag-handle
+  branch: variant/misskey-pr-34-continue-5ywvl
+  mode: as-is' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 114
+set MISVER 115
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -394,15 +414,16 @@ exit
 [統合済み] channelIndex — チャンネルだいたいぜんぶみるタブ
 [統合済み] mkNoteExtend — チャンネル Renote の出所表示 + リノートティッカー
 [統合済み] MkNoteDetailed-loadReplies — ノート詳細で返信を自動読み込み
-[統合待ち（要チェック）] claude/renote-lock-feature-7J0NA — リノートロック [上流#17554 CLOSED → MISTEMS 向け。2026-09-08 squash 時のマーカー混入を修復済]
+[統合済み] feat/renote-lock — リノートロック [上流#17554 CLOSED → MISTEMS 向け。2026-10-24 最新 develop へ rebase し、引用リノートにもロックを適用。claude/renote-lock-feature-7J0NA から改名、PR#56]
 [保留] hashtag-mutable — ハッシュタグをメニューからミュート (2026-10-23 上流の MFM 描画部共通化と衝突して統合から一時除外。createMfmRenderer に合わせて作り直しが必要)
 [保留] safer-rss — RSS の安全化 (コンフリクトで統合保留中)
 
 ◇ 絵文字・リアクション
 [統合済み] emojiDetailDialog — リアクションビューアに読み仮名など表示
-[統合済み] emojiPickKanaConv — 絵文字検索ひらカナ大統一
+[統合済み] emojiPickKanaConv — 絵文字検索ひらカナ大統一 (2026-10-23 からは feat/emoji-search-more-and-and に含めて統合)
+[統合済み] feat/emoji-search-more-and-and — 絵文字の入力補助とピッカーで追加読み込みと AND 検索 (emojiPickKanaConv の上に積んだブランチ)
 [統合済み][上流レビュー中] fix/emoji-picker-resize-when-arrive-new-not — ピッカーが新着でぴょこぴょこする問題 [上流#17773]
-[作業中] fix-emojipicker-movebug-arrivenote — キーボード表示中にドロワーが新着でずれる問題 (viewport 対応)
+[残骸] fix-emojipicker-movebug-arrivenote — キーボード表示中にドロワーが新着でずれる問題 (viewport 対応) → 2026-10-24 に fix/emoji-picker-resize-when-arrive-new-note へ吸収
 
 ◇ 検索
 [統合済み] search-enhance — ノート検索強化 (本文/CW 切替・UI 改善) + PGroonga 計画書
@@ -473,7 +494,7 @@ exit
 
 ◇ 残骸候補 (整理対象)
 [残骸] blank-image — 名前と無関係にタイムマシン開発の旧作業ブランチ
-[残骸] renote-lock — mistems-main の MISTEMS.93 時点スナップショット (機能本体は claude/renote-lock-feature-7J0NA)
+[残骸] renote-lock — mistems-main の MISTEMS.93 時点スナップショット (機能本体は feat/renote-lock)
 [残骸] timeout — mistems-main の MISTEMS.103 時点スナップショット
 [残骸] fanout-rebase / loadReplies-rebase / mkNoteExtend-rebase / favstar-rebase / favstar-backup-01da813237 / tmp-release-FavstarAndTimemachine — rebase 作業の中間残骸
 [残骸] release/mkPostExtendAndTimemachine / releate/clips-and-draggable (typo) — 旧 release 試行
@@ -504,7 +525,7 @@ exit
 ◇ 実装ありだが未統合 (要チェック)
 [統合待ち（要チェック）] claude/issue-26-20260510-1119 — MkPages テキストブロックに MFM ツールバー (Phase 2)
 [統合待ち（要チェック）] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 (fork PR#34 続き)
-[統合待ち（要チェック）] claude/remote-emoji-refetch-2nbU9 — リモートノート再取得の改善 (fork PR#35 レビュー反映)
+[統合済み] feat/remote-note-refetch — リモートノート再取得の改善 [2026-10-24 最新 develop に作り直し、claude/remote-emoji-refetch-2nbU9 から改名、PR#57。旧 PR#35・#55 は close]
 [統合待ち（要チェック）] fix-clips-pagination — my/clips ページネーション末尾判定の修正
 [保留] readble-message-ratelimitservice — レートリミットメッセージの可読化 (統合スクリプトでコメントアウト中・要コンフリクト修正)
 
@@ -574,6 +595,16 @@ riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Key�
 ----------------------------------------------------------------
 
 ■ CHANGELOG
+
+CHANGELOG 115
+- リノートロック: 投稿者とモデレーターが、ノートのリノートと引用を禁止できるように
+- リモートのノートを、古くなったら再取得できるように (リモート絵文字の更新も反映)
+- 絵文字の入力補助とピッカーで、候補の追加読み込みと、スペース区切りの AND 検索に対応
+- 絵文字ピッカーの検索で、ひらがな・カタカナに加えて、大文字・小文字と全角・半角も区別しないように
+- 絵文字ピッカーを開いている間に、新着ノートでピッカーが動く問題を修正 (Android でキーボード表示中のずれも)
+- スマホで、投稿フォームの添付ファイルを並べ替えられない問題と、アップロード中の並べ替えハンドルの位置を修正
+- 絵文字パレットの設定で、並べ替え中に一番上の行の末尾が振動する問題と、スマホで並べ替えられない問題を修正
+
 
 CHANGELOG 104
 - お知らせの既読をリセットできるように
