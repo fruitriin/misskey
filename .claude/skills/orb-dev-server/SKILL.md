@@ -23,7 +23,6 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - `up --prod` は `pnpm dev` の代わりに本番ビルド (`pnpm build` → `pnpm migrate` → `pnpm start`) で起動する。初回はビルドがあるので待ち時間の上限を 30 分にしている (開発モードは 15 分)
 - `up --seed` は起動と管理者作成のあとに、キーの合う `seed` のスナップショットがあれば確認なしで `restore` する。現在のデータは上書きされる。無ければ `seed` を実行する
 - `seed` は管理者以外のユーザーがいない環境にだけ入れる。データが既にあるときは何も変えずに止まるので、`down -v` してから入れ直すか、`restore` で戻す
-
 - `worktree` を省略するとカレントディレクトリの worktree を対象にする
 - スクリプトはこのブランチ (skill の本籍) にしか無いことがある。対象 worktree に無ければ、mistems-main か claudeImplement worktree のものをフルパスで呼ぶ
 - 初回の `up` は依存のインストールで数分かかる。`run_in_background` で実行して完了通知を待つとよい
@@ -33,7 +32,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 ## 仕組み
 
 - compose プロジェクト名は worktree のディレクトリ名を小文字化したもの。生成物は `~/.cache/misskey-orb-dev/<project>/` に置き、worktree には何も書かない
-- `web` は `.node-version` の Node 公式イメージで `pnpm install → pnpm migrate → pnpm dev` を実行する。worktree はマウントするので、ファイル保存はそのまま HMR で反映される
+- `web` は `.node-version` の Node 公式イメージで動かす。開発モードでは `pnpm install` → `pnpm build-pre` → (バックエンドのビルドが無いときだけ) `pnpm --filter backend... build` → `pnpm migrate` → `pnpm dev` を実行する。`--prod` では `pnpm install` → `pnpm build` → `pnpm migrate` → `pnpm start` を実行する。worktree はマウントするので、開発モードではファイル保存がそのまま HMR で反映される
 - `.config/default.yml` は `.config/example.yml` から生成し (URL・DB / Redis の接続先・setupPassword・allowedPrivateNetworks を差し替え)、コンテナ内の同じパスに重ねてマウントする。ホストの `.config/default.yml` は変更しない
 - `allowedPrivateNetworks` には OrbStack のコンテナが使う private IP の範囲 (`192.168.0.0/16` など) を入れる。本番モードの Misskey は private IP への取得を遮断するので、これが無いと seed のリモートのアバター・絵文字・添付・インスタンスのアイコン (この環境自身の orb.local の URL を proxy 経由で取る) が表示されない
 
@@ -45,7 +44,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - **vite は `.config/default.yml` を固定パスで読む**: `allowedHosts` を URL のホスト名から作るので、URL を orb.local のものにしないと vite が接続を拒否する
 - **seed は web コンテナの中で実行する**: ホストの Node.js は `*.orb.local` を引けないことがある。そのため seed の API の段は web コンテナ内から `http://localhost:3000` に対して実行する
 - **`files/` もスナップショットに含める**: 添付画像・アバターなどの実体は worktree の `files/` にあり、DB だけ戻すと参照先が無くなる。`files/` の tar はホスト側で作り、戻す
-- **新しい worktree でも migrate が動くように `pnpm build-pre` を毎回実行する**: `pnpm migrate` は `built/meta.json` を読む。バックエンドのビルドは `packages/backend/built/config.js` が無いときだけ行う
+- **新しい worktree でも migrate が動くように、開発モードでは起動のたびに `pnpm build-pre` を実行する**: `pnpm migrate` は `built/meta.json` を読む。バックエンドのビルドは `packages/backend/built/config.js` が無いときだけ行う。`--prod` では `pnpm build` がこれらを作るので実行しない
 
 ## 開発用データ (seed / snapshot / restore)
 
@@ -53,7 +52,9 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 
 ### データの中身
 
-- ユーザーは約 50 人である。ローカルが 40 人 (admin を含む) で、リモートが 10 人 (`remote-a.example` と `remote-b.example` に 5 人ずつ) である。パスワードはすべて `admin1234` である
+- ユーザーは約 50 人である。パスワードはローカルのユーザー全員 `admin1234` である
+  - ローカルは 40 人である。`admin` (管理者) と `user01`〜`user39` で、`user38` と `user39` はボットである
+  - リモートは 10 人である。`remote-a.example` (Misskey) に `akari`・`bunta`・`chihiro`・`daisuke`・`emi`、`remote-b.example` (Mastodon) に `fumi`・`gen`・`hana`・`iori`・`jun` がいる (例: `@akari@remote-a.example`)。リモートのユーザーではログインできない
 - ノートは約 3.5 万件で、過去 180 日に散らしている。1 人あたり 600〜800 件で、リモートのノートは約 7 千件である。リプライ・リノート・添付・リアクション・アンケート・CW・MFM・ハッシュタグを含む
 - カスタム絵文字はローカルが約 100 個、リモートが 8 個である
 - フォロー関係は相互・片思い・被フォロー・孤立の 4 種類を用意している
@@ -67,7 +68,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - seed のスクリプトは `orb-dev.sh` 自身の場所にある `seed/` を web コンテナの `/orb-seed` に読み取り専用でマウントして使う。対象の worktree に seed のスクリプトが無くても動く
 - スナップショットは `~/.cache/misskey-orb-dev/<project>/snapshots/<最新の migration 名>/<名前>.dump` (`pg_dump -Fc`) と `<名前>.files.tar` (worktree の `files/`) の 2 つである。取るときは一時ファイルに書いてから置き換えるので、途中で失敗しても前のものは壊れない
 - キーは最新の migration 名である。migration が変わると古いスナップショットは使えなくなるので、`restore` は戻さずに止まり、手元の一覧を表示する。その場合は `down -v` してから `up --seed` で入れ直す
-- 同じシード値なら内容 (ユーザー名・本文・関係) は同じになる。ただし seed の結果と実行時刻が同じ場合に限る。ID (aidx のノード部分) と正確な時刻は実行ごとに変わる
+- 同じシード値なら、いつ実行しても内容 (ユーザー名・本文・CW・公開範囲・リプライやリノートの相手・リアクション・フォロー関係) は同じになる。ID と時刻は実行ごとに変わる。SQL の段のノートは、実行した日の JST の 0 時を基準に、その前日までの 179 日に置く
 - seed の設定は環境変数で変えられる。`SEED` はシード値 (既定 `20261023`)、`SEED_LOCAL_NOTES` と `SEED_REMOTE_NOTES` は SQL の段で作る 1 人あたりのノート数の平均 (既定 700) である。`orb-dev.sh` は設定された変数だけを web コンテナに渡す (例: `SEED=1 orb-dev.sh seed`)
 - 値を変えて `seed` しても、スナップショットは同じ名前 `seed` で上書きされる。既定の内容を残したいときは、名前を付けて取る (例: `SEED_LOCAL_NOTES=50 orb-dev.sh seed . small`)
 
@@ -76,7 +77,9 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - 実際の連合はしない。リモートのユーザーとノートは DB に直接入れた表示用のデータである。ログインしていないと `users/show` はリモートユーザーを返さない (Misskey の仕様)
 - API で作るノート (約 430 件) の時刻は実行時刻になる。過去 180 日に散らしているのは SQL の段のノートである
 - `down -v` は worktree の `files/` (ローカルドライブの保存先) を消さない。残ったファイルはどこからも参照されないので害はないが、次のスナップショットには入る
+- `restore` は web を止め、DB を消してから戻し、worktree の `files/` を丸ごと消してスナップショットの中身に置き換え、Redis を `FLUSHALL` で空にしてから web を起動し直す。`files/` に手で置いたファイルも消える
 - `restore` が途中で失敗すると、DB が空のまま残ることがある。復旧は `up` → `restore`、または `up --seed` である。それでも失敗するなら `down -v` → `up --seed` で作り直す
+- スナップショットの名前を指定するときは worktree も書く (例: `restore . before-x`)。1 つ目の位置引数は常に worktree として扱う
 
 # 経験の記録
 （実施したときの注意点などを自由に記載）
