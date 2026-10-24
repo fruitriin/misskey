@@ -4,8 +4,9 @@
 #
 # usage: orb-dev.sh <up|down|logs|status|seed|snapshot|restore|variant> [worktree-path] [名前] [-v] [--prod] [--seed]
 #   up        設定を生成して起動し、起動完了を待って URL を表示する (初回は管理者アカウントも作る)
-#             --lan を付けると、LAN 内の端末 (スマホの実機など) から <Mac のホスト名>.local:<ポート> で開けるようにする。
+#             --lan を付けると、LAN 内の端末 (スマホの実機など) から http://<Mac の LAN の IP アドレス>:<ポート> で開けるようにする。
 #             ポートは 3000 から順にホストで空いているものを使う。--lan なしで up し直すと orb.local に戻る
+#             --lan-mdns は IP アドレスの代わりに <Mac のホスト名>.local を使う (Android の Chrome は .local を引けない)
 #             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する
 #             --seed を付けると、起動後にキーの合うスナップショットがあれば restore、なければ seed を実行する
 #   down      停止する。-v を付けると DB・node_modules の volume も消す
@@ -31,6 +32,7 @@ remove_volumes=""
 prod=""
 with_seed=""
 lan=""
+lan_mdns=""
 # variant は引数の形が違うので、ここでは解釈せずに variant_main に任せる
 [ "$cmd" = "variant" ] || for arg in "$@"; do
 	case "$arg" in
@@ -38,6 +40,7 @@ lan=""
 		--prod) prod="1" ;;
 		--seed) with_seed="1" ;;
 		--lan) lan="1" ;;
+		--lan-mdns) lan="1"; lan_mdns="1" ;;
 		-*) echo "不明なオプションです: $arg" >&2; exit 1 ;;
 		*)
 			# 1 つ目の位置引数は worktree、2 つ目はスナップショットの名前
@@ -144,9 +147,11 @@ build_nm_entries() {
 
 # --lan のときの URL とポートを決める。--lan なしなら orb.local の URL に戻す
 #
-# url に IP アドレスではなく mDNS の名前 (<Mac のホスト名>.local) を使うのは、backend が vite への中継先を
-# 「url のホスト名:5173」で作るため。IP アドレスだとコンテナの中から Mac の 5173 へ中継してしまうので、
-# コンテナの中だけ、その名前を 127.0.0.1 (= 自分自身の vite) に向ける (extra_hosts)
+# url のホストは、既定ではルートのインターフェースの IPv4 アドレスにする (Android の Chrome は mDNS の .local を
+# 引けないため)。IP アドレスが変わったら、up --lan し直せば作り直される。
+# backend は vite への中継先を「url のホスト名:5173」で作るので、コンテナの中からは Mac の 5173 番へ中継する。
+# 5173 番は同じ番号で公開しているので、Mac を経由して自分の vite に戻ってくる。
+# --lan-mdns のときは url を <Mac のホスト名>.local にし、コンテナの中だけその名前を 127.0.0.1 に向ける (extra_hosts)
 configure_lan() {
 	if [ -z "$lan" ]; then
 		rm -f "$state_dir/lan"
@@ -155,7 +160,17 @@ configure_lan() {
 		lan_host=""
 		return 0
 	fi
-	lan_host="$(scutil --get LocalHostName).local"
+	if [ -n "$lan_mdns" ]; then
+		lan_host="$(scutil --get LocalHostName).local"
+	else
+		local iface
+		iface="$(route -n get default 2>/dev/null | awk '/interface:/ { print $2 }')"
+		lan_host="$( [ -n "$iface" ] && ipconfig getifaddr "$iface" 2>/dev/null || true)"
+		if [ -z "$lan_host" ]; then
+			echo "LAN の IPv4 アドレスを取れませんでした (既定ルートのインターフェース: ${iface:-なし})。ネットワークにつないでから実行してください" >&2
+			exit 1
+		fi
+	fi
 	local prev_port="" p
 	[ -f "$state_dir/lan" ] && read -r _ prev_port < "$state_dir/lan"
 	listen_port=""
@@ -228,7 +243,9 @@ generate() {
 		for p in $lan_vite_ports; do
 			lan_entries+=$'\n'"      - \"$p:$p\""
 		done
-		lan_entries+=$'\n    extra_hosts:\n'"      - \"$lan_host:127.0.0.1\""
+		if [ -n "$lan_mdns" ]; then
+			lan_entries+=$'\n    extra_hosts:\n'"      - \"$lan_host:127.0.0.1\""
+		fi
 	fi
 
 	cat > "$state_dir/compose.yml" <<-EOF
@@ -1112,7 +1129,7 @@ case "$cmd" in
 		variant_main "$@"
 		;;
 	*)
-		sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+		sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
 		exit 1
 		;;
 esac

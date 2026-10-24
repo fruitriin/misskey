@@ -11,7 +11,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 ## コマンド
 
 ```bash
-.claude/skills/orb-dev-server/scripts/orb-dev.sh up     [worktree] [--prod] [--seed] [--lan]  # 起動して URL を表示 (初回は管理者も作成)
+.claude/skills/orb-dev-server/scripts/orb-dev.sh up     [worktree] [--prod] [--seed] [--lan | --lan-mdns]  # 起動して URL を表示 (初回は管理者も作成)
 .claude/skills/orb-dev-server/scripts/orb-dev.sh status [worktree]
 .claude/skills/orb-dev-server/scripts/orb-dev.sh logs   [worktree]   # web のログを追う
 .claude/skills/orb-dev-server/scripts/orb-dev.sh down   [worktree] [-v]  # -v で DB・node_modules の volume も消す
@@ -22,7 +22,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 
 - `up --prod` は `pnpm dev` の代わりに本番ビルド (`pnpm build` → `pnpm migrate` → `pnpm start`) で起動する。初回はビルドがあるので待ち時間の上限を 30 分にしている (開発モードは 15 分)
 - `up --seed` は起動と管理者作成のあとに、キーの合う `seed` のスナップショットがあれば確認なしで `restore` する。現在のデータは上書きされる。無ければ `seed` を実行する
-- `up --lan` は、LAN 内の端末 (スマホの実機など) から `http://<Mac のホスト名>.local:<ポート>/` で開けるようにする。ポートは 3000 から順に、ホストで空いているものを使う。`--lan` なしで `up` し直すと orb.local に戻る (詳しくは「LAN 内の端末から開く」)
+- `up --lan` は、LAN 内の端末 (スマホの実機など) から `http://<Mac の LAN の IP アドレス>:<ポート>/` で開けるようにする。ポートは 3000 から順に、ホストで空いているものを使う。`--lan` なしで `up` し直すと orb.local に戻る (詳しくは「LAN 内の端末から開く」)
 - `seed` は管理者以外のユーザーがいない環境にだけ入れる。データが既にあるときは何も変えずに止まるので、`down -v` してから入れ直すか、`restore` で戻す
 - `worktree` を省略するとカレントディレクトリの worktree を対象にする
 - スクリプトはこのブランチ (skill の本籍) にしか無いことがある。対象 worktree に無ければ、mistems-main か claudeImplement worktree のものをフルパスで呼ぶ
@@ -51,13 +51,15 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 
 `*.orb.local` は Mac の中でしか名前を引けないので、スマホなどの実機からは開けない。`up --lan` は次のように切り替える。
 
-- `url` を `http://<Mac のホスト名>.local:<ポート>/` にする。ホスト名は `scutil --get LocalHostName` の値で、端末からは mDNS (Bonjour) で引く
+- `url` を `http://<Mac の LAN の IPv4 アドレス>:<ポート>/` にする。IP アドレスは既定ルートのインターフェースのもの (`route -n get default` の interface → `ipconfig getifaddr <interface>`) を使う
+- `--lan-mdns` は、IP アドレスの代わりに `<Mac のホスト名>.local` (`scutil --get LocalHostName`) を使う。Android の Chrome は mDNS の `.local` を引けない (`DNS_PROBE_FINISHED_NXDOMAIN` になる) ので、既定は IP アドレスにしている
 - ポートは 3000〜3099 のうち、ホストで待ち受けているプロセスがない最初の番号にする。Misskey もコンテナの中でその番号で待ち受け、同じ番号でホストに公開する。この環境が既に公開しているポートは、そのまま使い続ける
-- 選んだホスト名とポートは `~/.cache/misskey-orb-dev/<project>/lan` に残し、`status` や `seed` もその URL を使う
-- `url` に IP アドレスを使わないのは、backend が vite への中継先を「`url` のホスト名:5173」で作るためである。IP アドレスにすると、コンテナの中から Mac の 5173 番へ中継してしまう。コンテナの中だけ `extra_hosts` でその名前を 127.0.0.1 に向け、自分の vite へ中継させる
+- 選んだホストとポートは `~/.cache/misskey-orb-dev/<project>/lan` に残し、`status` や `seed` もその URL を使う
 - vite の HMR 用に 5173 番 (埋め込みは 5174 番) も同じ番号で公開する。vite の HMR は、ページを開いた端末から 5173 番へ直接つなぐ (`hmr.clientPort` が固定) ためで、つながらないと Misskey の起動処理が「読み込みに失敗しました」になる。ホストの 5173 番がほかに使われているときは `--lan` で起動しない。このため `--lan` の環境は同時に 1 つしか動かせない
-- `url` を変えるので、変える前にアップロードしたファイルの URL (DB に残る) は古いホスト名のままになる。実機で使うファイルは、切り替えたあとにアップロードし直す
-- 開けないときは、端末が同じネットワークにいるか、macOS のファイアウォールで OrbStack の受信を許可しているかを確かめる。Android は端末や OS のバージョンによって `.local` を引けないことがある
+- backend は vite への中継先を「`url` のホスト名:5173」で作る。IP アドレスのときは、コンテナの中から Mac の 5173 番へ中継し、公開した 5173 番を経由して自分の vite に戻ってくる。`--lan-mdns` のときは、コンテナの中だけ `extra_hosts` でその名前を 127.0.0.1 に向ける
+- **IP アドレスが変わったら (別のネットワークにつないだときなど)、`up --lan` し直す**。URL が作り直される
+- **`url` を変えたら、データも入れ直す**。アップロードしたファイル・アバター・絵文字などの URL は絶対 URL で DB に残るので、古いホストのままだと画像が出ない。スナップショットも古い URL を持っているので `restore` では直らない。この環境で作ったデータしかないなら、web を止めて DB を作り直し (`dropdb` → `createdb`)、`files/` を空にし、Redis を `flushall` してから `up --lan` → `seed` する
+- 開けないときは、端末が同じネットワークにいるかを確かめる。macOS のファイアウォールでは、ポートを待ち受ける「OrbStack Helper」の受信が許可されている必要がある (`/usr/libexec/ApplicationFirewall/socketfilterfw --listapps` で確認できる)
 
 ## 開発用データ (seed / snapshot / restore)
 
