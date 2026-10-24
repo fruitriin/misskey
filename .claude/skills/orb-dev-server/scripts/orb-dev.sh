@@ -428,7 +428,7 @@ do_seed() {
 	done
 	echo "開発用データを入れています (API の段)..."
 	compose exec -T web rm -rf /tmp/orb-seed
-	if ! compose exec -T ${seed_env[@]+"${seed_env[@]}"} web node /orb-seed/seed.mjs --url http://localhost:3000 --out /tmp/orb-seed; then
+	if ! compose exec -T ${seed_env[@]+"${seed_env[@]}"} web node /orb-seed/seed.mjs --url "http://localhost:$listen_port" --out /tmp/orb-seed; then
 		echo "seed (API の段) が失敗したので止めます。スナップショットは取りません。" >&2
 		return 1
 	fi

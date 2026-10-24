@@ -43,7 +43,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - **node_modules はホストと分ける**: ホストの node_modules は macOS 向けのネイティブモジュール (sharp, re2 など) を含み、Linux コンテナでは動かない。ルートと `packages/*/node_modules` を名前付き volume にしている
 - **Node 25 以降は corepack が無い**: 公式イメージに同梱されなくなったので、`package.json` の `packageManager` のバージョンを `npm i -g` で入れている
 - **vite は `.config/default.yml` を固定パスで読む**: `allowedHosts` を URL のホスト名から作るので、URL を orb.local のものにしないと vite が接続を拒否する
-- **seed は web コンテナの中で実行する**: ホストの Node.js は `*.orb.local` を引けないことがある。そのため seed の API の段は web コンテナ内から `http://localhost:3000` に対して実行する
+- **seed は web コンテナの中で実行する**: ホストの Node.js は `*.orb.local` を引けないことがある。そのため seed の API の段は web コンテナ内から `http://localhost:<Misskey が待ち受けるポート>` (通常は 3000、`--lan` では選んだポート) に対して実行する
 - **`files/` もスナップショットに含める**: 添付画像・アバターなどの実体は worktree の `files/` にあり、DB だけ戻すと参照先が無くなる。`files/` の tar はホスト側で作り、戻す
 - **新しい worktree でも migrate が動くように、開発モードでは起動のたびに `pnpm build-pre` を実行する**: `pnpm migrate` は `built/meta.json` を読む。バックエンドのビルドは `packages/backend/built/config.js` が無いときだけ行う。`--prod` では `pnpm build` がこれらを作るので実行しない
 
