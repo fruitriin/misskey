@@ -89,7 +89,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 .claude/skills/orb-dev-server/scripts/orb-dev.sh variant classify <branch>        # frontend / backend / migration / other を表示する
 .claude/skills/orb-dev-server/scripts/orb-dev.sh variant prepare  <branch> [base] # worktree を作り、ブランチ固有の差分を当てる (コンフリクトは終了コード 2)
 .claude/skills/orb-dev-server/scripts/orb-dev.sh variant up       <branch> [base] # 本番ビルドで起動し、応答するまで待つ
-.claude/skills/orb-dev-server/scripts/orb-dev.sh variant down     <branch> [-v]   # 止める。-v で vdb・node_modules の volume も消す
+.claude/skills/orb-dev-server/scripts/orb-dev.sh variant down     <branch> [-v]   # 止める。-v で vdb・node_modules の volume も消す (worktree とブランチは残る)
 .claude/skills/orb-dev-server/scripts/orb-dev.sh variant status                    # ブランチ・種類・URL・DB・状態・応答を一覧する
 .claude/skills/orb-dev-server/scripts/orb-dev.sh variant up-all   <branch>...      # prepare と up を 1 本ずつ順に行う (ベースは既定のものだけ)
 .claude/skills/orb-dev-server/scripts/orb-dev.sh variant down-all [-v]
@@ -104,7 +104,15 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - Redis はベース環境のものを共有するが、キーの接頭辞は URL のホスト名から決まる (`packages/backend/src/config.ts` の `redis.prefix` の既定値) ので variant ごとに分かれる。接頭辞を揃えると、variant のコードがベース環境の定期ジョブを書き換えたり消したりするため、揃えてはならない
 - `files/` と pnpm のストア (`<base>_pnpm-store`) はベース環境のものを共有する
 - seed のスナップショットにはベース環境の URL (`http://web.<ベース>.orb.local:3000/`) が入っている。**ベース環境を止めると、variant の画像 (アバター・絵文字・添付・インスタンスのアイコン) も表示されなくなり、variant の起動もできない**。確認が終わるまでベース環境を止めない
-- `vdb` の初回は、ベースの seed のスナップショットを restore してから migrate を当てる。seed が無いときは web を起動せずに止まる。やり直すときは `variant down <branch> -v` → `variant up <branch>` である
+- `vdb` の初回は、ベースの seed のスナップショットを restore してから migrate を当てる。seed が無いときは web を起動せずに止まる。やり直すときは `variant down <branch>` → `docker volume rm variant-<slug>_vdb-data` → `variant up <branch>` である (`-v` は node_modules の volume も消すので、依存のインストールからやり直しになる)
+- `variant down` は worktree (`variant-<slug>`) とブランチ (`variant/<slug>`) を消さない。作り直すときは `git -C <ベース> worktree remove` と `git -C <ベース> branch -D` で消してから `prepare` する
+- `prepare` (当て済みのとき) と `up` は、riin のブランチが当てた版より進んでいれば注意と作り直しの手順を表示する。止めはしない
+- 種類 2 の `up` は、variant の worktree の最新の migration とベース DB の最新の migration が違えば起動しない。`main-統合.sh` で mistems-main を作り直したあとは、ベース環境を作り直す (`variant-prep` スキルの「main-統合.sh のあとの再実行」)
+- `up` は、web が今回起動してからのログだけを見て応答を判断する。Mac や OrbStack の再起動で止まった web を `up` で起動し直したときも、ビルドが終わるまで待つ
+- ベース環境の操作は variant にも及ぶ
+  - ベースの `restore` (`up --seed` で restore に進む場合を含む) は、共有の Redis を `FLUSHALL` するので variant のキーも消える。`files/` も丸ごと置き換えるので、variant (特に種類 3) でアップロードしたファイルも消える。逆に、variant でアップロードしたファイルは、ベースの次のスナップショットに入る
+  - 種類 2 はベースと DB を共有するが、Redis の接頭辞 (pub/sub のチャンネルを含む) は分かれる。片方で変えたユーザーなどのキャッシュが、もう片方では古いまま残ることがある
+- variant の web はベースの network (`<base>_default`) と pnpm のストアの volume を使うので、variant が動いている間はベースの `down` / `down -v` が途中で失敗する。ベースを止めるときは、先に `variant down-all` を実行する
 - `up` の前に空きメモリ (VM 全体からコンテナの使用量の合計を引いた値) を確かめ、4GB 未満なら起動せずに内訳を表示して止まる。他のコンテナを止めて空けることはしない
 - pnpm install / build が重なるので、`up` は 1 本ずつ実行し、前の web が応答してから次へ進む
 
