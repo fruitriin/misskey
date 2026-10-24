@@ -220,3 +220,39 @@ test('bulk: 同じシード値なら同じ内容', () => {
 	assert.deepEqual(strip(a), strip(b));
 	assert.deepEqual(a.reactions.map((r) => r.reaction), b.reactions.map((r) => r.reaction));
 });
+
+test('bulk: 同じシード値と seed-result なら、実行時刻が違っても本文・関係・リアクションは同じ', () => {
+	// 実行ごとに変わる ID を、並び順 (添字) に置き換えて比べる。ローカルのユーザーの ID は seed-result のものなので変わらない
+	const shape = (d) => {
+		const noteIndex = new Map(d.notes.map((n, i) => [n.id, i]));
+		const remoteIndex = new Map(d.remoteUsers.map((u, i) => [u.id, `remote${i}`]));
+		const fileIndex = new Map(d.driveFiles.map((f, i) => [f.id, `link${i}`]));
+		const who = (id) => remoteIndex.get(id) ?? id;
+		return {
+			notes: d.notes.map((n) => ({
+				user: who(n.userId), text: n.text, cw: n.cw, visibility: n.visibility,
+				reply: n.replyId == null ? null : noteIndex.get(n.replyId),
+				renote: n.renoteId == null ? null : noteIndex.get(n.renoteId),
+				files: n.fileIds.map((id) => fileIndex.get(id) ?? id),
+				reactions: n.reactions, renoteCount: n.renoteCount, repliesCount: n.repliesCount,
+			})),
+			reactions: d.reactions.map((r) => [noteIndex.get(r.noteId), who(r.userId), r.reaction]),
+			followings: d.followings.map((f) => [who(f.followerId), who(f.followeeId)]),
+			hashtags: d.hashtags.map((h) => [h.name, h.mentionedUserIds.map(who)]),
+		};
+	};
+	const result = fakeResult();
+	const a = generateBulk(result, bulkOpts);
+	// API の段のノートの時刻が変わったとき (= upper が 1 日の中や日をまたいで動いたとき) を、now を前にずらして再現する
+	for (const hours of [7, 13.5, 30, 24 * 3 + 5]) {
+		const b = generateBulk(result, { ...bulkOpts, now: NOW - hours * 60 * 60 * 1000 });
+		assert.notEqual(b.range.upper, a.range.upper);
+		// 大きな値の deepEqual は差分の表示に時間がかかるので、文字列にして比べ、最初に食い違う場所を示す
+		const sa = shape(a);
+		const sb = shape(b);
+		for (const key of Object.keys(sa)) {
+			const i = sa[key].findIndex((v, k) => JSON.stringify(v) !== JSON.stringify(sb[key][k]));
+			assert.ok(i === -1 && sa[key].length === sb[key].length, `${hours} 時間ずらすと ${key} が変わる (${i} 番目)`);
+		}
+	}
+});

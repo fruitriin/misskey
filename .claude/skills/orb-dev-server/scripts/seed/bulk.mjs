@@ -148,7 +148,11 @@ export function generateBulk(result, opts = {}) {
 	// ノートの時刻の上限: API の段のノートより前 (やりとりのノートがタイムラインの先頭に残るように)
 	const apiTimes = (result.notes ?? []).map((n) => aidxTime(n.id));
 	const upper = Math.min(now, ...apiTimes) - 60 * 1000;
-	const lower = now - SPAN_DAYS * DAY;
+	// 時刻はすべて anchor (upper を含む日の JST の 0 時) からの相対で決める。
+	// 乱数は実行時刻と関係のない順に使い、時刻は最後に anchor へ足すだけにするので、
+	// 同じシード値と同じ seed-result なら、いつ実行しても本文や関係は同じになる (変わるのは ID と時刻だけ)
+	const anchor = Math.floor((upper + JST) / DAY) * DAY - JST;
+	const lower = anchor - (SPAN_DAYS - 1) * DAY;
 
 	let counter = 0;
 	const newId = (time) => genAidx(time, counter++);
@@ -292,6 +296,7 @@ export function generateBulk(result, opts = {}) {
 	const byId = new Map(authors.map((a) => [a.id, a]));
 
 	// ---- ノートの時刻 (人ごとに投稿する時間帯の癖を付ける) ----
+	// anchor の前日までの SPAN_DAYS - 1 日に置く。anchor より前なので upper を超えず、切り詰めも要らない
 	// 1 人あたりの件数 (平均の 6/7〜8/7 倍) は、API の段で作ったノートも含めた数にする
 	const apiNoteCount = new Map();
 	for (const n of result.notes ?? []) apiNoteCount.set(n.userId, (apiNoteCount.get(n.userId) ?? 0) + 1);
@@ -302,13 +307,11 @@ export function generateBulk(result, opts = {}) {
 		const peakHour = rnd.int(0, 23);
 		const spread = 1.5 + rnd.next() * 3.5;
 		for (let k = 0; k < count; k++) {
-			const day = rnd.int(0, SPAN_DAYS - 1);
+			const day = rnd.int(1, SPAN_DAYS - 1); // anchor の何日前か
 			const hour = (((peakHour + gaussian(rnd) * spread) % 24) + 24) % 24;
-			const midnightJst = Math.floor((upper - day * DAY + JST) / DAY) * DAY - JST;
-			let t = Math.floor(midnightJst + hour * HOUR + rnd.next() * 60 * 1000);
-			if (t > upper) t -= DAY;
-			t = Math.min(upper, Math.max(lower + 1, t));
-			slots.push({ author: a, time: t });
+			// 1 分以内のずれで次の日にはみ出さないよう、その日のうちに収める
+			const offset = Math.min(DAY - 1, Math.floor(hour * HOUR + rnd.next() * 60 * 1000));
+			slots.push({ author: a, time: anchor - day * DAY + offset });
 		}
 	}
 	slots.sort((x, y) => x.time - y.time);
@@ -428,7 +431,7 @@ export function generateBulk(result, opts = {}) {
 		const fr = remoteOf.get(follower.id);
 		const fe = remoteOf.get(followee.id);
 		followings.push({
-			id: newId(rnd.int(lower, upper)),
+			id: newId(lower + rnd.int(0, (SPAN_DAYS - 1) * DAY - 1)),
 			followeeId: followee.id,
 			followerId: follower.id,
 			followerHost: fr?.host ?? null,
