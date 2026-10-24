@@ -383,7 +383,7 @@ variant_usage() {
 	  up <branch> [base]       本番ビルドで起動し、応答するまで待つ
 	  down <branch> [-v]       止める。-v で DB (vdb)・node_modules の volume も消す
 	  status                   全 variant のブランチ・種類・URL・DB・応答を一覧する
-	  up-all <branch>...       prepare と up を 1 本ずつ順に行う
+	  up-all <branch>...       prepare と up を 1 本ずつ順に行う (ベース環境は既定のものだけ)
 	  down-all [-v]            全 variant を止める
 	<branch> は riin のブランチ名 (例: claude/renote-lock-feature-7J0NA)。base はベース環境の worktree (既定は mistems-main の worktree)
 	EOF
@@ -438,6 +438,33 @@ variant_applied() {
 	git -C "$v_wt" log --format=%s "origin/develop..HEAD" | grep -xF "variant: $v_branch" > /dev/null
 }
 
+# slug が同じ別のブランチ (claude/foo と fix/foo など) が、この worktree や compose のプロジェクトを使っていれば終了する
+require_no_slug_collision() {
+	local other
+	if [ -d "$v_wt" ]; then
+		other="$(git -C "$v_wt" log --format=%s "origin/develop..HEAD" | sed -n 's/^variant: //p' | grep -vxF "$v_branch" || true)"
+		if [ -n "$other" ]; then
+			echo "$v_wt には別のブランチ ($(printf '%s' "$other" | head -1)) の差分が当たっています。slug ($v_slug) が同じブランチは同時に扱えません。何も変更せずに終了します。" >&2
+			exit 1
+		fi
+	fi
+	other="$(docker ps -a --filter "label=com.docker.compose.project=$v_project" --format '{{.Label "orb-dev.variant.branch"}}' | grep -vxF "$v_branch" | grep -v '^$' || true)"
+	if [ -n "$other" ]; then
+		echo "compose のプロジェクト $v_project は別のブランチ ($(printf '%s' "$other" | head -1)) が使っています。slug ($v_slug) が同じブランチは同時に扱えません。何も変更せずに終了します。" >&2
+		exit 1
+	fi
+}
+
+# variant のブランチが、今のベース環境の HEAD より古いベースから作られていれば注意を表示する (止めはしない)
+warn_if_old_base() {
+	local base_head
+	base_head="$(git -C "$base_wt" rev-parse HEAD)"
+	if ! git -C "$v_wt" merge-base --is-ancestor "$base_head" HEAD; then
+		echo "注意: $v_wt は、今のベース環境の HEAD ($(git -C "$base_wt" log -1 --format='%h %s')) を含まない、古いベースから作られています。" >&2
+		echo "  新しいベースで作り直すには: '$0 variant down $v_branch -v' → git worktree remove '$v_wt' → git branch -D '$v_local_branch' → '$0 variant prepare $v_branch'" >&2
+	fi
+}
+
 variant_report_conflicts() {
 	local unmerged
 	unmerged="$(git -C "$v_wt" diff --name-only --diff-filter=U)"
@@ -448,7 +475,8 @@ variant_report_conflicts() {
 	else
 		echo "$v_wt にコミットしていない変更があります。" >&2
 	fi
-	echo "解消したら git -C '$v_wt' add -A && git -C '$v_wt' commit -m 'variant: $v_branch' でコミットし、もう一度 '$0 variant prepare $v_branch' を実行してください。" >&2
+	# rerere は main-統合.sh と rr-cache を共有するので、variant の解消を記録させない (統合のときに勝手に当たるのを防ぐ)
+	echo "解消したら git -C '$v_wt' add -A && git -C '$v_wt' -c rerere.enabled=false commit -m 'variant: $v_branch' でコミットし、もう一度 '$0 variant prepare $v_branch' を実行してください。" >&2
 }
 
 # variant で動かすのは backend (種類 2) と migration (種類 3) だけ
@@ -469,6 +497,7 @@ require_variant_category() {
 variant_prepare() {
 	variant_load "$@"
 	require_variant_category
+	require_no_slug_collision
 
 	if [ ! -e "$v_wt" ]; then
 		if git -C "$base_wt" show-ref --verify -q "refs/heads/$v_local_branch"; then
@@ -485,6 +514,7 @@ variant_prepare() {
 
 	if variant_applied; then
 		echo "当て済みです: $v_wt ($v_local_branch)"
+		warn_if_old_base
 		return 0
 	fi
 	if [ -n "$(git -C "$v_wt" status --porcelain)" ]; then
@@ -494,11 +524,13 @@ variant_prepare() {
 	fi
 
 	echo "ブランチ固有の差分を当てています: $(git -C "$base_wt" log -1 --format='%h %s' "$v_fork") .. riin/$v_branch"
-	if git -C "$base_wt" diff --binary "$v_fork" "riin/$v_branch" | git -C "$v_wt" apply --3way --index; then
+	# rerere は main-統合.sh と rr-cache を共有する。variant のコンフリクトと解消を記録させないよう、apply と commit では無効にする
+	if git -C "$base_wt" diff --binary "$v_fork" "riin/$v_branch" | git -C "$v_wt" -c rerere.enabled=false apply --3way --index; then
 		# 差分がすべてベース環境に入っているときも、当て済みの印としてコミットする
-		git -C "$v_wt" commit -q --allow-empty -m "variant: $v_branch" \
+		git -C "$v_wt" -c rerere.enabled=false commit -q --allow-empty -m "variant: $v_branch" \
 			-m "起点: $v_fork"$'\n'"ブランチ: riin/$v_branch ($(git -C "$base_wt" rev-parse "riin/$v_branch"))"
 		echo "当ててコミットしました: $v_wt ($v_local_branch)"
+		warn_if_old_base
 		return 0
 	fi
 	if [ -n "$(git -C "$v_wt" status --porcelain)" ]; then
@@ -630,6 +662,8 @@ generate_variant() {
 	      orb-dev.variant.category: "$v_category"
 	      orb-dev.variant.base: "$base_project"
 	    # ベース環境の network に繋ぎ、redis (と種類 2 では db) はベース環境のものを使う
+	    # compose はサービス名を必ず別名に足すので、ベースの network では web がベースと variant の両方を指す。
+	    # ベース環境の中では web という名前で通信しないこと (Misskey と seed は orb.local の URL を使うので影響しない)
 	    networks:
 	      - default
 	      - base
@@ -669,6 +703,8 @@ variant_up() {
 		echo "$v_branch はまだ用意できていません。先に '$0 variant prepare $v_branch' を実行してください" >&2
 		exit 1
 	fi
+	require_no_slug_collision
+	warn_if_old_base
 
 	use_env "$v_wt" "$v_project"
 	if web_ready; then
@@ -707,10 +743,35 @@ variant_up() {
 
 	use_env "$v_wt" "$v_project"
 	generate_variant "$seed_dump"
+	if [ "$v_category" = "migration" ]; then
+		start_vdb
+	fi
 	compose up -d
 	echo "起動を待っています (本番ビルドがあるので数分〜十数分かかります)..."
 	wait_ready
 	echo "起動しました: $url  (ブランチ: ${v_branch}、種類: $v_category)"
+}
+
+# 種類 3 の vdb を先に起動し、seed が入っていることを確かめる。
+# 初回の restore が失敗すると、データディレクトリは初期化済みの空の DB のまま残り、次の起動では initdb.d を実行しない。
+# そのまま web を起動すると、空の DB に migrate がかかって seed の無い環境が正常に起動したように見えるので、ここで止める
+start_vdb() {
+	local admins
+	echo "vdb を起動しています (初回はベース環境の seed を戻すので数分かかります)..."
+	if ! compose up -d --wait vdb; then
+		echo "vdb が起動しませんでした。ログ:" >&2
+		compose logs --tail 30 vdb >&2
+		echo "'$0 variant down $v_branch -v' で vdb を消してから、もう一度 '$0 variant up $v_branch' を実行してください" >&2
+		exit 1
+	fi
+	# seed には管理者 admin がいる。表が無い (restore されていない) ときも 0 とみなす
+	admins="$(compose exec -T vdb psql -U "$db_user" "$db_name" -Atc \
+		"SELECT count(*) FROM \"user\" WHERE \"usernameLower\" = 'admin' AND host IS NULL" 2>/dev/null || true)"
+	if [ "$admins" != "1" ]; then
+		echo "vdb に seed が入っていません (初回の restore が失敗した可能性があります)。web は起動しません。" >&2
+		echo "'$0 variant down $v_branch -v' で vdb を消してから、もう一度 '$0 variant up $v_branch' を実行してください" >&2
+		exit 1
+	fi
 }
 
 variant_down() {
