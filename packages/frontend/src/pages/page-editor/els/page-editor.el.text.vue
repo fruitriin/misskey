@@ -10,19 +10,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 	<section>
 		<div :class="$style.toolbar">
-			<button class="_button" :class="$style.toolbarButton" @click="insertChar('$')">$MFM</button>
+			<button class="_button" :class="$style.toolbarButton" @click="showFormatMenu">$MFM</button>
 			<button class="_button" :class="$style.toolbarButton" @click="showMfmMenu">{{ i18n.ts._pages.otherMfm }}</button>
 			<button class="_button" :class="$style.toolbarButton" @click="insertChar('#')">#</button>
 			<button class="_button" :class="$style.toolbarButton" @click="insertEmoji"><i class="ti ti-mood-happy"></i></button>
-			<button
-				v-for="fmt in MFM_FORMATS"
-				:key="fmt.id"
-				:title="fmt.label"
-				:class="$style.toolbarBtn"
-				@mousedown.prevent="applyFormat(fmt)"
-			>
-				<i :class="fmt.icon"></i>
-			</button>
 		</div>
 		<textarea ref="inputEl" v-model="text" :class="$style.textarea"></textarea>
 	</section>
@@ -157,6 +148,15 @@ function insertEmoji(ev: PointerEvent) {
 	);
 }
 
+function showFormatMenu(ev: PointerEvent) {
+	const items: MenuItem[] = MFM_FORMATS.map(fmt => ({
+		text: fmt.label,
+		icon: fmt.icon,
+		action: () => applyFormat(fmt),
+	}));
+	os.popupMenu(items, ev.currentTarget ?? ev.target);
+}
+
 function showMfmMenu(ev: PointerEvent) {
 	const items: MenuItem[] = [
 		{ text: '**Bold**', icon: 'ti ti-bold', action: () => insertTemplate('**Bold**') },
@@ -193,30 +193,6 @@ function insertTemplate(tpl: string) {
 	&:hover {
 		background: var(--MI_THEME-accentedBg);
 		color: var(--MI_THEME-accent);
-	}
-}
-
-.toolbarBtn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 30px;
-	height: 30px;
-	border: none;
-	background: transparent;
-	border-radius: 4px;
-	cursor: pointer;
-	color: var(--MI_THEME-fg);
-	font-size: 14px;
-
-	&:hover {
-		background: var(--MI_THEME-accentedBg);
-		color: var(--MI_THEME-accent);
-	}
-
-	&:active {
-		background: var(--MI_THEME-accent);
-		color: #fff;
 	}
 }
 
