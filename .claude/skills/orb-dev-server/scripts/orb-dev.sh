@@ -295,15 +295,20 @@ do_restore() {
 }
 
 do_seed() {
+	# docker compose exec はホストの環境変数を渡さないので、seed の設定に使う変数のうち設定されているものだけ渡す
+	local seed_env=() var
+	for var in SEED SEED_LOCAL_NOTES SEED_REMOTE_NOTES; do
+		if [ -n "${!var:-}" ]; then seed_env+=(-e "$var=${!var}"); fi
+	done
 	echo "開発用データを入れています (API の段)..."
 	compose exec -T web rm -rf /tmp/orb-seed
-	if ! compose exec -T web node /orb-seed/seed.mjs --url http://localhost:3000 --out /tmp/orb-seed; then
+	if ! compose exec -T ${seed_env[@]+"${seed_env[@]}"} web node /orb-seed/seed.mjs --url http://localhost:3000 --out /tmp/orb-seed; then
 		echo "seed (API の段) が失敗したので止めます。スナップショットは取りません。" >&2
 		return 1
 	fi
 	echo "開発用データを入れています (SQL の段)..."
 	# bulk.mjs の出力は BEGIN から COMMIT までの 1 つのトランザクション。途中で失敗すれば何も入らない
-	if ! compose exec -T web node /orb-seed/bulk.mjs --result /tmp/orb-seed/seed-result.json --base-url "$url" \
+	if ! compose exec -T ${seed_env[@]+"${seed_env[@]}"} web node /orb-seed/bulk.mjs --result /tmp/orb-seed/seed-result.json --base-url "$url" \
 		| psql_db -q > /dev/null; then
 		echo "seed (SQL の段) が失敗したので止めます。スナップショットは取りません。" >&2
 		echo "API の段のデータは残っています。'$0 down $wt -v' で環境を消してからやり直してください。" >&2

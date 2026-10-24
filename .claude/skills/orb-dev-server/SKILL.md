@@ -67,6 +67,8 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - スナップショットは `~/.cache/misskey-orb-dev/<project>/snapshots/<最新の migration 名>/<名前>.dump` (`pg_dump -Fc`) と `<名前>.files.tar` (worktree の `files/`) の 2 つである。取るときは一時ファイルに書いてから置き換えるので、途中で失敗しても前のものは壊れない
 - キーは最新の migration 名である。migration が変わると古いスナップショットは使えなくなるので、`restore` は戻さずに止まり、手元の一覧を表示する。その場合は `down -v` してから `up --seed` で入れ直す
 - 同じシード値なら内容 (ユーザー名・本文・関係) は同じになる。ただし seed の結果と実行時刻が同じ場合に限る。ID (aidx のノード部分) と正確な時刻は実行ごとに変わる
+- seed の設定は環境変数で変えられる。`SEED` はシード値 (既定 `20261023`)、`SEED_LOCAL_NOTES` と `SEED_REMOTE_NOTES` は SQL の段で作る 1 人あたりのノート数の平均 (既定 700) である。`orb-dev.sh` は設定された変数だけを web コンテナに渡す (例: `SEED=1 orb-dev.sh seed`)
+- 値を変えて `seed` しても、スナップショットは同じ名前 `seed` で上書きされる。既定の内容を残したいときは、名前を付けて取る (例: `SEED_LOCAL_NOTES=50 orb-dev.sh seed . small`)
 
 ### 対象外と注意
 
