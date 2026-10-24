@@ -4,6 +4,8 @@
 #
 # usage: orb-dev.sh <up|down|logs|status|seed|snapshot|restore|variant> [worktree-path] [名前] [-v] [--prod] [--seed]
 #   up        設定を生成して起動し、起動完了を待って URL を表示する (初回は管理者アカウントも作る)
+#             --lan を付けると、LAN 内の端末 (スマホの実機など) から <Mac のホスト名>.local:<ポート> で開けるようにする。
+#             ポートは 3000 から順にホストで空いているものを使う。--lan なしで up し直すと orb.local に戻る
 #             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する
 #             --seed を付けると、起動後にキーの合うスナップショットがあれば restore、なければ seed を実行する
 #   down      停止する。-v を付けると DB・node_modules の volume も消す
@@ -28,12 +30,14 @@ snap_name="seed"
 remove_volumes=""
 prod=""
 with_seed=""
+lan=""
 # variant は引数の形が違うので、ここでは解釈せずに variant_main に任せる
 [ "$cmd" = "variant" ] || for arg in "$@"; do
 	case "$arg" in
 		-v|--volumes) remove_volumes="-v" ;;
 		--prod) prod="1" ;;
 		--seed) with_seed="1" ;;
+		--lan) lan="1" ;;
 		-*) echo "不明なオプションです: $arg" >&2; exit 1 ;;
 		*)
 			# 1 つ目の位置引数は worktree、2 つ目はスナップショットの名前
@@ -61,6 +65,15 @@ use_env() {
 	state_dir="$cache_root/$project"
 	snapshots_dir="$state_dir/snapshots"
 	url="http://web.$project.orb.local:3000/"
+	# Misskey がコンテナの中で待ち受けるポート。--lan のときは、ホストに公開するポートと同じ番号にする
+	listen_port=3000
+	lan_host=""
+	lan_vite_ports=""
+	# 前回 --lan で up した環境なら、status や seed でもその URL を使う
+	if [ -f "$state_dir/lan" ]; then
+		read -r lan_host listen_port < "$state_dir/lan"
+		url="http://$lan_host:$listen_port/"
+	fi
 }
 
 if [ "$cmd" != "variant" ]; then
@@ -95,11 +108,12 @@ write_default_yml() {
 	# allowedPrivateNetworks: 本番モード (NODE_ENV=production) の Misskey は private IP への取得を遮断する。
 	# seed のリモートのアバター・絵文字・添付・インスタンスのアイコンは、この環境自身の orb.local の URL
 	# (OrbStack のコンテナの IP は 192.168.x.x / fd07:… の private IP) を proxy 経由で取るので、その範囲を許可する
-	awk -v url="$url" -v setup="$setup_password" -v db_host="$db_host" '
+	awk -v url="$url" -v setup="$setup_password" -v db_host="$db_host" -v port="${listen_port:-3000}" '
 		skip_list && /^#  - / { next }
 		{ skip_list = 0 }
 		/^[a-zA-Z]/ { section = $1 }
 		/^url: / { print "url: " url; next }
+		/^port: / { print "port: " port; next }
 		/^# setupPassword: / { print "setupPassword: " setup; next }
 		/^#allowedPrivateNetworks:/ {
 			print "allowedPrivateNetworks:"
@@ -126,6 +140,57 @@ build_nm_entries() {
 		nm_mounts+=$'\n'"      - nm-$name:/workspace/packages/$name/node_modules"
 		nm_volumes+=$'\n'"  nm-$name:"
 	done
+}
+
+# --lan のときの URL とポートを決める。--lan なしなら orb.local の URL に戻す
+#
+# url に IP アドレスではなく mDNS の名前 (<Mac のホスト名>.local) を使うのは、backend が vite への中継先を
+# 「url のホスト名:5173」で作るため。IP アドレスだとコンテナの中から Mac の 5173 へ中継してしまうので、
+# コンテナの中だけ、その名前を 127.0.0.1 (= 自分自身の vite) に向ける (extra_hosts)
+configure_lan() {
+	if [ -z "$lan" ]; then
+		rm -f "$state_dir/lan"
+		url="http://web.$project.orb.local:3000/"
+		listen_port=3000
+		lan_host=""
+		return 0
+	fi
+	lan_host="$(scutil --get LocalHostName).local"
+	local prev_port="" p
+	[ -f "$state_dir/lan" ] && read -r _ prev_port < "$state_dir/lan"
+	listen_port=""
+	# この環境が既にそのポートを公開して動いているなら、そのまま使う
+	if [ -n "$prev_port" ] && compose port web "$prev_port" >/dev/null 2>&1; then
+		listen_port="$prev_port"
+	else
+		for p in $prev_port $(seq 3000 3099); do
+			if ! lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then
+				listen_port="$p"
+				break
+			fi
+		done
+	fi
+	if [ -z "$listen_port" ]; then
+		echo "3000〜3099 に空いているポートがありません" >&2
+		exit 1
+	fi
+	# vite の HMR は、ページを開いた端末から 5173 番 (埋め込みは 5174 番) へ直接つなぐ (vite.config.ts の
+	# hmr.clientPort が固定)。つながらないと Misskey の起動処理が「読み込みに失敗しました」になるので、同じ番号で公開する
+	lan_vite_ports=""
+	for p in 5173 5174; do
+		if compose port web "$p" >/dev/null 2>&1 || ! lsof -nP -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1; then
+			lan_vite_ports+=" $p"
+		elif [ "$p" = 5173 ]; then
+			echo "ホストの 5173 番を別のプロセスが使っています。vite の HMR がつながらず画面を開けないので、--lan では起動しません:" >&2
+			lsof -nP -iTCP:5173 -sTCP:LISTEN >&2
+			exit 1
+		else
+			echo "注意: ホストの $p 番を別のプロセスが使っているので公開しません。埋め込みのページは開けないことがあります" >&2
+		fi
+	done
+	url="http://$lan_host:$listen_port/"
+	mkdir -p "$state_dir"
+	echo "$lan_host $listen_port" > "$state_dir/lan"
 }
 
 generate() {
@@ -156,6 +221,16 @@ generate() {
 		run_cmd+=" && pnpm build-pre && { [ -f packages/backend/built/config.js ] || pnpm --filter backend... build; } && pnpm migrate && pnpm dev"
 	fi
 
+	# --lan のときだけホストにポートを公開する (configure_lan のコメント参照)
+	local lan_entries=""
+	if [ -n "$lan_host" ]; then
+		lan_entries=$'    ports:\n'"      - \"$listen_port:$listen_port\""
+		for p in $lan_vite_ports; do
+			lan_entries+=$'\n'"      - \"$p:$p\""
+		done
+		lan_entries+=$'\n    extra_hosts:\n'"      - \"$lan_host:127.0.0.1\""
+	fi
+
 	cat > "$state_dir/compose.yml" <<-EOF
 	services:
 	  redis:
@@ -184,6 +259,7 @@ generate() {
 	        condition: service_healthy
 	      redis:
 	        condition: service_healthy
+	$lan_entries
 	    volumes:
 	      - $wt:/workspace
 	      - ./default.yml:/workspace/.config/default.yml:ro
@@ -988,12 +1064,17 @@ variant_main() {
 
 case "$cmd" in
 	up)
+		configure_lan
 		generate
 		compose up -d
 		echo "起動を待っています (初回は依存のインストールで数分かかります)..."
 		wait_ready
 		create_admin
 		echo "起動しました: $url  (ログイン: $admin_user / $admin_pass)"
+		if [ -n "$lan_host" ]; then
+			echo "LAN 内の端末からも開けます。開けないときは、端末が同じネットワークにいるか、macOS のファイアウォールで OrbStack の受信を許可しているかを確かめてください"
+			echo "vite の HMR 用に 5173 番も公開しています。ほかの worktree を --lan で同時に動かすことはできません"
+		fi
 		if [ -n "$with_seed" ]; then
 			snap_name="seed"
 			key="$(snapshot_key)"
@@ -1031,7 +1112,7 @@ case "$cmd" in
 		variant_main "$@"
 		;;
 	*)
-		sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+		sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
 		exit 1
 		;;
 esac
