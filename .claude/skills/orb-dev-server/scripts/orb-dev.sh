@@ -2,7 +2,7 @@
 # worktree ごとに独立した Misskey 開発サーバー (pnpm dev + PostgreSQL + Redis) を OrbStack 上で動かす。
 # ホストにポートを公開しないので、複数の worktree や他プロジェクトと 3000 / 5173 / 5432 / 6379 を取り合わない。
 #
-# usage: orb-dev.sh <up|down|logs|status|seed|snapshot|restore> [worktree-path] [名前] [-v] [--prod] [--seed]
+# usage: orb-dev.sh <up|down|logs|status|seed|snapshot|restore|variant> [worktree-path] [名前] [-v] [--prod] [--seed]
 #   up        設定を生成して起動し、起動完了を待って URL を表示する (初回は管理者アカウントも作る)
 #             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する
 #             --seed を付けると、起動後にキーの合うスナップショットがあれば restore、なければ seed を実行する
@@ -12,6 +12,9 @@
 #   seed      起動中の環境に開発用データを入れ、終わったらスナップショット (seed) を取る
 #   snapshot  今の DB と files/ を保存する。名前の既定は seed
 #   restore   保存した DB と files/ に戻す。名前の既定は seed。キー (最新 migration 名) が合わなければ戻さない
+#   variant   統合待ちのブランチを、ベース環境 (既定は mistems-main の worktree) の DB・Redis を使う別のコンテナで動かす
+#             classify <branch> | prepare <branch> [base] | up <branch> [base] | down <branch> [-v]
+#             | status | up-all <branch>... | down-all [-v]   (<branch> は riin のブランチ名)
 set -euo pipefail
 
 # seed のスクリプトは対象の worktree ではなく、このスクリプトと同じ場所のものを web コンテナにマウントして使う
@@ -25,7 +28,8 @@ snap_name="seed"
 remove_volumes=""
 prod=""
 with_seed=""
-for arg in "$@"; do
+# variant は引数の形が違うので、ここでは解釈せずに variant_main に任せる
+[ "$cmd" = "variant" ] || for arg in "$@"; do
 	case "$arg" in
 		-v|--volumes) remove_volumes="-v" ;;
 		--prod) prod="1" ;;
@@ -46,12 +50,22 @@ case "$snap_name" in
 		;;
 esac
 
-wt="$(cd "$wt_arg" && git rev-parse --show-toplevel)"
-# compose のプロジェクト名は [a-z0-9_-] のみ
-project="$(basename "$wt" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_-]+/-/g; s/^-+//; s/-+$//')"
-state_dir="${XDG_CACHE_HOME:-$HOME/.cache}/misskey-orb-dev/$project"
-snapshots_dir="$state_dir/snapshots"
-url="http://web.$project.orb.local:3000/"
+cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/misskey-orb-dev"
+
+# 操作する環境を切り替える。compose / psql_db / wait_ready などはここで決めた変数を使う
+# $1: worktree のパス  $2: compose のプロジェクト名 (省略すると worktree のディレクトリ名から作る)
+use_env() {
+	wt="$1"
+	# compose のプロジェクト名は [a-z0-9_-] のみ
+	project="${2:-$(basename "$wt" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_-]+/-/g; s/^-+//; s/-+$//')}"
+	state_dir="$cache_root/$project"
+	snapshots_dir="$state_dir/snapshots"
+	url="http://web.$project.orb.local:3000/"
+}
+
+if [ "$cmd" != "variant" ]; then
+	use_env "$(cd "$wt_arg" && git rev-parse --show-toplevel)"
+fi
 admin_user="admin"
 admin_pass="admin1234"
 setup_password="example_password_please_change_this_or_you_will_get_hacked"
@@ -66,23 +80,22 @@ psql_db() {
 	compose exec -T db psql -v ON_ERROR_STOP=1 -U "$db_user" "$db_name" "$@"
 }
 
-generate() {
-	mkdir -p "$state_dir"
-	local node_ver pnpm_ver
-	node_ver="$(tr -d '[:space:]' < "$wt/.node-version")"
-	pnpm_ver="$(sed -nE 's/.*"packageManager": *"pnpm@([^"]+)".*/\1/p' "$wt/package.json")"
-
+write_docker_env() {
 	cat > "$state_dir/docker.env" <<-EOF
 	POSTGRES_USER=$db_user
 	POSTGRES_PASSWORD=example-misskey-pass
 	POSTGRES_DB=$db_name
 	EOF
+}
 
+# $wt/.config/example.yml から $state_dir/default.yml を作る。$1: DB の接続先のホスト名
+write_default_yml() {
+	local db_host="$1"
 	# vite は ../../.config/default.yml を固定パスで読むため、生成した設定をそのパスに重ねてマウントする
 	# allowedPrivateNetworks: 本番モード (NODE_ENV=production) の Misskey は private IP への取得を遮断する。
 	# seed のリモートのアバター・絵文字・添付・インスタンスのアイコンは、この環境自身の orb.local の URL
 	# (OrbStack のコンテナの IP は 192.168.x.x / fd07:… の private IP) を proxy 経由で取るので、その範囲を許可する
-	awk -v url="$url" -v setup="$setup_password" '
+	awk -v url="$url" -v setup="$setup_password" -v db_host="$db_host" '
 		skip_list && /^#  - / { next }
 		{ skip_list = 0 }
 		/^[a-zA-Z]/ { section = $1 }
@@ -97,18 +110,36 @@ generate() {
 			skip_list = 1
 			next
 		}
-		section == "db:" && /^  host: / { print "  host: db"; next }
+		section == "db:" && /^  host: / { print "  host: " db_host; next }
 		section == "redis:" && /^  host: / { print "  host: redis"; next }
 		{ print }
 	' "$wt/.config/example.yml" > "$state_dir/default.yml"
+}
 
-	# ホストの node_modules は macOS 向けのネイティブモジュールを含むので、コンテナ側は volume に分ける
-	local nm_mounts="      - nm-root:/workspace/node_modules" nm_volumes="  nm-root:" pkg name
+# compose.yml の node_modules の volume の行を作る。nm_mounts と nm_volumes に入れる
+build_nm_entries() {
+	local pkg name
+	nm_mounts="      - nm-root:/workspace/node_modules"
+	nm_volumes="  nm-root:"
 	for pkg in "$wt"/packages/*/package.json; do
 		name="$(basename "$(dirname "$pkg")")"
 		nm_mounts+=$'\n'"      - nm-$name:/workspace/packages/$name/node_modules"
 		nm_volumes+=$'\n'"  nm-$name:"
 	done
+}
+
+generate() {
+	mkdir -p "$state_dir"
+	local node_ver pnpm_ver
+	node_ver="$(tr -d '[:space:]' < "$wt/.node-version")"
+	pnpm_ver="$(sed -nE 's/.*"packageManager": *"pnpm@([^"]+)".*/\1/p' "$wt/package.json")"
+
+	write_docker_env
+	write_default_yml db
+
+	# ホストの node_modules は macOS 向けのネイティブモジュールを含むので、コンテナ側は volume に分ける
+	local nm_mounts nm_volumes
+	build_nm_entries
 
 	# CI=true: modules ディレクトリを作り直すときに、TTY が無いと pnpm install が止まるのを避ける
 	local run_cmd="npm i -g pnpm@$pnpm_ver && pnpm config set store-dir /pnpm-store && CI=true pnpm install --frozen-lockfile"
@@ -332,6 +363,469 @@ do_seed() {
 	do_snapshot
 }
 
+# ---------------------------------------------------------------------------
+# variant: 統合待ちのブランチを、ベース環境 (mistems-main) の隣で個別のコンテナとして動かす
+#   ソースは「ベース環境の worktree の HEAD + ブランチ固有の差分」。Redis・files/・pnpm のストアはベース環境のものを使う
+#   backend の変更はベース環境の DB をそのまま使い、migration を追加するものは自分の DB (vdb) を持つ
+# ---------------------------------------------------------------------------
+
+classify_js="$script_dir/variant/classify.mjs"
+self="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+# 注意: pipefail なので、パイプの後ろで grep -q を使わない (grep が先に終わると前のコマンドが SIGPIPE で失敗扱いになる)
+# 起動の前に必要な空きメモリ (本番ビルド中の web は一時的に多く使う)
+variant_min_free_bytes=$((4 * 1024 * 1024 * 1024))
+
+variant_usage() {
+	cat >&2 <<-EOF
+	usage: $0 variant <subcommand>
+	  classify <branch>        種類 (frontend / backend / migration / other) を表示する
+	  prepare <branch> [base]  worktree を作り、ブランチ固有の差分を当てる。コンフリクトしたら終了コード 2
+	  up <branch> [base]       本番ビルドで起動し、応答するまで待つ
+	  down <branch> [-v]       止める。-v で DB (vdb)・node_modules の volume も消す
+	  status                   全 variant のブランチ・種類・URL・DB・応答を一覧する
+	  up-all <branch>...       prepare と up を 1 本ずつ順に行う
+	  down-all [-v]            全 variant を止める
+	<branch> は riin のブランチ名 (例: claude/renote-lock-feature-7J0NA)。base はベース環境の worktree (既定は mistems-main の worktree)
+	EOF
+}
+
+# mistems-main のブランチをチェックアウトしている worktree を表示する
+default_base_wt() {
+	local found
+	found="$(git -C "$script_dir" worktree list --porcelain | awk '
+		/^worktree / { path = substr($0, 10) }
+		$0 == "branch refs/heads/mistems-main" { print path; exit }
+	')"
+	if [ -z "$found" ]; then
+		echo "mistems-main をチェックアウトしている worktree が見つかりません。ベース環境の worktree を引数で指定してください" >&2
+		return 1
+	fi
+	echo "$found"
+}
+
+# 名前を決める。$1: ブランチ名  $2: ベース環境の worktree (省略可)
+variant_names() {
+	v_branch="$1"
+	if [ -n "${2:-}" ]; then
+		base_wt="$(cd "$2" && git rev-parse --show-toplevel)"
+	else
+		base_wt="$(default_base_wt)"
+	fi
+	use_env "$base_wt"
+	base_project="$project"
+	v_slug="$(node "$classify_js" --slug "$v_branch")"
+	v_wt="$(dirname "$base_wt")/variant-$v_slug"
+	v_local_branch="variant/$v_slug"
+	v_project="variant-$v_slug"
+}
+
+# 名前を決め、ブランチを取ってきて種類と起点を調べる
+variant_load() {
+	variant_names "$@"
+	if ! git -C "$base_wt" fetch -q riin "$v_branch"; then
+		echo "riin からブランチ $v_branch を取得できませんでした" >&2
+		exit 1
+	fi
+	local json
+	json="$(node "$classify_js" "$base_wt" "riin/$v_branch")"
+	v_category="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).category)' "$json")"
+	v_fork="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).forkPoint)' "$json")"
+}
+
+# variant のブランチにブランチ固有の差分のコミット (件名 "variant: <branch>") があるかどうか
+# コンフリクトを解消したあとに直しのコミットを重ねても当て済みと分かるよう、最新のコミットに限らず探す
+variant_applied() {
+	git -C "$v_wt" log --format=%s "origin/develop..HEAD" | grep -xF "variant: $v_branch" > /dev/null
+}
+
+variant_report_conflicts() {
+	local unmerged
+	unmerged="$(git -C "$v_wt" diff --name-only --diff-filter=U)"
+	if [ -n "$unmerged" ]; then
+		echo "コンフリクトしました。$v_wt で次のファイルを解消してください:" >&2
+		printf '%s\n' "$unmerged" | sed 's/^/  /' >&2
+		echo "autogen (locale.ts、misskey-js の autogen) は解消せずに生成し直してください。CHANGELOG.md はどちらを取っても構いません。" >&2
+	else
+		echo "$v_wt にコミットしていない変更があります。" >&2
+	fi
+	echo "解消したら git -C '$v_wt' add -A && git -C '$v_wt' commit -m 'variant: $v_branch' でコミットし、もう一度 '$0 variant prepare $v_branch' を実行してください。" >&2
+}
+
+# variant で動かすのは backend (種類 2) と migration (種類 3) だけ
+require_variant_category() {
+	case "$v_category" in
+		backend|migration) ;;
+		frontend)
+			echo "$v_branch は frontend だけの変更です。variant ではなく frontend-variants で確認してください" >&2
+			exit 1
+			;;
+		*)
+			echo "$v_branch は frontend・backend・migration のどれにも当たりません (種類: $v_category)。variant では動かしません" >&2
+			exit 1
+			;;
+	esac
+}
+
+variant_prepare() {
+	variant_load "$@"
+	require_variant_category
+
+	if [ ! -e "$v_wt" ]; then
+		if git -C "$base_wt" show-ref --verify -q "refs/heads/$v_local_branch"; then
+			git -C "$base_wt" worktree add -q "$v_wt" "$v_local_branch"
+		else
+			git -C "$base_wt" worktree add -q -b "$v_local_branch" "$v_wt" HEAD
+		fi
+		echo "worktree を作りました: $v_wt (ブランチ ${v_local_branch}、元: $(git -C "$v_wt" log -1 --format='%h %s'))"
+	fi
+	if [ "$(git -C "$v_wt" rev-parse --abbrev-ref HEAD 2>/dev/null || true)" != "$v_local_branch" ]; then
+		echo "$v_wt は $v_local_branch をチェックアウトしている worktree ではありません。何も変更せずに終了します。" >&2
+		exit 1
+	fi
+
+	if variant_applied; then
+		echo "当て済みです: $v_wt ($v_local_branch)"
+		return 0
+	fi
+	if [ -n "$(git -C "$v_wt" status --porcelain)" ]; then
+		# 前回の prepare のコンフリクトを解消している途中
+		variant_report_conflicts
+		exit 2
+	fi
+
+	echo "ブランチ固有の差分を当てています: $(git -C "$base_wt" log -1 --format='%h %s' "$v_fork") .. riin/$v_branch"
+	if git -C "$base_wt" diff --binary "$v_fork" "riin/$v_branch" | git -C "$v_wt" apply --3way --index; then
+		# 差分がすべてベース環境に入っているときも、当て済みの印としてコミットする
+		git -C "$v_wt" commit -q --allow-empty -m "variant: $v_branch" \
+			-m "起点: $v_fork"$'\n'"ブランチ: riin/$v_branch ($(git -C "$base_wt" rev-parse "riin/$v_branch"))"
+		echo "当ててコミットしました: $v_wt ($v_local_branch)"
+		return 0
+	fi
+	if [ -n "$(git -C "$v_wt" status --porcelain)" ]; then
+		variant_report_conflicts
+		exit 2
+	fi
+	echo "差分を当てられませんでした (コンフリクトではない理由で、何も変更していません)。上のエラーを確かめてください" >&2
+	exit 1
+}
+
+# 動いているコンテナのメモリ使用量の合計 (バイト) を表示する
+containers_mem_bytes() {
+	docker stats --no-stream --format '{{.MemUsage}}' | awk '
+		function tobytes(s,   n, u) {
+			n = s + 0; u = s; sub(/^[0-9.]+/, "", u)
+			if (u == "KiB") return n * 1024
+			if (u == "MiB") return n * 1048576
+			if (u == "GiB") return n * 1073741824
+			if (u == "TiB") return n * 1099511627776
+			if (u == "kB" || u == "KB") return n * 1e3
+			if (u == "MB") return n * 1e6
+			if (u == "GB") return n * 1e9
+			return n
+		}
+		{ split($0, a, " / "); sum += tobytes(a[1]) }
+		END { printf "%.0f\n", sum }
+	'
+}
+
+fmt_gb() {
+	awk -v b="$1" 'BEGIN { printf "%.1fGB", b / 1073741824 }'
+}
+
+# OrbStack の VM のメモリからコンテナの使用量の合計を引いた空きが足りなければ、内訳を表示して終了する
+# 他のコンテナを止めて空けることはしない
+require_free_memory() {
+	local total used free
+	total="$(docker info --format '{{.MemTotal}}')"
+	used="$(containers_mem_bytes)"
+	free=$((total - used))
+	if [ "$free" -lt "$variant_min_free_bytes" ]; then
+		echo "空きメモリが足りないので起動しません: 空き $(fmt_gb "$free") (VM $(fmt_gb "$total") - コンテナ $(fmt_gb "$used"))、必要 $(fmt_gb "$variant_min_free_bytes")" >&2
+		echo "コンテナごとの使用量:" >&2
+		docker stats --no-stream --format '{{.Name}}\t{{.MemUsage}}' | sed 's/^/  /' >&2
+		echo "どのコンテナも止めていません。不要な環境を止めてから、もう一度実行してください。" >&2
+		exit 1
+	fi
+	echo "空きメモリ: $(fmt_gb "$free") (VM $(fmt_gb "$total") - コンテナ $(fmt_gb "$used"))"
+}
+
+# pnpm install / build を同時に 2 つ実行しないよう、ほかの variant がまだ起動の途中なら終了する
+require_no_variant_starting() {
+	local name proj
+	while IFS=$'\t' read -r name proj; do
+		[ -n "$name" ] || continue
+		[ "$proj" = "$v_project" ] && continue
+		if ! docker logs "$name" 2>&1 | grep "Now listening" > /dev/null; then
+			echo "variant のコンテナ $name がまだ起動の途中です。応答するまで待ってから、もう一度実行してください" >&2
+			exit 1
+		fi
+	done < <(docker ps --filter label=orb-dev.variant.branch --format '{{.Names}}	{{.Label "com.docker.compose.project"}}')
+}
+
+# variant の compose.yml と default.yml を作る (use_env で variant の環境に切り替えてから呼ぶ)
+# $1: 種類 3 で初回に戻すベース環境の seed の dump (空なら戻さない)
+generate_variant() {
+	local seed_dump="$1"
+	mkdir -p "$state_dir"
+	local node_ver pnpm_ver db_host run_cmd nm_mounts nm_volumes
+	local vdb_service="" vdb_volume="" web_depends=""
+	node_ver="$(tr -d '[:space:]' < "$wt/.node-version")"
+	pnpm_ver="$(sed -nE 's/.*"packageManager": *"pnpm@([^"]+)".*/\1/p' "$wt/package.json")"
+	build_nm_entries
+
+	run_cmd="npm i -g pnpm@$pnpm_ver && pnpm config set store-dir /pnpm-store && CI=true pnpm install --frozen-lockfile && NODE_ENV=production pnpm build"
+	if [ "$v_category" = "migration" ]; then
+		db_host="vdb"
+		# 自分の DB にだけ、このブランチの migration を当てる
+		run_cmd+=" && pnpm migrate"
+		write_docker_env
+		local init_mounts=""
+		if [ -n "$seed_dump" ]; then
+			mkdir -p "$state_dir/vdb-init"
+			cat > "$state_dir/vdb-init/restore-seed.sh" <<-'EOF'
+			#!/bin/sh
+			# postgres のイメージは、volume が空のとき (初回) だけ docker-entrypoint-initdb.d を実行する
+			set -e
+			pg_restore --single-transaction --exit-on-error --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB" /orb-seed-dump/seed.dump
+			EOF
+			init_mounts=$'\n'"      - ./vdb-init:/docker-entrypoint-initdb.d:ro"$'\n'"      - $seed_dump:/orb-seed-dump/seed.dump:ro"
+		fi
+		vdb_service="  vdb:
+    image: postgres:18-alpine
+    env_file:
+      - ./docker.env
+    volumes:
+      - vdb-data:/var/lib/postgresql$init_mounts
+    healthcheck:
+      # 初回の restore の間は unix socket でしか待ち受けないので、TCP で確かめて restore が終わるのを待つ
+      test: \"pg_isready -h 127.0.0.1 -U \$\$POSTGRES_USER -d \$\$POSTGRES_DB\"
+      interval: 5s
+      start_period: 30m
+      start_interval: 5s
+      retries: 20"
+		vdb_volume="  vdb-data:"
+		web_depends="    depends_on:
+      vdb:
+        condition: service_healthy"
+	else
+		# ベース環境の DB をそのまま使う。ベース環境の DB を変えないよう migrate はしない
+		db_host="db"
+	fi
+	run_cmd+=" && NODE_ENV=production pnpm start"
+	write_default_yml "$db_host"
+
+	cat > "$state_dir/compose.yml" <<-EOF
+	services:
+	$vdb_service
+	  web:
+	    image: node:$node_ver-bookworm
+	    working_dir: /workspace
+	    command: bash -c "$run_cmd"
+	    environment:
+	      # キューのワーカーとデーモン (チャートの集計など) を起動しない
+	      MK_ONLY_SERVER: "1"
+	      MK_NO_DAEMONS: "1"
+	    labels:
+	      orb-dev.variant.branch: "$v_branch"
+	      orb-dev.variant.category: "$v_category"
+	      orb-dev.variant.base: "$base_project"
+	    # ベース環境の network に繋ぎ、redis (と種類 2 では db) はベース環境のものを使う
+	    networks:
+	      - default
+	      - base
+	$web_depends
+	    volumes:
+	      - $wt:/workspace
+	      - ./default.yml:/workspace/.config/default.yml:ro
+	      - $base_wt/files:/workspace/files
+	      - base-pnpm-store:/pnpm-store
+	$nm_mounts
+	networks:
+	  base:
+	    name: ${base_project}_default
+	    external: true
+	volumes:
+	  base-pnpm-store:
+	    name: ${base_project}_pnpm-store
+	    external: true
+	$vdb_volume
+	$nm_volumes
+	EOF
+	# 種類 2 では vdb の行と depends_on の行が空になるので、空行を消す
+	sed -i '' '/^$/d' "$state_dir/compose.yml"
+}
+
+# web コンテナが動いていて、ログに "Now listening" が出ているかどうか
+web_ready() {
+	[ -f "$state_dir/compose.yml" ] || return 1
+	compose ps --status running --services 2>/dev/null | grep -x web > /dev/null || return 1
+	compose logs web 2>/dev/null | grep "Now listening" > /dev/null
+}
+
+variant_up() {
+	variant_load "$@"
+	require_variant_category
+	if [ ! -d "$v_wt" ] || ! variant_applied; then
+		echo "$v_branch はまだ用意できていません。先に '$0 variant prepare $v_branch' を実行してください" >&2
+		exit 1
+	fi
+
+	use_env "$v_wt" "$v_project"
+	if web_ready; then
+		echo "既に起動しています: $url  (作り直すときは '$0 variant down $v_branch' してから up してください)"
+		return 0
+	fi
+
+	# ベース環境が動いていて、起動し終わっていることを確かめる
+	use_env "$base_wt"
+	require_running
+	require_own_project
+	if ! compose logs web 2>/dev/null | grep "Now listening" > /dev/null; then
+		echo "ベース環境 ($base_project) がまだ起動の途中です。応答するまで待ってから、もう一度実行してください" >&2
+		exit 1
+	fi
+	if ! docker volume inspect "${base_project}_pnpm-store" > /dev/null 2>&1; then
+		echo "ベース環境の pnpm のストア (${base_project}_pnpm-store) がありません" >&2
+		exit 1
+	fi
+	mkdir -p "$base_wt/files"
+
+	# 種類 3 は、自分の DB の volume がまだ無いとき (初回) だけ、ベース環境の seed のスナップショットを戻す
+	local seed_dump="" key
+	if [ "$v_category" = "migration" ] && ! docker volume inspect "${v_project}_vdb-data" > /dev/null 2>&1; then
+		key="$(snapshot_key)"
+		seed_dump="$snapshots_dir/$key/seed.dump"
+		if [ ! -f "$seed_dump" ]; then
+			echo "ベース環境の seed のスナップショットがありません: $seed_dump" >&2
+			echo "先に '$0 up $base_wt --prod --seed' でベース環境に seed を入れてください" >&2
+			exit 1
+		fi
+	fi
+
+	require_no_variant_starting
+	require_free_memory
+
+	use_env "$v_wt" "$v_project"
+	generate_variant "$seed_dump"
+	compose up -d
+	echo "起動を待っています (本番ビルドがあるので数分〜十数分かかります)..."
+	wait_ready
+	echo "起動しました: $url  (ブランチ: ${v_branch}、種類: $v_category)"
+}
+
+variant_down() {
+	local slug
+	slug="$(node "$classify_js" --slug "$1")"
+	use_env "" "variant-$slug"
+	if [ ! -f "$state_dir/compose.yml" ]; then
+		echo "variant の環境がありません: $project ($state_dir/compose.yml がありません)" >&2
+		exit 1
+	fi
+	compose down $remove_volumes
+}
+
+# variant の compose のプロジェクト名を 1 行ずつ表示する (コンテナのラベルと、生成した compose.yml から集める)
+variant_projects() {
+	{
+		docker ps -a --filter label=orb-dev.variant.branch --format '{{.Label "com.docker.compose.project"}}'
+		local f
+		for f in "$cache_root"/variant-*/compose.yml; do
+			[ -f "$f" ] && basename "$(dirname "$f")"
+		done
+	} | sort -u
+}
+
+variant_down_all() {
+	local p
+	while IFS= read -r p; do
+		[ -n "$p" ] || continue
+		echo "止めています: $p"
+		use_env "" "$p"
+		if [ -f "$state_dir/compose.yml" ]; then
+			compose down $remove_volumes
+		else
+			docker compose -p "$p" down $remove_volumes
+		fi
+	done < <(variant_projects)
+}
+
+variant_status() {
+	local rows proj branch category base state u db code resp
+	rows="$(docker ps -a --filter label=orb-dev.variant.branch \
+		--format '{{.Label "com.docker.compose.project"}}	{{.Label "orb-dev.variant.branch"}}	{{.Label "orb-dev.variant.category"}}	{{.Label "orb-dev.variant.base"}}	{{.State}}')"
+	if [ -z "$rows" ]; then
+		echo "variant のコンテナはありません"
+		return 0
+	fi
+	{
+		printf 'ブランチ\t種類\tURL\tDB\t状態\t応答\n'
+		while IFS=$'\t' read -r proj branch category base state; do
+			u="http://web.$proj.orb.local:3000/"
+			if [ "$category" = "migration" ]; then db="vdb"; else db="base ($base)"; fi
+			code="$(curl -s -m 5 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "${u}api/meta" || true)"
+			if [ "$code" = "200" ]; then resp="OK"; else resp="NG ($code)"; fi
+			printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$branch" "$category" "$u" "$db" "$state" "$resp"
+		done <<< "$rows"
+	} | column -t -s $'\t'
+}
+
+variant_up_all() {
+	local b rc
+	for b in "$@"; do
+		echo "=== $b"
+		rc=0
+		"$BASH" "$self" variant prepare "$b" || rc=$?
+		if [ "$rc" -eq 2 ]; then
+			echo "$b がコンフリクトしたので止めます。解消してコミットしてから、もう一度 up-all を実行してください" >&2
+			exit 2
+		elif [ "$rc" -ne 0 ]; then
+			echo "$b の prepare が失敗したので止めます" >&2
+			exit 1
+		fi
+		# 起動して応答するまで待ってから次へ進む (pnpm install / build を同時に 2 つ実行しない)
+		if ! "$BASH" "$self" variant up "$b"; then
+			echo "$b の起動が失敗したので止めます" >&2
+			exit 1
+		fi
+	done
+	variant_status
+}
+
+variant_main() {
+	local sub="${1:-}" args=() a
+	[ $# -gt 0 ] && shift
+	for a in "$@"; do
+		case "$a" in
+			-v|--volumes) remove_volumes="-v" ;;
+			-*) echo "不明なオプションです: $a" >&2; exit 1 ;;
+			*) args+=("$a") ;;
+		esac
+	done
+	set -- ${args[@]+"${args[@]}"}
+	if [ -n "$remove_volumes" ] && [ "$sub" != "down" ] && [ "$sub" != "down-all" ]; then
+		echo "-v は down と down-all でだけ使えます" >&2
+		exit 1
+	fi
+
+	case "$sub:$#" in
+		classify:1)
+			variant_load "$1"
+			echo "$v_category"
+			echo "起点: $(git -C "$base_wt" log -1 --format='%h %s' "$v_fork")  名前: $v_slug" >&2
+			git -C "$base_wt" diff --no-renames --name-only --diff-filter=A "origin/develop...riin/$v_branch" -- packages/backend/migration \
+				| sed 's/^/追加される migration: /' >&2
+			;;
+		prepare:1|prepare:2) variant_prepare "$@" ;;
+		up:1|up:2) variant_up "$@" ;;
+		down:1) variant_down "$1" ;;
+		status:0) variant_status ;;
+		down-all:0) variant_down_all ;;
+		up-all:0) variant_usage; exit 1 ;;
+		up-all:*) variant_up_all "$@" ;;
+		*) variant_usage; exit 1 ;;
+	esac
+}
+
 case "$cmd" in
 	up)
 		generate
@@ -373,8 +867,11 @@ case "$cmd" in
 		require_running
 		do_restore
 		;;
+	variant)
+		variant_main "$@"
+		;;
 	*)
-		sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+		sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
 		exit 1
 		;;
 esac
