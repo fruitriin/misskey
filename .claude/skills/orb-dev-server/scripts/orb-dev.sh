@@ -739,6 +739,33 @@ generate_variant() {
 	sed -i '' '/^$/d' "$state_dir/compose.yml"
 }
 
+# variant の worktree の migration のうち最新のもの (TypeORM と同じく、class 名の末尾 13 桁の時刻で比べる) の名前を表示する
+newest_migration_in_wt() {
+	grep -hoE '^export class [A-Za-z0-9_]+' "$v_wt"/packages/backend/migration/*.js \
+		| sed -E 's/^export class //' \
+		| awk 'match($0, /[0-9]{13}$/) { print substr($0, RSTART), $0 }' \
+		| sort -n | tail -1 | cut -d' ' -f2
+}
+
+# 種類 2 は migration を追加せず、ベース環境の DB をそのまま使う。variant の worktree の最新の migration が
+# ベース DB の最新と違えば (main-統合.sh のあとにベース環境を作り直していないなど)、起動しても列や表が無いエラーで
+# 画面が壊れる。応答はするので起動は成功して見える。違えば案内を表示して終了する (ベース環境は作り直さない)
+# use_env でベース環境に切り替えてから呼ぶ
+require_base_db_matches_migrations() {
+	local wt_newest db_newest
+	wt_newest="$(newest_migration_in_wt)"
+	db_newest="$(psql_db -Atc 'SELECT name FROM migrations ORDER BY timestamp DESC LIMIT 1')"
+	[ "$wt_newest" = "$db_newest" ] && return 0
+	echo "ベース環境 ($base_project) の DB の migration が、$v_wt と合いません。" >&2
+	echo "  $v_wt の最新の migration: ${wt_newest:-(なし)}" >&2
+	echo "  ベース DB に当たっている最新の migration: ${db_newest:-(なし)}" >&2
+	echo "種類 2 の variant はベース DB をそのまま使うので、このままでは動きません。どの環境も変更していません。" >&2
+	echo "main-統合.sh で mistems-main を作り直したあとなら、ベース環境と variant を作り直してください (variant-prep スキルの「main-統合.sh のあとの再実行」の節)。" >&2
+	echo "variant の worktree だけが古いなら、作り直すと合います:" >&2
+	print_rebuild_steps
+	exit 1
+}
+
 # variant の web コンテナが動いていて、今回起動してからのログに "Now listening" が出ているかどうか
 web_ready() {
 	[ -f "$state_dir/compose.yml" ] || return 1
@@ -756,6 +783,13 @@ variant_up() {
 	require_no_slug_collision
 	warn_if_old_base
 	warn_if_branch_moved
+
+	# 種類 2 は、起動済みかどうかに関わらず、ベース DB の migration と合っているかを確かめる
+	if [ "$v_category" = "backend" ]; then
+		use_env "$base_wt"
+		require_running
+		require_base_db_matches_migrations
+	fi
 
 	use_env "$v_wt" "$v_project"
 	if web_ready; then
