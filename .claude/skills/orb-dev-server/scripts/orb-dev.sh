@@ -38,6 +38,14 @@ for arg in "$@"; do
 	esac
 done
 
+# スナップショットの名前はファイル名に使うので、パスを含むものや隠しファイルになるものは受け付けない
+case "$snap_name" in
+	''|.*|*/*)
+		echo "スナップショットの名前が不正です: '$snap_name' (空、. で始まる名前、/ を含む名前は使えません)" >&2
+		exit 1
+		;;
+esac
+
 wt="$(cd "$wt_arg" && git rev-parse --show-toplevel)"
 # compose のプロジェクト名は [a-z0-9_-] のみ
 project="$(basename "$wt" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_-]+/-/g; s/^-+//; s/-+$//')"
@@ -174,6 +182,33 @@ create_admin() {
 		| grep -q '"token"' && echo "管理者アカウントを作成しました: $admin_user / $admin_pass" || true
 }
 
+# seed / snapshot / restore の前に、この worktree の環境が起動していることを確かめる
+require_running() {
+	local running
+	if [ ! -f "$state_dir/compose.yml" ]; then
+		echo "この worktree の環境がありません。先に '$0 up $wt' で起動してください" >&2
+		exit 1
+	fi
+	running="$(compose ps --status running --services 2>/dev/null || true)"
+	local svc
+	for svc in db redis web; do
+		if ! printf '%s\n' "$running" | grep -qx "$svc"; then
+			echo "環境が起動していません ($svc が動いていません)。先に '$0 up $wt' で起動してください" >&2
+			exit 1
+		fi
+	done
+}
+
+# 同じ名前の worktree が別の場所にあると compose のプロジェクトが共有されてしまうので、
+# 壊す操作の前に、compose.yml がこの worktree をマウントしていることを確かめる
+require_own_project() {
+	if ! grep -qxF "      - $wt:/workspace" "$state_dir/compose.yml"; then
+		echo "プロジェクト $project の環境は別の worktree のものです ($state_dir/compose.yml が $wt をマウントしていません)。" >&2
+		echo "同じディレクトリ名の worktree が複数あるときは、片方の名前を変えてください。何も変更せずに終了します。" >&2
+		exit 1
+	fi
+}
+
 # スナップショットのキー (DB に適用済みの最新 migration 名) を表示する
 snapshot_key() {
 	local key
@@ -201,6 +236,18 @@ do_snapshot() {
 	echo "保存しました: $dir/$snap_name.dump, $dir/$snap_name.files.tar"
 }
 
+# DB と files/ をスナップショットの内容に置き換える。失敗したら 1 を返す
+# (呼び出し側の if の中では set -e が効かないので、1 つずつ確かめる)
+apply_snapshot() {
+	local dir="$1"
+	psql_db -q -c 'SET client_min_messages = warning; DROP SCHEMA public CASCADE; CREATE SCHEMA public;' || return 1
+	compose exec -T db pg_restore --single-transaction --exit-on-error --no-owner -U "$db_user" -d "$db_name" \
+		< "$dir/$snap_name.dump" || return 1
+	rm -rf "$wt/files" || return 1
+	mkdir -p "$wt/files" || return 1
+	tar -C "$wt/files" -xf "$dir/$snap_name.files.tar" || return 1
+}
+
 do_restore() {
 	local key dir since
 	key="$(snapshot_key)"
@@ -217,13 +264,27 @@ do_restore() {
 		return 1
 	fi
 
+	require_own_project
+	# 環境に手を付ける前に、スナップショットが最後まで読めることを確かめる。
+	# pg_restore -f /dev/null は DB に触らず dump 全体 (データを含む) を読む
+	echo "スナップショット「${snap_name}」を確かめています..."
+	if ! compose exec -T db pg_restore -f /dev/null < "$dir/$snap_name.dump"; then
+		echo "dump が壊れています: $dir/$snap_name.dump 。環境には何も変更せずに終了します。" >&2
+		return 1
+	fi
+	if ! tar -tf "$dir/$snap_name.files.tar" > /dev/null; then
+		echo "files の tar が壊れています: $dir/$snap_name.files.tar 。環境には何も変更せずに終了します。" >&2
+		return 1
+	fi
+
 	echo "スナップショット「${snap_name}」に戻します (キー: $key)"
 	compose stop web
-	psql_db -q -c 'SET client_min_messages = warning; DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
-	compose exec -T db pg_restore --exit-on-error --no-owner -U "$db_user" -d "$db_name" < "$dir/$snap_name.dump"
-	rm -rf "$wt/files"
-	mkdir -p "$wt/files"
-	tar -C "$wt/files" -xf "$dir/$snap_name.files.tar"
+	if ! apply_snapshot "$dir"; then
+		echo "戻している途中で失敗しました。DB と files/ は戻し切れていない可能性があり、web は止まったままです。" >&2
+		echo "戻し直すには、'$0 up $wt' で起動し直してから (空の DB には migrate がかかる) '$0 restore $wt $snap_name' を実行してください。" >&2
+		echo "seed のスナップショットなら '$0 up $wt --seed' だけで戻ります。それでも戻らないときは '$0 down $wt -v' で環境を消してから '$0 up $wt --seed' で作り直してください。" >&2
+		exit 1
+	fi
 	# タイムラインやユーザーなどのキャッシュが戻す前の DB を指したままにならないよう、Redis を空にする
 	compose exec -T redis redis-cli FLUSHALL > /dev/null
 	since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -281,12 +342,15 @@ case "$cmd" in
 		echo "URL: $url"
 		;;
 	seed)
+		require_running
 		do_seed
 		;;
 	snapshot)
+		require_running
 		do_snapshot
 		;;
 	restore)
+		require_running
 		do_restore
 		;;
 	*)
