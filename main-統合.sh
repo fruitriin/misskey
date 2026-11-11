@@ -317,8 +317,12 @@ git commit -a -m "blueskyの投稿埋め込み表示に対応"
 # https://github.com/misskey-dev/misskey/pull/17758
 # NOTE: custom-emojis.ts で「絵文字検索ひらカナ大統一」とコンフリクトする。
 #       解消方針: PR の新 fetchCustomEmojis を採用し、ひらカナ正規化は setCustomEmojis 内に移設 (rerere 学習済)
-squash_merge party/17758-emoji-cache
-git commit -a -m "カスタム絵文字の更新をサーバーに確認してクライアントキャッシュを更新するように"
+# NOTE: perf/emojis-cache は party/17758-emoji-cache の上に積んだブランチで、17758 の変更をすべて含む (2026-11-11)。
+#       /api/emojis の一覧を emojis/stats と同じ鍵でキャッシュする (gamelore で 1 回約 7,000 行・累計 10 億行超)。
+#       2 行に分けて squash すると 17758 の変更が「両側の変更」として衝突するので、積んだブランチ 1 本で取り込む。
+#       party/17758-emoji-cache を更新したら、perf/emojis-cache をその上に rebase し直してから統合すること。
+squash_merge riin/perf/emojis-cache
+git commit -a -m "カスタム絵文字の更新をサーバーに確認してクライアントキャッシュを更新するように (/api/emojis の一覧のキャッシュを含む)"
 
 # ---- 仮氏パーティ ここまで ----
 
@@ -384,7 +388,7 @@ echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を�
   mode: as-is' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 117
+set MISVER 118
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -498,6 +502,7 @@ exit
 [作業中] claude/review-performance-widget-keMRa — DB パフォーマンスウィジェット
 [統合済み] perf/server-stats-no-spawn — サーバーメトリクス収集で子プロセスを起動しない (/proc 直読み・閲覧者がいないときは停止) [2026-11-08 main-統合.sh に追加、次回の統合から入る]
 [統合済み] perf/chat-history-limit — チャットの履歴の取得で getOne() に limit(1) を付け、全件を読まないようにする [2026-11-11 main-統合.sh に追加、次回の統合から入る]
+[統合済み] perf/emojis-cache — /api/emojis の一覧を emojis/stats と同じ鍵でメモリにキャッシュ (party/17758-emoji-cache の上に積み、17758 の行を置き換え) [2026-11-11 main-統合.sh に追加、次回の統合から入る]
 
 ◇ 通知
 [統合済み][上流レビュー中] fix/notification-unread-count — 通知残カウントバグ + 100 件打ち切り [上流#17530]
@@ -629,6 +634,9 @@ riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Key�
 ----------------------------------------------------------------
 
 ■ CHANGELOG
+CHANGELOG 118
+- カスタム絵文字の一覧の取得をキャッシュし、絵文字が変わったときだけデータベースから読むように (サーバーの負荷を下げた)
+
 CHANGELOG 117
 - タイムラインをもっと見れなくなるバグを修正
 
