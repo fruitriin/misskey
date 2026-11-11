@@ -107,16 +107,22 @@ MISTEMS の README (mistems-readme ブランチ、`mistems-readme` スキルで�
 6. **secrets / 認証情報をリポジトリにコミットしない** (`.config/*.yml` の本番値、`.env` ファイル、API token、private key 等)
 7. **misskey-dev/misskey へは書き込まない**
    - misskey-dev の Issue・PR・コードは参考にするだけにとどめる
-   - misskey-dev へのコメント、Issue の起票、PR の作成、リアクションはしない。コミットメッセージにも misskey-dev の PR / Issue 番号を書かない (参照通知が飛ぶため。参照先は `main-統合.sh` のコメントに URL で残す)
+   - misskey-dev へのコメント、Issue の起票、PR の作成、リアクションはしない
    - PR を作るときは `riin` または `systems` のリポジトリの中で作る (「PR の使い分け」)
+
+8. **コミットメッセージと PR の本文に、他のリポジトリの PR / Issue への参照を書かない**
+   - 対象は misskey-dev に限らず、MisskeyIO など他のフォークも含む。`owner/repo#123`、`#123`、PR・Issue の URL のどれも書かない
+   - GitHub は参照を見つけると、参照先の PR に「referenced this」のイベントを残す。MISTEMS は rebase と squash merge のたびにコミットを作り直すので、統合のたびに先方へ通知が飛ぶ
+   - 出典は `main-統合.sh` のコメントに URL で残す。ファイルの中身は参照として扱われない
+   - PR の本文で出典に触れたいときは、「MisskeyIO/misskey の PR 598」のように、リンクにならない書き方にする
 
 ### スキル呼び出し
 
 上流スキルの実行・事前知識・memory の内容に関わらず免除されない。
 
-8. **`working-on-backend` スキルを参照せずに `packages/backend/` 配下のファイルを編集・追加しない**
-9. **`working-on-frontend` スキルを参照せずに `packages/frontend/` 配下のファイルを編集・追加しない**
-10. **`shipping-misskey-change` スキルを参照せずに commit / PR 作成 / 作業をユーザーに返さない**
+9. **`working-on-backend` スキルを参照せずに `packages/backend/` 配下のファイルを編集・追加しない**
+10. **`working-on-frontend` スキルを参照せずに `packages/frontend/` 配下のファイルを編集・追加しない**
+11. **`shipping-misskey-change` スキルを参照せずに commit / PR 作成 / 作業をユーザーに返さない**
 
 ---
 

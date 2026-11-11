@@ -17,7 +17,7 @@ description: MISTEMS に統合した機能ブランチを、mistems/mistems の 
   - 画面が変わるなら、スクリーンショットか GIF を 1〜3 枚
   - 画面で伝わらないことだけを 1〜3 行 (何ができるようになるか、なぜ欲しいか)
 - 本文の最後の行は `🤖 Generated with [Claude Code](https://claude.com/claude-code)` とする
-- misskey-dev の PR / Issue 番号は書かない。riin のレビュー用 PR へのリンクも書かない
+- 他のリポジトリ (misskey-dev や MisskeyIO などのフォーク) の PR / Issue 番号や URL は書かない (CLAUDE.md の禁止事項 8)。riin のレビュー用 PR へのリンクも書かない
 - draft にしない。マージもしない
 
 ## 手順

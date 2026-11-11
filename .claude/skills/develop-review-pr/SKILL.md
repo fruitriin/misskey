@@ -11,7 +11,7 @@ riin の PR はレビューのための作業場で、やり取りや試行錯�
 
 ## 守ること
 
-- origin (misskey-dev) へは push も PR も作らない。コミットメッセージや PR の本文に misskey-dev の PR / Issue 番号を書かない
+- origin (misskey-dev) へは push も PR も作らない。コミットメッセージや PR の本文に、他のリポジトリ (misskey-dev や MisskeyIO などのフォーク) の PR / Issue 番号や URL を書かない (CLAUDE.md の禁止事項 8)
 - riin の自分のブランチへの force push は許可不要。ただし `--force-with-lease=<branch>:<push 前の SHA>` を使い、push 前にバックアップの ref を作る
 - 既存の PR は、ユーザーの指示なしに閉じたり base を変えたりしない
 - 他の開発環境や variant のコンテナを止めない。OrbStack の環境は、自分で作ったものだけを片付ける
