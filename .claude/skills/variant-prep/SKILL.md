@@ -148,7 +148,7 @@ orb-dev.sh variant status
 | --- | --- |
 | ブランチ | riin のブランチ名 |
 | 種類 | frontend / backend / migration / other |
-| URL | backend・migration は `http://web.variant-<slug>.orb.local:3000/`。frontend は「frontend-variants.yml に追記」と書く |
+| URL | backend・migration は `http://variant-<slug>.localhost:3080/`。frontend は「frontend-variants.yml に追記」と書く |
 | DB | `base` (ベース環境の DB を共有) / `vdb` (自分専用の DB) / `-` (frontend) |
 
 起動できなかったブランチは、表の下に理由 (コンフリクトの未解消、メモリ不足など) を書く。

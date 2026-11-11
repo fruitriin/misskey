@@ -6,7 +6,7 @@ description: Use whenever starting, stopping, or checking a Misskey dev server (
 # orb-dev-server
 
 worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立てる。
-ホストにポートを公開せず、`http://web.<project>.orb.local:3000/` でアクセスする (`--lan` のときだけ、LAN 内の端末向けにポートを公開する)。
+DB・Redis・Misskey のポートはホストに公開しない。開発モードは `http://web.<project>.orb.local:3000/`、本番モード (`--prod`) と variant は `http://<project>.localhost:3080/` で開く (下の「*.localhost の共用プロキシ」を参照)。`--lan` のときだけ、LAN 内の端末向けにポートを公開する。
 
 ## コマンド
 
@@ -29,6 +29,17 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 - 初回の `up` は依存のインストールで数分かかる。`run_in_background` で実行して完了通知を待つとよい
 - 管理者アカウントは `admin` / `admin1234`。ユーザーが 1 人もいないときだけ作る
 - 動作確認は Playwright MCP で上記 URL を開く
+
+## *.localhost の共用プロキシ
+
+本番モードの環境と variant は、Misskey の `url` を `http://<project>.localhost:3080/` にする。
+
+- ブラウザは `*.localhost` を 127.0.0.1 に向ける。ホストの `127.0.0.1:3080` に 1 つだけ置いた Caddy (compose のプロジェクト `orb-dev-proxy`、設定は `~/.cache/misskey-orb-dev/orb-dev-proxy/`) が、ホスト名で `web.<project>.orb.local:3000` へ振り分ける。ホストに公開するポートはこの 1 つだけなので、環境がいくつあっても取り合わない
+- Misskey はコンテナの中で今までどおり 3000 番で待ち受ける。orb.local の URL (seed のスナップショットに入っている画像の URL など) もそのまま開ける
+- Misskey が自分の url を取りに行くとき (画像のプロキシなど) のために、web コンテナでは `<project>.localhost` を `host-gateway` に向け、同じプロキシを通して自分に戻す
+- ポートは `ORB_DEV_LOCALHOST_PORT` で変えられる。プロキシは `up --prod` と `variant up` で自動で起動し、設定が変わっていれば作り直す。止めるときは `docker compose -p orb-dev-proxy -f ~/.cache/misskey-orb-dev/orb-dev-proxy/compose.yml down`
+- 開発モードは vite の HMR が url のホスト名を使うので、orb.local のままにする。プロジェクト名に `_` がある環境も、ホスト名にできないので orb.local のままにする
+- ログイン状態や設定はブラウザの中で URL (オリジン) ごとに分かれる。orb.local で開いていた環境を `*.localhost` に移すと、ログインし直しになる
 
 ## 仕組み
 
@@ -114,7 +125,7 @@ worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立�
 `<branch>` は riin のブランチ名 (例: `claude/renote-lock-feature-7J0NA`) である。
 
 - 種類は origin/develop との差分で決める。migration を追加するものは `vdb` (自分専用の DB)、backend を変えるものはベース環境の DB を使う。frontend だけのものは `prepare` / `up` を断る (frontend-variants.yml で確認する)
-- variant の worktree は `<ベースの親>/variant-<slug>`、ブランチは `variant/<slug>` (ローカルのみ)、compose のプロジェクトは `variant-<slug>`、URL は `http://web.variant-<slug>.orb.local:3000/` である。slug はブランチ名の最後の `/` 以降を小文字にし、`[a-z0-9-]` 以外を `-` にしたものである
+- variant の worktree は `<ベースの親>/variant-<slug>`、ブランチは `variant/<slug>` (ローカルのみ)、compose のプロジェクトは `variant-<slug>`、URL は `http://variant-<slug>.localhost:3080/` である (`http://web.variant-<slug>.orb.local:3000/` でも開ける)。slug はブランチ名の最後の `/` 以降を小文字にし、`[a-z0-9-]` 以外を `-` にしたものである
 - `prepare` は、起点 (件名が `Version updated to:` の最新のコミット、無ければ merge-base) からブランチ先端までの差分を、ベースの HEAD に 3-way で当ててコミットする。コンフリクトの解消のコミットは、rerere の記録が `main-統合.sh` に影響しないよう `git -c rerere.enabled=false commit` で行う
 - variant のコンテナは `MK_ONLY_SERVER=1` と `MK_NO_DAEMONS=1` で起動する。キューのワーカーとデーモンが動かないので、積まれたジョブ (配送・通知の後処理など) は処理されず、定期ジョブも動かない。配送や通知の後処理を伴う動作は確認できない
 - Redis はベース環境のものを共有するが、キーの接頭辞は URL のホスト名から決まる (`packages/backend/src/config.ts` の `redis.prefix` の既定値) ので variant ごとに分かれる。接頭辞を揃えると、variant のコードがベース環境の定期ジョブを書き換えたり消したりするため、揃えてはならない

@@ -7,7 +7,8 @@
 #             --lan を付けると、LAN 内の端末 (スマホの実機など) から http://<Mac の LAN の IP アドレス>:<ポート> で開けるようにする。
 #             ポートは 3000 から順にホストで空いているものを使う。--lan なしで up し直すと orb.local に戻る
 #             --lan-mdns は IP アドレスの代わりに <Mac のホスト名>.local を使う (Android の Chrome は .local を引けない)
-#             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する
+#             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する。
+#             本番モードと variant は http://<プロジェクト名>.localhost:3080/ で開く (下の「*.localhost の共用プロキシ」を参照)
 #             --seed を付けると、起動後にキーの合うスナップショットがあれば restore、なければ seed を実行する
 #   down      停止する。-v を付けると DB・node_modules の volume も消す
 #   logs      web コンテナのログを追う
@@ -59,6 +60,20 @@ esac
 
 cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/misskey-orb-dev"
 
+# *.localhost の共用プロキシ
+# 本番モードの環境と variant は、Misskey の url を http://<プロジェクト名>.localhost:<localhost_port>/ にする。
+# ブラウザは *.localhost を 127.0.0.1 に向けるので、ホストの 127.0.0.1:<localhost_port> に 1 つだけ置いた Caddy が、
+# ホスト名で web.<プロジェクト名>.orb.local:3000 へ振り分ける。ホストに公開するポートはこの 1 つだけで、
+# 環境がいくつあっても取り合わない。Misskey はコンテナの中で今までどおり 3000 番で待ち受けるので、
+# orb.local の URL (seed のスナップショットに入っている画像の URL など) もそのまま使える。
+# Misskey が自分の url を取りに行くとき (seed の画像のプロキシなど) のために、コンテナの中では
+# <プロジェクト名>.localhost をホスト (host-gateway) に向け、同じプロキシを通して自分に戻す。
+# URL のホスト名は、ブラウザがローカルの開発用として扱う *.localhost にする。
+# 開発モード (pnpm dev) は vite の HMR が url のホスト名を使うので、今までどおり orb.local のままにする
+localhost_port="${ORB_DEV_LOCALHOST_PORT:-3080}"
+proxy_project="orb-dev-proxy"
+proxy_dir="$cache_root/$proxy_project"
+
 # 操作する環境を切り替える。compose / psql_db / wait_ready などはここで決めた変数を使う
 # $1: worktree のパス  $2: compose のプロジェクト名 (省略すると worktree のディレクトリ名から作る)
 use_env() {
@@ -76,7 +91,77 @@ use_env() {
 	if [ -f "$state_dir/lan" ]; then
 		read -r lan_host listen_port < "$state_dir/lan"
 		url="http://$lan_host:$listen_port/"
+	elif [ -f "$state_dir/localhost" ]; then
+		url="http://$project.localhost:$localhost_port/"
 	fi
+}
+
+# ホストの 127.0.0.1:<localhost_port> に、*.localhost を各環境へ振り分ける Caddy を起動する。
+# 設定が前回と同じで起動済みなら何もしない。設定が変わっていれば作り直す
+ensure_proxy() {
+	local caddyfile compose_yml changed=""
+	# Host が <名前>.localhost のリクエストを web.<名前>.orb.local へ送る。Host ヘッダーはそのまま渡すので、
+	# Misskey からは url どおりのホストに見える (WebSocket も Caddy がそのまま中継する)
+	caddyfile="$(cat <<-EOF
+	{
+		auto_https off
+		admin off
+	}
+	http://:$localhost_port {
+		reverse_proxy web.{http.request.host.labels.1}.orb.local:3000
+	}
+	EOF
+	)"
+	compose_yml="$(cat <<-EOF
+	services:
+	  proxy:
+	    image: caddy:2-alpine
+	    container_name: $proxy_project
+	    restart: unless-stopped
+	    ports:
+	      - "127.0.0.1:$localhost_port:$localhost_port"
+	    volumes:
+	      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+	EOF
+	)"
+	mkdir -p "$proxy_dir"
+	if [ "$(cat "$proxy_dir/Caddyfile" 2>/dev/null)" != "$caddyfile" ] || [ "$(cat "$proxy_dir/compose.yml" 2>/dev/null)" != "$compose_yml" ]; then
+		changed=1
+		printf '%s\n' "$caddyfile" > "$proxy_dir/Caddyfile"
+		printf '%s\n' "$compose_yml" > "$proxy_dir/compose.yml"
+	fi
+	if [ -z "$changed" ] && [ "$(docker inspect -f '{{.State.Running}}' "$proxy_project" 2>/dev/null)" = "true" ]; then
+		return 0
+	fi
+	# 自分のプロキシ以外がポートを使っているなら止める
+	if ! docker inspect "$proxy_project" >/dev/null 2>&1 && lsof -nP -iTCP:"$localhost_port" -sTCP:LISTEN >/dev/null 2>&1; then
+		echo "ホストの $localhost_port 番を別のプロセスが使っているので、*.localhost のプロキシを起動できません:" >&2
+		lsof -nP -iTCP:"$localhost_port" -sTCP:LISTEN >&2
+		echo "ORB_DEV_LOCALHOST_PORT で別の番号を指定してください (既に起動した環境は、その番号で up し直す必要があります)" >&2
+		exit 1
+	fi
+	docker compose -p "$proxy_project" -f "$proxy_dir/compose.yml" up -d --force-recreate >&2
+}
+
+# この環境の url を *.localhost にする。プロジェクト名に _ があるとホスト名にできないので、orb.local のままにする
+use_localhost_url() {
+	case "$project" in
+		*_*)
+			rm -f "$state_dir/localhost"
+			echo "注意: プロジェクト名 $project に _ があるので、*.localhost ではなく orb.local の URL を使います" >&2
+			return 0
+			;;
+	esac
+	ensure_proxy
+	mkdir -p "$state_dir"
+	touch "$state_dir/localhost"
+	url="http://$project.localhost:$localhost_port/"
+}
+
+# *.localhost の URL を使う環境の web に足す extra_hosts の行 (use_localhost_url の説明を参照)
+localhost_extra_hosts() {
+	[ -f "$state_dir/localhost" ] || return 0
+	printf '    extra_hosts:\n      - "%s.localhost:host-gateway"\n' "$project"
 }
 
 if [ "$cmd" != "variant" ]; then
@@ -158,8 +243,15 @@ configure_lan() {
 		url="http://web.$project.orb.local:3000/"
 		listen_port=3000
 		lan_host=""
+		# 本番モードは *.localhost で開く。開発モードは vite の HMR のため orb.local のまま
+		if [ -n "$prod" ]; then
+			use_localhost_url
+		else
+			rm -f "$state_dir/localhost"
+		fi
 		return 0
 	fi
+	rm -f "$state_dir/localhost"
 	if [ -n "$lan_mdns" ]; then
 		lan_host="$(scutil --get LocalHostName).local"
 	else
@@ -250,6 +342,9 @@ generate() {
 		fi
 	fi
 
+	local localhost_entries
+	localhost_entries="$(localhost_extra_hosts)"
+
 	cat > "$state_dir/compose.yml" <<-EOF
 	services:
 	  redis:
@@ -279,6 +374,7 @@ generate() {
 	      redis:
 	        condition: service_healthy
 	$lan_entries
+	$localhost_entries
 	    volumes:
 	      - $wt:/workspace
 	      - ./default.yml:/workspace/.config/default.yml:ro
@@ -795,6 +891,8 @@ generate_variant() {
 	fi
 	run_cmd+=" && NODE_ENV=production pnpm start"
 	write_default_yml "$db_host"
+	local localhost_entries
+	localhost_entries="$(localhost_extra_hosts)"
 
 	cat > "$state_dir/compose.yml" <<-EOF
 	services:
@@ -818,6 +916,7 @@ generate_variant() {
 	      - default
 	      - base
 	$web_depends
+	$localhost_entries
 	    volumes:
 	      - $wt:/workspace
 	      - ./default.yml:/workspace/.config/default.yml:ro
@@ -927,6 +1026,7 @@ variant_up() {
 	require_free_memory
 
 	use_env "$v_wt" "$v_project"
+	use_localhost_url
 	generate_variant "$seed_dump"
 	if [ "$v_category" = "migration" ]; then
 		start_vdb
@@ -1015,7 +1115,11 @@ variant_status() {
 	{
 		printf 'ブランチ\t種類\tURL\tDB\t状態\t応答\n'
 		while IFS=$'\t' read -r proj branch category base state; do
-			u="http://web.$proj.orb.local:3000/"
+			if [ -f "$cache_root/$proj/localhost" ]; then
+				u="http://$proj.localhost:$localhost_port/"
+			else
+				u="http://web.$proj.orb.local:3000/"
+			fi
 			if [ "$category" = "migration" ]; then db="vdb"; else db="base ($base)"; fi
 			code="$(curl -s -m 5 -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "${u}api/meta" || true)"
 			if [ "$code" = "200" ]; then resp="OK"; else resp="NG ($code)"; fi
