@@ -384,7 +384,7 @@ echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を�
   mode: as-is' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 116
+set MISVER 117
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -629,8 +629,10 @@ riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Key�
 ----------------------------------------------------------------
 
 ■ CHANGELOG
+CHANGELOG 117
+- タイムラインをもっと見れなくなるバグを修正
 
-CHANGELOG 116 (次回の統合)
+CHANGELOG 116
 - お知らせをグループに分けてタブで表示できるように (グループごとの未読バッジ・非通知・表示順の並べ替え)
 - 画像メニューに「リンクをコピー」と「絵文字として確認」を追加
 - サーバーメトリクスの収集で子プロセスを起動しないようにし、サーバーの負荷を下げた
