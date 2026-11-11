@@ -1,11 +1,13 @@
 ---
 name: develop-review-pr
-description: 機能ブランチを最新の origin/develop に載せ直して riin に push し、riin の develop を origin/develop にそろえたうえで、riin の中に develop 向けの人間レビュー用 PR を作る。mistems-main から派生した古いブランチも、固有の変更だけを develop に載せる。"/develop-review-pr"、"develop 向けの PR を作って"、"人間レビュー用の PR"、"riin/develop と PR"、"develop を pull して PR" 等の発話で起動する。
+description: 機能ブランチを最新の origin/develop に載せ直して riin に push し、riin と systems の develop を origin/develop にそろえたうえで、riin の中に develop 向けの人間レビュー用 PR を作る。mistems-main から派生した古いブランチも、固有の変更だけを develop に載せる。"/develop-review-pr"、"develop 向けの PR を作って"、"人間レビュー用の PR"、"riin/develop と PR"、"develop を pull して PR" 等の発話で起動する。
 ---
 
 # develop-review-pr
 
 機能ブランチを、人がレビューできる形の PR にするスキル。PR は riin (fruitriin/misskey) の中で `develop` ← `<機能ブランチ>` として作る。差分がそのブランチ固有の変更だけになるよう、ブランチを最新の `origin/develop` から作り直す。
+
+riin の PR はレビューのための作業場で、やり取りや試行錯誤をここに残す。統合に入れたあとに見せる完成版は、mistems/mistems のショーケース PR である (CLAUDE.md の「PR の使い分け」)。ショーケース PR は `squash-prep` スキルで作る。このスキルでは作らない。
 
 ## 守ること
 
@@ -17,15 +19,19 @@ description: 機能ブランチを最新の origin/develop に載せ直して ri
 
 ## 手順
 
-### 1. riin の develop を origin/develop にそろえる
+### 1. riin と systems の develop を origin/develop にそろえる
 
 ```bash
-git fetch origin develop && git fetch riin
-git rev-list --count origin/develop..riin/develop   # 0 であること (riin/develop に独自のコミットが無い)
-git push riin origin/develop:refs/heads/develop      # fast-forward
+git fetch origin develop && git fetch riin develop && git fetch systems develop
+git rev-list --count origin/develop..riin/develop      # 0 であること (riin/develop に独自のコミットが無い)
+git rev-list --count origin/develop..systems/develop   # 0 であること
+git push riin origin/develop:refs/heads/develop         # fast-forward
+git push systems origin/develop:refs/heads/develop      # fast-forward
 ```
 
-`origin/develop..riin/develop` が 0 でなければ、riin/develop に独自のコミットがある。上書きせずにユーザーに尋ねる。
+どちらかが 0 でなければ、その develop に独自のコミットがある。上書きせずにユーザーに尋ねる。
+
+systems の develop も、機能ブランチを push する前にそろえる。先に機能ブランチを push すると、mistems/mistems のショーケース PR の差分に上流のコミットが混ざる (PR の差分の起点は base と head の merge-base で、head への push のときに取り直される)。
 
 ### 2. バックアップと起点の確認
 
@@ -100,6 +106,7 @@ PR の本文には、次のことを書く。最後の行は `🤖 Generated wit
 
 - `.config/test.yml` を消し、`orb-dev.sh down <worktree> -v` で自分の環境だけを消す。`docker ps` で他の環境が残っていることを確かめる
 - 同じブランチを head にした古い PR (base が mistems-main など) があれば、force push でその PR の中身も変わる。そのことと PR の番号を報告し、閉じるか base を変えるかをユーザーに尋ねる
+- 同じブランチを head にしたショーケース PR が mistems/mistems にあれば、この push で中身が更新される。PR の番号を報告に書く (`gh pr list -R mistems/mistems --head <branch>`)
 - 同じブランチの variant のコンテナ (`variant-<slug>`) は古い版のまま残る。作り直すかどうかを報告に書く
 - 報告には、PR の URL、push 前の SHA とバックアップの ref、新しい SHA、検証の結果を含める
 

@@ -11,8 +11,8 @@ Claude Code 固有の補助 (skills / agents / slash commands) は `.claude/` �
 | remote | リポジトリ | 役割 |
 | --- | --- | --- |
 | `origin` | misskey-dev/misskey | 上流。本流の develop を取り込む元。**参照するだけで、書き込まない** |
-| `systems` | mistems/mistems | MISTEMS の正本。統合済みの `mistems-main` とリリースのタグを置く |
-| `riin` | fruitriin/misskey | 開発用。機能ブランチ、`riin/release/*`、claudeImplement などを置く |
+| `systems` | mistems/mistems | MISTEMS の正本。統合済みの `mistems-main`、リリースのタグ、`origin/develop` にそろえた `develop`、機能のショーケース PR を置く |
+| `riin` | fruitriin/misskey | 開発用。機能ブランチ、`riin/release/*`、claudeImplement、`origin/develop` にそろえた `develop`、レビュー用の PR を置く |
 
 ほかに、他の開発者のフォーク (`kakkokari-gtyih` など) を remote に登録している。上流に出ている他人の PR を取り込むときは、`party/<PR番号>-<名前>` のローカルブランチにして使う。
 
@@ -30,10 +30,28 @@ MISTEMS 開発全体で使うファイル (規約、スキル、開発ツール�
 
 1. **機能ブランチを最新の `origin/develop` から切る**。古い develop や mistems-main から派生したブランチは、`rebase-to-develop` スキルで最新の develop に載せ直す
 2. **1 機能 1 ブランチ**で実装し、`riin` に push する
-3. **`main-統合.sh` に squash merge のエントリを足す** (`squash-prep` スキル)。統合はローカルで行い、GitHub 上ではマージしない
+3. **`main-統合.sh` に squash merge のエントリを足し、mistems/mistems にショーケース PR を作る** (`squash-prep` スキル)。統合はローカルで行い、GitHub 上ではマージしない
 4. **統合時のコンフリクト**は `git rerere` に解消方法を覚えさせる。rerere がすべて自動で解消したときは、スクリプトがそのまま続行する。CHANGELOG.md は毎回破棄する
 5. **互いにコンフリクトする機能**は、`riin/release/*` の統合ブランチにまとめてから squash merge する。`riin/release/*` 自体がコンフリクトしたときは、`rebuild-release-branch` スキルで元の機能ブランチから作り直す
 6. 上流が同じ課題を解決したら、そのブランチは統合から外し、`main-統合.sh` の台帳の「栄誉の殿堂」に移す
+
+### PR の使い分け
+
+PR は GitHub 上でマージせず、機能の説明とレビューに使う。用途によって置くリポジトリを分ける。
+
+| リポジトリ | 用途 | 作るスキル |
+| --- | --- | --- |
+| riin (fruitriin/misskey) | レビュー用。やり取りや試行錯誤を残す作業場 | `develop-review-pr` |
+| systems (mistems/mistems) | ショーケース。統合に入れた機能を、完成した形で見せる。draft にする | `squash-prep` |
+
+どちらも base は各リポジトリの `develop`、head は riin の機能ブランチである。mistems/mistems と fruitriin/misskey は同じフォークネットワークに入っているので、ショーケース PR の head は `fruitriin:<branch>` で指せる。
+
+PR の差分の起点は、base と head の merge-base である。merge-base は head への push のときに取り直され、base だけを更新したときは取り直されないことがある。そのため、**機能ブランチを push する前に、riin と systems の `develop` を `origin/develop` にそろえる** (どちらも fast-forward だけで済むことを確かめる)。順番が逆だと、PR の差分に上流のコミットが混ざる。
+
+```bash
+git push riin origin/develop:refs/heads/develop
+git push systems origin/develop:refs/heads/develop
+```
 
 ### force push
 
@@ -90,7 +108,7 @@ MISTEMS の README (mistems-readme ブランチ、`mistems-readme` スキルで�
 7. **misskey-dev/misskey へは書き込まない**
    - misskey-dev の Issue・PR・コードは参考にするだけにとどめる
    - misskey-dev へのコメント、Issue の起票、PR の作成、リアクションはしない。コミットメッセージにも misskey-dev の PR / Issue 番号を書かない (参照通知が飛ぶため。参照先は `main-統合.sh` のコメントに URL で残す)
-   - PR を作るときは `riin` または `systems` のリポジトリの中で作る
+   - PR を作るときは `riin` または `systems` のリポジトリの中で作る (「PR の使い分け」)
 
 ### スキル呼び出し
 

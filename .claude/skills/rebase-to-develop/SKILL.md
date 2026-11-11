@@ -133,15 +133,21 @@ force push は破壊的操作なので、実行前に必ず:
 - 操作前のコミットハッシュを提示する（`git reset --hard <hash>` で復元可能）
 - ユーザーの明示的な承認を得る
 
+push の前に、riin と systems の develop を origin/develop にそろえる。手順は `develop-review-pr` スキルの手順 1 と同じで、どちらも fast-forward だけで済むことを確かめてから push する。
+
 ```bash
+git push riin origin/develop:refs/heads/develop
+git push systems origin/develop:refs/heads/develop
 git push riin <branch> --force-with-lease
 ```
 
 `--force-with-lease` を使い、他者の push を上書きしないようにする。
 
+develop を先にそろえるのは、mistems/mistems のショーケース PR の差分を正しく保つためである。PR の差分の起点は base と head の merge-base で、head への push のときに取り直される。機能ブランチを先に push すると、systems の develop がまだ古いので、差分に上流のコミットが混ざる。
+
 ## 後処理
 
-- 既存の PR がある場合は PR 番号とリンクを報告する
+- 既存の PR がある場合は PR 番号とリンクを報告する。riin のレビュー用 PR と、mistems/mistems のショーケース PR (`gh pr list -R mistems/mistems --head <branch>`) の両方を確かめる
 - 一時 worktree を使った場合は削除する
 - mistems-readme メンテナンスの要否を判定する（下記）
 
