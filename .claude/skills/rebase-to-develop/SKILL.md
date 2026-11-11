@@ -48,7 +48,7 @@ mistems-main 上に積まれたブランチから固有の変更だけを取り�
    git stash pop
    ```
 3. **結果判定**
-   - コンフリクトなし → diff を見せてユーザーに確認 → 承認後 force push
+   - コンフリクトなし → force push (ユーザーの承認は不要)
    - コンフリクトあり → コンフリクト分析へ（後述）
 
 ### stash の健全性チェック
@@ -71,7 +71,7 @@ develop から派生しているが、ベースが古いブランチを最新 de
    git rebase origin/develop
    ```
 4. **結果判定**
-   - 成功 → diff を見せてユーザーに確認 → 承認後 force push
+   - 成功 → force push (ユーザーの承認は不要)
    - コンフリクト 1 回 → 通常のコンフリクト解決フローへ
    - コンフリクト 2 回以上 → ケース B' へ遷移
 
@@ -95,7 +95,7 @@ develop から派生しているが、ベースが古いブランチを最新 de
    git rebase origin/develop
    ```
 4. **結果判定**
-   - 成功 → diff を見せてユーザーに確認 → 承認後 force push
+   - 成功 → force push (ユーザーの承認は不要)
    - コンフリクトあり → 今度は 1 回だけなので通常のコンフリクト解決フローへ
 
 ## コンフリクト分析
@@ -128,10 +128,10 @@ rebase 対象ブランチが変更しているファイル・機能を、上流 
 
 ## force push
 
-force push は破壊的操作なので、実行前に必ず:
-- 変更内容の diff を提示する
-- 操作前のコミットハッシュを提示する（`git reset --hard <hash>` で復元可能）
-- ユーザーの明示的な承認を得る
+riin の自分のブランチへの force push は、ユーザーの承認なしに行ってよい (CLAUDE.md の「force push」)。そのかわり、次のことを守る。
+
+- push 前の SHA を記録し、`git branch backup/<名前>-<YYYYMMDD> riin/<branch>` でバックアップの ref を作る
+- push 後の報告に、push 前の SHA、バックアップの ref、新しい SHA を書く (`git reset --hard <SHA>` で戻せる)
 
 push の前に、riin と systems の develop を origin/develop にそろえる。手順は `develop-review-pr` スキルの手順 1 と同じで、どちらも fast-forward だけで済むことを確かめてから push する。
 

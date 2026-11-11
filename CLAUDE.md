@@ -30,7 +30,7 @@ MISTEMS 開発全体で使うファイル (規約、スキル、開発ツール�
 
 1. **機能ブランチを最新の `origin/develop` から切る**。古い develop や mistems-main から派生したブランチは、`rebase-to-develop` スキルで最新の develop に載せ直す
 2. **1 機能 1 ブランチ**で実装し、`riin` に push する
-3. **`main-統合.sh` に squash merge のエントリを足し、mistems/mistems にショーケース PR を作る** (`squash-prep` スキル)。統合はローカルで行い、GitHub 上ではマージしない
+3. **`main-統合.sh` に squash merge のエントリを足し、mistems/mistems にショーケース PR を作る** (`squash-prep` スキル、`showcase-pr` スキル)。統合はローカルで行い、GitHub 上ではマージしない
 4. **統合時のコンフリクト**は `git rerere` に解消方法を覚えさせる。rerere がすべて自動で解消したときは、スクリプトがそのまま続行する。CHANGELOG.md は毎回破棄する
 5. **互いにコンフリクトする機能**は、`riin/release/*` の統合ブランチにまとめてから squash merge する。`riin/release/*` 自体がコンフリクトしたときは、`rebuild-release-branch` スキルで元の機能ブランチから作り直す
 6. 上流が同じ課題を解決したら、そのブランチは統合から外し、`main-統合.sh` の台帳の「栄誉の殿堂」に移す
@@ -42,7 +42,7 @@ PR は GitHub 上でマージせず、機能の説明とレビューに使う。
 | リポジトリ | 用途 | 作るスキル |
 | --- | --- | --- |
 | riin (fruitriin/misskey) | レビュー用。やり取りや試行錯誤を残す作業場 | `develop-review-pr` |
-| systems (mistems/mistems) | ショーケース。統合に入れた機能を、完成した形で見せる。draft にする | `squash-prep` |
+| systems (mistems/mistems) | ショーケース。統合に入れた機能を、タイトルと一言 (画面が変わるならスクリーンショットか GIF) だけで見せる | `showcase-pr` |
 
 どちらも base は各リポジトリの `develop`、head は riin の機能ブランチである。mistems/mistems と fruitriin/misskey は同じフォークネットワークに入っているので、ショーケース PR の head は `fruitriin:<branch>` で指せる。
 
