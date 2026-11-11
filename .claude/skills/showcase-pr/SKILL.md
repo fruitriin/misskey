@@ -71,4 +71,6 @@ PR の URL を報告する。画面を撮らなかったときは、その理由
 
 ## 経験の記録
 
-(実行時に任意で追記する)
+- 2026-11-11: `feat/image-menu-copy-link-emoji-preview` で初めて実行した (mistems/mistems #62)。`--attach` の画像は `user-attachments` の URL に書き換えられ、差分は機能のコミットだけになった
+  - 開発モードの環境 (`pnpm dev`) は `*.localhost:3080` から開くと初期化に失敗する。統合済みの機能なら、本番モードで動いている mistems-main の環境 (`http://mistems-main.localhost:3080/`) で撮るとよい
+  - Playwright MCP が別のセッションで使用中のときは、アプリ内蔵のブラウザで撮った。`zoom` で切り抜いた画像は PNG で tool-results に保存されるので、それを添付した
