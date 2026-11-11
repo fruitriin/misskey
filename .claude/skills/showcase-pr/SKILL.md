@@ -42,19 +42,20 @@ git push systems origin/develop:refs/heads/develop
 
 - riin のレビュー用 PR にスクリーンショットがあれば、その URL を流用する
 - 無ければ、`orb-dev-server` スキルでブランチの環境を起動し、Playwright で撮る。動きのある変更 (アニメーション、ドラッグ、画面遷移) は GIF にする
-- 画像は systems の `showcase-assets` ブランチ (孤立ブランチ) の `<branch の / を - にした名前>/` に置いて push し、次の URL で本文に貼る
-  ```
-  https://raw.githubusercontent.com/mistems/mistems/showcase-assets/<ディレクトリ>/<ファイル名>
-  ```
-  `showcase-assets` は main-統合.sh の対象外で、画像だけを置く。まだ無ければ `git worktree add --orphan -b showcase-assets <misskey-worktrees>/showcase-assets` で作る
+- 撮った画像は `--attach` で PR に添付する (手順 4)。リポジトリにコミットしたり、別のブランチに置いたりしない
 
 ### 4. PR を作る
 
 head は riin のブランチを指す。mistems/mistems と fruitriin/misskey は同じフォークネットワークに入っているので、ブランチを systems へ push し直さなくてよい。
 
 ```bash
-gh pr create -R mistems/mistems --base develop --head fruitriin:<branch> --title "<タイトル>" --body-file <本文>
+gh pr create -R mistems/mistems --base develop --head fruitriin:<branch> --title "<タイトル>" --body-file <本文> \
+  --attach '<画像>#<代替テキスト>'
 ```
+
+- `--attach` は gh 2.103 以降で使える。画像と動画を添付でき、1 回に 50 個まで添付できる
+- 本文に `![<代替テキスト>](./<画像>)` と書いておくと、その参照がアップロード先の URL に書き換えられる。本文で参照しない添付は、本文の末尾に足される。`--body-file` の中のパスは、そのファイルのあるディレクトリからの相対パスになる
+- 一部の添付が失敗しても PR は作られ、終了コードが 0 以外になる。そのときは `gh pr edit <番号> -R mistems/mistems --attach ...` で足す
 
 ### 5. 報告
 
