@@ -469,7 +469,7 @@ do_seed() {
 
 classify_js="$script_dir/variant/classify.mjs"
 self="$script_dir/$(basename "${BASH_SOURCE[0]}")"
-# 注意: pipefail なので、パイプの後ろで grep -q を使わない (grep が先に終わると前のコマンドが SIGPIPE で失敗扱いになる)
+# 注意: pipefail なので、パイプの後ろで grep -q や head、awk の exit など、入力を読み切らずに終わるものを使わない (先に終わると前のコマンドが SIGPIPE で失敗扱いになる)
 # 起動の前に必要な空きメモリ (本番ビルド中の web は一時的に多く使う)
 variant_min_free_bytes=$((4 * 1024 * 1024 * 1024))
 
@@ -492,7 +492,7 @@ default_base_wt() {
 	local found
 	found="$(git -C "$script_dir" worktree list --porcelain | awk '
 		/^worktree / { path = substr($0, 10) }
-		$0 == "branch refs/heads/mistems-main" { print path; exit }
+		$0 == "branch refs/heads/mistems-main" && !done { print path; done = 1 }
 	')"
 	if [ -z "$found" ]; then
 		echo "mistems-main をチェックアウトしている worktree が見つかりません。ベース環境の worktree を引数で指定してください" >&2
@@ -578,7 +578,7 @@ applied_sha_file() {
 # 本文に sha が無いコミット (以前の案内で手で解消したもの) は、コミットした時刻より新しいコミットがブランチにあるかで判断する
 warn_if_branch_moved() {
 	local c applied_sha now_sha newer
-	c="$(git -C "$v_wt" log --format='%H%x09%s' "origin/develop..HEAD" | awk -F'\t' -v s="variant: $v_branch" '$2 == s { print $1; exit }')"
+	c="$(git -C "$v_wt" log --format='%H%x09%s' "origin/develop..HEAD" | awk -F'\t' -v s="variant: $v_branch" '$2 == s && !done { print $1; done = 1 }')"
 	[ -n "$c" ] || return 0
 	now_sha="$(git -C "$base_wt" rev-parse "riin/$v_branch")"
 	applied_sha="$(git -C "$v_wt" log -1 --format=%b "$c" | sed -nE 's/^ブランチ: riin\/.* \(([0-9a-f]+)\)$/\1/p' | head -1)"

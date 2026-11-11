@@ -201,3 +201,6 @@ orb-dev.sh variant down-all [-v]
 
 # 経験の記録
 （実施したときの注意点などを自由に記載）
+
+- 2026-11-11: 種類 3 (migration) の `variant up` が「ベース環境の seed のスナップショットがありません」で止まった。ベース環境を `--seed` なしで起動し直したため、今の migration のキーでスナップショットが保存されていなかった。ベース DB に seed が入っていれば (ローカルユーザーがいるかで確かめる)、`orb-dev.sh snapshot /Users/riin/workspace/misskey-worktrees/mistems-main` で今の DB を保存すれば進める。DB を消して `--seed` し直す必要はない
+- 2026-11-11: 機能ブランチを最新の develop に rebase すると、古い develop に載ったベース (mistems-main) に当てたときに、MISTEMS の機能と隣り合わせで項目を足した箇所 (モデレーションログの種類、`locales/ja-JP.yml` など) がコンフリクトしやすい。手で書くファイルは両方を残し、自動生成のファイルは、variant の worktree に mistems-main の node_modules を一時的にリンクして `pnpm build-misskey-js-with-types` で生成し直した。root の `node_modules` は、シンボリックリンクにすると pnpm が断るので、実体のディレクトリを作って中身をそれぞれリンクし、`.pnpm-task-run-state-v1` だけは実体のディレクトリにする。API の生成には `.config/default.yml` が要るので `.config/example.yml` を一時的にコピーする。終わったらリンクとコピーを消す
