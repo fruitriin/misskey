@@ -342,6 +342,24 @@ git commit -a -m "feat: リモートノートを TTL 付きで再取得し、リ
 squash_merge riin/feat/frontend-variants
 git commit -a -m "feat: 複数ブランチのフロントエンドを本番に同居させ、管理画面から切り替えられるように"
 
+# サーバーメトリクス (serverStats) の収集が 2 秒ごとに子プロセスを起動し、master の CPU の 5.3% を使っていた問題 (本番 CPU プロファイル 2026-11-08)
+# Linux では /proc から直接読み、ウィジェットを見ている人がいないときは収集を止める。計画書: docs/2026-11-08-サーバーメトリクス収集の子プロセス廃止.md
+squash_merge riin/perf/server-stats-no-spawn
+git commit -a -m "perf(backend): サーバーメトリクスの収集で子プロセスを起動しないようにする"
+
+# チャットの履歴 (chat/history) の取得で、getOne() に LIMIT が付かず、条件に合うメッセージを全件読んでいた問題 (gamelore の pg_stat_statements で約 7 億行、2026-11-11)
+squash_merge riin/perf/chat-history-limit
+git commit -a -m "perf(backend): チャットの履歴の取得で、1 件だけ読むようにする"
+
+# お知らせのグループ (グループごとのタブ・未読バッジ・タブごとの非通知・表示順の並べ替え。migration あり)
+# リノートロックとモデレーションログの種類・ja-JP.yml・misskey-js の autogen が隣り合わせで衝突する。両方を残し、autogen は生成し直す
+squash_merge riin/feat/announcement-groups
+git commit -a -m "feat: お知らせをグループに分けてタブで表示し、グループごとに非通知にできるように"
+
+# 画像メニューに「リンクをコピー」「絵文字として確認」を追加 (frontend と ja-JP.yml)
+squash_merge riin/feat/image-menu-copy-link-emoji-preview
+git commit -a -m "feat(frontend): 画像メニューに「リンクをコピー」と「絵文字として確認」を追加"
+
 # 本番で確認するフロントエンド variant の一覧。下の台帳の [統合待ち（要チェック）] から、frontend だけを変えるブランチを選ぶ。
 # branch は riin (fruitriin/misskey) 上のブランチ名。mode を省略すると、この時点の HEAD に squash merge してビルドする。
 # backend の変更を含むブランチは、本番の backend に反映されないので variant では正しく確認できない (コメントアウトして理由を残す)。
@@ -468,6 +486,8 @@ exit
   （fix/instance-chart-requests-overflow は同一コミットの別名）
 [作業中] perf/stats-reaction-count-estimate — /api/stats のリアクション数を reltuples 概算に
 [作業中] claude/review-performance-widget-keMRa — DB パフォーマンスウィジェット
+[統合済み] perf/server-stats-no-spawn — サーバーメトリクス収集で子プロセスを起動しない (/proc 直読み・閲覧者がいないときは停止) [2026-11-08 main-統合.sh に追加、次回の統合から入る]
+[統合済み] perf/chat-history-limit — チャットの履歴の取得で getOne() に limit(1) を付け、全件を読まないようにする [2026-11-11 main-統合.sh に追加、次回の統合から入る]
 
 ◇ 通知
 [統合済み][上流レビュー中] fix/notification-unread-count — 通知残カウントバグ + 100 件打ち切り [上流#17530]
@@ -527,6 +547,10 @@ exit
 [統合待ち（要チェック）] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 (fork PR#34 続き)
 [統合済み] feat/remote-note-refetch — リモートノート再取得の改善 [2026-10-24 最新 develop に作り直し、claude/remote-emoji-refetch-2nbU9 から改名、PR#57。旧 PR#35・#55 は close]
 [統合待ち（要チェック）] fix-clips-pagination — my/clips ページネーション末尾判定の修正
+[統合済み] feat/announcement-groups — お知らせのグループ (グループごとのタブ・未読バッジ・非通知・表示順の並べ替え。migration あり) [2026-11-11 main-統合.sh に追加、次回の統合から入る]
+[統合済み] feat/image-menu-copy-link-emoji-preview — 画像メニューに「リンクをコピー」「絵文字として確認」を追加 [2026-11-11 main-統合.sh に追加、次回の統合から入る]
+[統合待ち（要チェック）] feat/upload-image-rotate — アップロード前の画像の編集に左右の回転を追加 [2026-11-11 最新 develop へ rebase]
+[作業中] feat/drive-direct-upload — ドライブ直接アップロード (R2 署名付き URL とマルチパート)。計画書のみ
 [保留] readble-message-ratelimitservice — レートリミットメッセージの可読化 (統合スクリプトでコメントアウト中・要コンフリクト修正)
 
 ◇ 吸収済み・置換済み (リモート削除候補)
@@ -595,6 +619,13 @@ riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Key�
 ----------------------------------------------------------------
 
 ■ CHANGELOG
+
+CHANGELOG 116 (次回の統合)
+- お知らせをグループに分けてタブで表示できるように (グループごとの未読バッジ・非通知・表示順の並べ替え)
+- 画像メニューに「リンクをコピー」と「絵文字として確認」を追加
+- サーバーメトリクスの収集で子プロセスを起動しないようにし、サーバーの負荷を下げた
+- チャットの履歴の取得を高速化
+
 
 CHANGELOG 115
 - リノートロック: 投稿者とモデレーターが、ノートのリノートと引用を禁止できるように
