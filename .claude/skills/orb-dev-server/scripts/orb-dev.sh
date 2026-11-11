@@ -232,8 +232,10 @@ generate() {
 		run_cmd+=" && NODE_ENV=production pnpm build && pnpm migrate && NODE_ENV=production pnpm start"
 	else
 		# migrate は built/meta.json (build-pre が書く) と packages/backend/built を読むので、
-		# 新しい worktree でも migrate できるよう先に作る。バックエンドのビルドは無いときだけ行う
-		run_cmd+=" && pnpm build-pre && { [ -f packages/backend/built/config.js ] || pnpm --filter backend... build; } && pnpm migrate && pnpm dev"
+		# 新しい worktree でも migrate できるよう先に作る。バックエンドのビルドは、無いときと、
+		# rebase などで src が built/config.js より新しくなったとき (古いビルドが新しい migration の設定と合わない) に行う
+		# (compose の YAML に bash -c "..." で埋め込むので、引用符と $ は使わない)
+		run_cmd+=" && pnpm build-pre && { [ -f packages/backend/built/config.js ] && ! find packages/backend/src -newer packages/backend/built/config.js -print | grep -q . || pnpm --filter backend... build; } && pnpm migrate && pnpm dev"
 	fi
 
 	# --lan のときだけホストにポートを公開する (configure_lan のコメント参照)
