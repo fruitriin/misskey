@@ -171,9 +171,17 @@ squash_merge riin/fix/fanout-timeline
 git commit -a -m "FTTLの歯抜けバグ修正"
 
 
-# riin/favstar (favstar-rebased を採用・リネーム済) + riin/timemachine
-squash_merge riin/release/FavstarAndTimemachine
-git commit -a -m "タイムマシンとふぁぼった"
+# ふぁぼったー + タイムマシン + タイムラインの歯抜けマーカー
+# release/FavstarTimemachineGapMarker = release/FavstarAndTimemachine (ふぁぼったー・タイムマシンの 2 コミット) に
+#   feat/timeline-gap-marker (その上に歯抜けマーカーを積んだブランチ) を merge した統合用 release。
+#   歯抜けマーカーのコードが依存するのはタイムマシンだけだが、タイムマシンのコミットが MkNote.vue などで
+#   ふぁぼったーの変更と混ざっているため、ふぁぼったーごと土台にしている。
+#   ふぁぼったー・タイムマシンを直したら release/FavstarAndTimemachine → feat/timeline-gap-marker の順に積み直し、
+#   この release を作り直すこと (rebuild-release-branch スキル)。
+#   歯抜けマーカーは実験的機能 (設定 > その他 > 実験的機能 > タイムラインの切断中追加読み込み) で、既定はオフ
+# https://github.com/fruitriin/misskey/pull/54
+squash_merge riin/release/FavstarTimemachineGapMarker
+git commit -a -m "タイムマシンとふぁぼった + タイムラインの切断中追加読み込み (歯抜けマーカー、実験的機能)"
 
 
 
@@ -376,7 +384,7 @@ echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を�
   mode: as-is' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 115
+set MISVER 116
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -458,7 +466,9 @@ exit
 ◇ タイムマシン・ふぁぼったー
 [統合済み][作業中] timemachine — タイムマシン本体 (release 経由で統合済み)。フィードバック対応計画書で改修中
 [統合済み] favstar-rebased — ふぁぼったー (squash 済み、release 経由)
-[統合済み] release/FavstarAndTimemachine — ↑2つの統合用 release
+[統合済み] release/FavstarAndTimemachine — ↑2つの release。2026-11-11 に最新 develop へ載せ直し、統合は release/FavstarTimemachineGapMarker 経由になった
+[統合済み] feat/timeline-gap-marker — スリープや WebSocket の切断でタイムラインに取りこぼした区間を歯抜けマーカーで示し、押すと補給する。実験的機能の設定で、既定はオフ (fork PR#54)。release/FavstarAndTimemachine の上に積んだブランチで、release 経由で統合 [2026-11-11 claude/confident-cerf-49qdy1 (mistems-main 96 派生) から作り直し]
+[統合済み] release/FavstarTimemachineGapMarker — release/FavstarAndTimemachine + feat/timeline-gap-marker の統合用 release [2026-11-11 作成、main-統合.sh に追加、次回の統合から入る]
 [作業中] fix-mkpaginator-type — paginator の allowPartial 特性化テスト+代替実装 (未コミット作業のみ。タイムマシン期の上流 PR 準備の名残と推定)
 
 ◇ タイムライン (FTT)
@@ -625,6 +635,10 @@ CHANGELOG 116 (次回の統合)
 - 画像メニューに「リンクをコピー」と「絵文字として確認」を追加
 - サーバーメトリクスの収集で子プロセスを起動しないようにし、サーバーの負荷を下げた
 - チャットの履歴の取得を高速化
+- タイムラインの切断中追加読み込み (実験的機能): 通信の切断やスリープのあいだに取りこぼしたノートを、再接続したときに取り直せるように
+- リモートのノートを再取得するときに、リアクションの数と付けたユーザーも相手のサーバーから取り込むように (取り消しも反映)
+- 絵文字の入力補完で、IME の変換中に候補を選べない・候補が消える問題を修正 (iOS を含む)。AND 検索は実験的機能の設定でオフにできるように
+- ドライブの使用量の集計を高速化
 
 
 CHANGELOG 115
