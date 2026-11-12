@@ -4,13 +4,16 @@
 #
 # usage: orb-dev.sh <up|down|logs|status|seed|snapshot|restore|variant> [worktree-path] [名前] [-v] [--prod] [--seed]
 #   up        設定を生成して起動し、起動完了を待って URL を表示する (初回は管理者アカウントも作る)
-#             --lan を付けると、LAN 内の端末 (スマホの実機など) から http://<Mac の LAN の IP アドレス>:<ポート> で開けるようにする。
-#             ポートは 3000 から順にホストで空いているものを使う。--lan なしで up し直すと orb.local に戻る
+#             空いている枠 (既定は dev1〜dev10) を取り、http://<枠>.localhost:3080/ で開けるようにする。--slot=devN で枠を指定できる。
+#             枠が埋まっていれば起動しない。--no-slot なら枠を取らず http://web.<プロジェクト名>.orb.local:3000/ で起動する
+#             前回と url が違えば (枠が替わった、--lan と行き来した)、DB の中の URL を書き換えてから起動する
+#             --lan を付けると、LAN 内の端末 (スマホの実機など) から http://<Mac の LAN の IP アドレス>:<ポート> で開けるようにする (枠は取らない)。
+#             ポートは 3000 から順にホストで空いているものを使う
 #             --lan-mdns は IP アドレスの代わりに <Mac のホスト名>.local を使う (Android の Chrome は .local を引けない)
-#             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する。
-#             本番モードと variant は http://<プロジェクト名>.localhost:3080/ で開く (下の「*.localhost の共用プロキシ」を参照)
+#             --prod を付けると pnpm dev の代わりに本番ビルド (pnpm build → migrate → start) で起動する
 #             --seed を付けると、起動後にキーの合うスナップショットがあれば restore、なければ seed を実行する
-#   down      停止する。-v を付けると DB・node_modules の volume も消す
+#   down      停止して枠を返す。-v を付けると DB・node_modules の volume も消す
+#   slots     枠の一覧を表示する
 #   logs      web コンテナのログを追う
 #   status    コンテナの状態と URL を表示する
 #   seed      起動中の環境に開発用データを入れ、終わったらスナップショット (seed) を取る
@@ -34,6 +37,8 @@ prod=""
 with_seed=""
 lan=""
 lan_mdns=""
+want_slot=""
+no_slot=""
 # variant は引数の形が違うので、ここでは解釈せずに variant_main に任せる
 [ "$cmd" = "variant" ] || for arg in "$@"; do
 	case "$arg" in
@@ -42,6 +47,8 @@ lan_mdns=""
 		--seed) with_seed="1" ;;
 		--lan) lan="1" ;;
 		--lan-mdns) lan="1"; lan_mdns="1" ;;
+		--slot=*) want_slot="${arg#--slot=}" ;;
+		--no-slot) no_slot="1" ;;
 		-*) echo "不明なオプションです: $arg" >&2; exit 1 ;;
 		*)
 			# 1 つ目の位置引数は worktree、2 つ目はスナップショットの名前
@@ -60,16 +67,19 @@ esac
 
 cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/misskey-orb-dev"
 
-# *.localhost の共用プロキシ
-# 本番モードの環境と variant は、Misskey の url を http://<プロジェクト名>.localhost:<localhost_port>/ にする。
+# shellcheck source=lib/slots.sh
+. "$script_dir/lib/slots.sh"
+slot_domain="mistems-slot.local"
+admin_token="orbdevadmintoken"
+
+# 枠と共用プロキシ
+# 枠 (devN) を取った環境は、Misskey の url を http://devN.localhost:<localhost_port>/ にする。
 # ブラウザは *.localhost を 127.0.0.1 に向けるので、ホストの 127.0.0.1:<localhost_port> に 1 つだけ置いた Caddy が、
-# ホスト名で web.<プロジェクト名>.orb.local:3000 へ振り分ける。ホストに公開するポートはこの 1 つだけで、
-# 環境がいくつあっても取り合わない。Misskey はコンテナの中で今までどおり 3000 番で待ち受けるので、
-# orb.local の URL (seed のスナップショットに入っている画像の URL など) もそのまま使える。
-# Misskey が自分の url を取りに行くとき (seed の画像のプロキシなど) のために、コンテナの中では
-# <プロジェクト名>.localhost をホスト (host-gateway) に向け、同じプロキシを通して自分に戻す。
-# URL のホスト名は、ブラウザがローカルの開発用として扱う *.localhost にする。
-# 開発モード (pnpm dev) は vite の HMR が url のホスト名を使うので、今までどおり orb.local のままにする
+# Host の 1 つ目のラベル (devN) で devN.mistems-slot.local (web コンテナに付けた OrbStack の独自ドメイン) へ振り分ける。
+# 枠と環境の対応は独自ドメインのラベルで決まるので、Caddy の設定は変わらない。ホストに公開するポートはこの 1 つだけである。
+# Misskey はコンテナの中でも <localhost_port> で待ち受け、web コンテナでは devN.localhost を 127.0.0.1 に向ける。
+# Misskey が自分の url を取りに行くとき (画像のプロキシなど) も、backend が vite へ中継するとき (url のホスト名:5173) も、
+# コンテナの中で自分につながる。vite の HMR の WebSocket は Caddy が 5173 / 5174 へ回す (ensure_proxy のコメント参照)
 localhost_port="${ORB_DEV_LOCALHOST_PORT:-3080}"
 proxy_project="orb-dev-proxy"
 proxy_dir="$cache_root/$proxy_project"
@@ -87,12 +97,14 @@ use_env() {
 	listen_port=3000
 	lan_host=""
 	lan_vite_ports=""
+	slot="$(slot_of_project "$project" || true)"
 	# 前回 --lan で up した環境なら、status や seed でもその URL を使う
 	if [ -f "$state_dir/lan" ]; then
 		read -r lan_host listen_port < "$state_dir/lan"
 		url="http://$lan_host:$listen_port/"
-	elif [ -f "$state_dir/localhost" ]; then
-		url="http://$project.localhost:$localhost_port/"
+	elif [ -n "$slot" ]; then
+		url="http://$slot.localhost:$localhost_port/"
+		listen_port="$localhost_port"
 	fi
 }
 
@@ -100,15 +112,39 @@ use_env() {
 # 設定が前回と同じで起動済みなら何もしない。設定が変わっていれば作り直す
 ensure_proxy() {
 	local caddyfile compose_yml changed=""
-	# Host が <名前>.localhost のリクエストを web.<名前>.orb.local へ送る。Host ヘッダーはそのまま渡すので、
-	# Misskey からは url どおりのホストに見える (WebSocket も Caddy がそのまま中継する)
+	# Host が devN.localhost のリクエストを devN.mistems-slot.local へ送る。Host ヘッダーはそのまま渡すので、
+	# Misskey と vite からは url どおりのホストに見える。
+	# vite の HMR の WebSocket (Sec-WebSocket-Protocol: vite-hmr) は vite へ直接送る。Misskey に送ると、
+	# Misskey の WebSocket のサーバーが受けてしまい HMR が動かない。埋め込みの vite は base が /embed_vite/ である
 	caddyfile="$(cat <<-EOF
 	{
 		auto_https off
 		admin off
 	}
 	http://:$localhost_port {
-		reverse_proxy web.{http.request.host.labels.1}.orb.local:3000
+		@embed_hmr {
+			header_regexp Host ^dev[0-9]+[.]localhost
+			header Sec-WebSocket-Protocol vite-hmr
+			path /embed_vite/*
+		}
+		@hmr {
+			header_regexp Host ^dev[0-9]+[.]localhost
+			header Sec-WebSocket-Protocol vite-hmr
+		}
+		@slot header_regexp Host ^dev[0-9]+[.]localhost
+		handle @embed_hmr {
+			reverse_proxy {http.request.host.labels.1}.$slot_domain:5174
+		}
+		handle @hmr {
+			reverse_proxy {http.request.host.labels.1}.$slot_domain:5173
+		}
+		handle @slot {
+			reverse_proxy {http.request.host.labels.1}.$slot_domain:$localhost_port
+		}
+		# 以前の版の <プロジェクト名>.localhost の環境は、up し直すまでこちらで開ける
+		handle {
+			reverse_proxy web.{http.request.host.labels.1}.orb.local:3000
+		}
 	}
 	EOF
 	)"
@@ -143,28 +179,85 @@ ensure_proxy() {
 	docker compose -p "$proxy_project" -f "$proxy_dir/compose.yml" up -d --force-recreate >&2
 }
 
-# この環境の url を *.localhost にする。プロジェクト名に _ があるとホスト名にできないので、orb.local のままにする
-use_localhost_url() {
-	case "$project" in
-		*_*)
-			rm -f "$state_dir/localhost"
-			echo "注意: プロジェクト名 $project に _ があるので、*.localhost ではなく orb.local の URL を使います" >&2
-			return 0
-			;;
-	esac
+# 枠を取って url を枠のものにする。取れなければ枠の一覧を表示して終了する
+use_slot() {
+	if ! slot="$(slot_claim "$project" "$wt" "$want_slot")"; then
+		echo "枠の一覧:" >&2
+		print_slots >&2
+		echo "空けるときは、使っていない環境を '$0 down <worktree>' で止めてください。枠を取らずに起動するなら --no-slot を付けます" >&2
+		exit 1
+	fi
 	ensure_proxy
-	mkdir -p "$state_dir"
-	touch "$state_dir/localhost"
-	url="http://$project.localhost:$localhost_port/"
+	url="http://$slot.localhost:$localhost_port/"
+	listen_port="$localhost_port"
 }
 
-# *.localhost の URL を使う環境の web に足す extra_hosts の行 (use_localhost_url の説明を参照)
-localhost_extra_hosts() {
-	[ -f "$state_dir/localhost" ] || return 0
-	printf '    extra_hosts:\n      - "%s.localhost:host-gateway"\n' "$project"
+print_slots() {
+	local s p w t state
+	printf '%-6s %-32s %-10s %s\n' 枠 プロジェクト 状態 URL・ワークツリー
+	while IFS=$'\t' read -r s p w t; do
+		if [ "$p" = "-" ]; then
+			printf '%-6s %-32s %-10s %s\n' "$s" - 空き -
+		else
+			state="$(docker inspect -f '{{.State.Status}}' "$p-web-1" 2>/dev/null || echo なし)"
+			printf '%-6s %-32s %-10s %s\n' "$s" "$p" "$state" "http://$s.localhost:$localhost_port/  $w (取得 $t)"
+		fi
+	done < <(slot_list)
 }
 
-if [ "$cmd" != "variant" ]; then
+# vite.config.ts の HMR の接続先のポート (clientPort) を、プロキシのポートに置き換えたコピーを作る。
+# 機能ブランチは origin/develop から切るので、vite.config.ts を変えるコミットを置けない。コンテナの中でだけ重ねる
+write_vite_overlays() {
+	local pkg port src
+	for pkg in frontend:5173 frontend-embed:5174; do
+		port="${pkg#*:}"
+		pkg="${pkg%%:*}"
+		src="$wt/packages/$pkg/vite.config.ts"
+		if ! grep -q "clientPort: $port," "$src"; then
+			echo "$src に 'clientPort: $port,' がありません。上流で vite の設定が変わったので、orb-dev.sh の write_vite_overlays を直してください。" >&2
+			echo "HMR がつながらないまま起動しないよう、ここで止めます。" >&2
+			exit 1
+		fi
+		sed "s/clientPort: $port,/clientPort: $localhost_port,/" "$src" > "$state_dir/vite.config.$pkg.ts"
+	done
+}
+
+# 枠を取った環境の web サービスに足す行 (OrbStack の独自ドメインと、devN.localhost を自分に向ける extra_hosts)
+slot_entries() {
+	[ -n "$slot" ] || return 0
+	printf '    labels:\n      dev.orbstack.domains: "%s.%s"\n' "$slot" "$slot_domain"
+	printf '    extra_hosts:\n      - "%s.localhost:127.0.0.1"\n' "$slot"
+}
+
+# 開発モードで枠を取った環境の vite の設定を重ねる行 (本番ビルドでは vite の開発サーバーを使わないので出さない)
+slot_vite_mounts() {
+	[ -n "$slot" ] && [ -z "$prod" ] || return 0
+	printf '      - ./vite.config.frontend.ts:/workspace/packages/frontend/vite.config.ts:ro\n'
+	printf '      - ./vite.config.frontend-embed.ts:/workspace/packages/frontend-embed/vite.config.ts:ro\n'
+}
+
+# DB の中のオリジンを書き換え、古い URL を持つキャッシュを消すため Redis を空にする。
+# $1: 古い url  $2: 新しい url (どちらも末尾の / はあってもなくてもよい)。同じなら何もしない
+rewrite_origin() {
+	local old="${1%/}" new="${2%/}"
+	[ -n "$old" ] && [ "$old" != "$new" ] || return 0
+	echo "DB の中の $old を $new に書き換えます..."
+	psql_db -q -v old="$old" -v new="$new" < "$script_dir/seed/rewrite-url.sql"
+	compose exec -T redis redis-cli FLUSHALL > /dev/null
+}
+
+# admin のトークンを全環境で同じ固定値にする。ブラウザは枠のホスト名ごとにトークンを覚えているので、
+# 枠につなぐ環境を替えてもログインしたままになる
+set_admin_token() {
+	psql_db -q -c "UPDATE \"user\" SET token = '$admin_token' WHERE \"usernameLower\" = '$admin_user' AND host IS NULL" > /dev/null
+}
+
+# 前回 up したときの url (生成済みの default.yml から読む)。初めてなら空
+previous_url() {
+	sed -nE 's/^url: *//p' "$state_dir/default.yml" 2>/dev/null || true
+}
+
+if [ "$cmd" != "variant" ] && [ "$cmd" != "slots" ]; then
 	use_env "$(cd "$wt_arg" && git rev-parse --show-toplevel)"
 fi
 admin_user="admin"
@@ -239,18 +332,21 @@ build_nm_entries() {
 # --lan-mdns のときは url を <Mac のホスト名>.local にし、コンテナの中だけその名前を 127.0.0.1 に向ける (extra_hosts)
 configure_lan() {
 	if [ -z "$lan" ]; then
-		rm -f "$state_dir/lan"
-		url="http://web.$project.orb.local:3000/"
-		listen_port=3000
+		# localhost は、以前の版が <プロジェクト名>.localhost の url に使っていた印
+		rm -f "$state_dir/lan" "$state_dir/localhost"
 		lan_host=""
-		# 本番モードは *.localhost で開く。開発モードは vite の HMR のため orb.local のまま
-		if [ -n "$prod" ]; then
-			use_localhost_url
+		if [ -n "$no_slot" ]; then
+			slot_release "$project"
+			slot=""
+			url="http://web.$project.orb.local:3000/"
+			listen_port=3000
 		else
-			rm -f "$state_dir/localhost"
+			use_slot
 		fi
 		return 0
 	fi
+	slot_release "$project"
+	slot=""
 	rm -f "$state_dir/localhost"
 	if [ -n "$lan_mdns" ]; then
 		lan_host="$(scutil --get LocalHostName).local"
@@ -312,6 +408,7 @@ generate() {
 	pnpm_ver="$(sed -nE 's/.*"packageManager": *"pnpm@([^"]+)".*/\1/p' "$wt/package.json")"
 
 	write_docker_env
+	if [ -n "$slot" ] && [ -z "$prod" ]; then write_vite_overlays; fi
 	write_default_yml db
 
 	# ホストの node_modules は macOS 向けのネイティブモジュールを含むので、コンテナ側は volume に分ける
@@ -342,8 +439,9 @@ generate() {
 		fi
 	fi
 
-	local localhost_entries
-	localhost_entries="$(localhost_extra_hosts)"
+	local slot_lines vite_mounts
+	slot_lines="$(slot_entries)"
+	vite_mounts="$(slot_vite_mounts)"
 
 	cat > "$state_dir/compose.yml" <<-EOF
 	services:
@@ -374,18 +472,21 @@ generate() {
 	      redis:
 	        condition: service_healthy
 	$lan_entries
-	$localhost_entries
+	$slot_lines
 	    volumes:
 	      - $wt:/workspace
 	      - ./default.yml:/workspace/.config/default.yml:ro
 	      - $script_dir/seed:/orb-seed:ro
 	      - pnpm-store:/pnpm-store
+	$vite_mounts
 	$nm_mounts
 	volumes:
 	  db-data:
 	  pnpm-store:
 	$nm_volumes
 	EOF
+	# 枠や --lan の行が無いときの空行を消す
+	sed -i '' '/^$/d' "$state_dir/compose.yml"
 }
 
 # 今の compose.yml が本番モードかどうか (restore で web を起動し直すときの待ち時間に使う)
@@ -474,6 +575,8 @@ do_snapshot() {
 	tar -C "$wt/files" -cf "$dir/$snap_name.files.tar.tmp" .
 	mv "$dir/$snap_name.dump.tmp" "$dir/$snap_name.dump"
 	mv "$dir/$snap_name.files.tar.tmp" "$dir/$snap_name.files.tar"
+	# 画像などの URL は絶対 URL で入っているので、restore のときに書き換えられるよう、取ったときの url を残す
+	echo "$url" > "$dir/$snap_name.url"
 	echo "保存しました: $dir/$snap_name.dump, $dir/$snap_name.files.tar"
 }
 
@@ -526,6 +629,15 @@ do_restore() {
 		echo "seed のスナップショットなら '$0 up $wt --seed' だけで戻ります。それでも戻らないときは '$0 down $wt -v' で環境を消してから '$0 up $wt --seed' で作り直してください。" >&2
 		exit 1
 	fi
+	# スナップショットを取ったときの url から今の url に書き換える。url を残していない古いスナップショットは、
+	# orb.local か (本番モードなら) <プロジェクト名>.localhost で取ったものなので、両方を書き換える
+	if [ -f "$dir/$snap_name.url" ]; then
+		rewrite_origin "$(cat "$dir/$snap_name.url")" "$url"
+	else
+		rewrite_origin "http://web.$project.orb.local:3000/" "$url"
+		rewrite_origin "http://$project.localhost:$localhost_port/" "$url"
+	fi
+	set_admin_token
 	# タイムラインやユーザーなどのキャッシュが戻す前の DB を指したままにならないよう、Redis を空にする
 	compose exec -T redis redis-cli FLUSHALL > /dev/null
 	since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -556,6 +668,7 @@ do_seed() {
 		return 1
 	fi
 	echo "開発用データを入れました"
+	set_admin_token
 	do_snapshot
 }
 
@@ -1187,13 +1300,19 @@ variant_main() {
 
 case "$cmd" in
 	up)
+		prev_url="$(previous_url)"
 		configure_lan
 		generate
+		# 書き換えは web を起動する前に行う (古い url のままのキャッシュを作らせない)
+		compose up -d --wait db redis
+		rewrite_origin "$prev_url" "$url"
 		compose up -d
 		echo "起動を待っています (初回は依存のインストールで数分かかります)..."
 		wait_ready
 		create_admin
+		set_admin_token
 		echo "起動しました: $url  (ログイン: $admin_user / $admin_pass)"
+		if [ -n "$slot" ]; then echo "枠: $slot"; fi
 		if [ -n "$lan_host" ]; then
 			echo "LAN 内の端末からも開けます。開けないときは、端末が同じネットワークにいるか、macOS のファイアウォールで OrbStack の受信を許可しているかを確かめてください"
 			echo "vite の HMR 用に 5173 番も公開しています。ほかの worktree を --lan で同時に動かすことはできません"
@@ -1210,6 +1329,10 @@ case "$cmd" in
 		;;
 	down)
 		compose down $remove_volumes
+		slot_release "$project"
+		;;
+	slots)
+		print_slots
 		;;
 	logs)
 		compose logs -f --tail 100 web
@@ -1217,6 +1340,7 @@ case "$cmd" in
 	status)
 		compose ps -a
 		echo "URL: $url"
+		if [ -n "$slot" ]; then echo "枠: $slot"; fi
 		;;
 	seed)
 		require_running
