@@ -251,18 +251,21 @@ rewrite_origin() {
 # Misskey はトークンから引いたユーザーを、見つからなかった結果も含めて 5 分間メモリに残す。そろえる前に
 # 固定トークンで問い合わせたブラウザがいると「見つからない」が残るので、Misskey がトークンを作り直したときと
 # 同じ内部イベント (userTokenRegenerated) を Redis で流し、動いている Misskey のキャッシュを入れ替える。
-# DB にユーザーの表が無い (migrate 前) か admin がいなければ何もしない
+# DB にユーザーの表が無い (migrate 前) か admin がいなければ何もしない。
+# 引数を省くとこの環境の db と redis を使う。variant は DB (ベースの db か自分の vdb) と Redis (ベースのもの) を指定する
+# $1: DB を持つ compose のプロジェクト  $2: DB のサービス名  $3: Redis を持つ compose のプロジェクト
 set_admin_token() {
-	local row id old host
-	[ "$(psql_db -Atc "SELECT to_regclass('public.user') IS NOT NULL")" = "t" ] || return 0
-	row="$(psql_db -Atc "SELECT id || ' ' || coalesce(token, '') FROM \"user\" WHERE \"usernameLower\" = '$admin_user' AND host IS NULL")"
+	local db_project="${1:-$project}" db_svc="${2:-db}" redis_project="${3:-$project}" row id old host
+	local db=(docker compose -p "$db_project" -f "$cache_root/$db_project/compose.yml" exec -T "$db_svc" psql -v ON_ERROR_STOP=1 -U "$db_user" "$db_name")
+	[ "$("${db[@]}" -Atc "SELECT to_regclass('public.user') IS NOT NULL")" = "t" ] || return 0
+	row="$("${db[@]}" -Atc "SELECT id || ' ' || coalesce(token, '') FROM \"user\" WHERE \"usernameLower\" = '$admin_user' AND host IS NULL")"
 	[ -n "$row" ] || return 0
 	read -r id old <<< "$row"
-	psql_db -q -c "UPDATE \"user\" SET token = '$admin_token' WHERE id = '$id'" > /dev/null
+	"${db[@]}" -q -c "UPDATE \"user\" SET token = '$admin_token' WHERE id = '$id'" > /dev/null
 	# Misskey は url のホスト (ポートを含む) の名前のチャンネルで内部イベントを受ける
 	host="${url#*://}"
 	host="${host%/}"
-	compose exec -T redis redis-cli PUBLISH "$host" \
+	docker compose -p "$redis_project" -f "$cache_root/$redis_project/compose.yml" exec -T redis redis-cli PUBLISH "$host" \
 		"{\"channel\":\"internal\",\"message\":{\"type\":\"userTokenRegenerated\",\"body\":{\"id\":\"$id\",\"oldToken\":\"$old\",\"newToken\":\"$admin_token\"}}}" > /dev/null
 }
 
@@ -1171,6 +1174,12 @@ variant_up() {
 	compose up -d
 	echo "起動を待っています (本番ビルドがあるので数分〜十数分かかります)..."
 	wait_ready "$since"
+	# 枠につなぐ環境を替えてもログインが続くよう、admin のトークンをそろえる。種類 2 はベースの DB、種類 3 は vdb のものを変える
+	if [ "$v_category" = "migration" ]; then
+		set_admin_token "$project" vdb "$base_project"
+	else
+		set_admin_token "$base_project" db "$base_project"
+	fi
 	echo "起動しました: $url  (ブランチ: ${v_branch}、種類: $v_category)"
 }
 
