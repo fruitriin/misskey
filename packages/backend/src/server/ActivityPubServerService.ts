@@ -40,6 +40,13 @@ import type { FindOptionsWhere } from 'typeorm';
 const ACTIVITY_JSON = 'application/activity+json; charset=utf-8';
 const LD_JSON = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"; charset=utf-8';
 
+/**
+ * inbox で受け付ける Date ヘッダー (と署名の created・expires) の時刻のずれ (秒、前後とも)。
+ * ライブラリの既定値は 300 秒だが、配送を待たせても最初の Date のまま送ってくる実装 (Threads など) があり、
+ * 5 分を超えて遅れた配送をすべて 401 にしていた。Mastodon (未来は 1 時間、過去は Date から 65 分まで) に近い 1 時間にする。
+ */
+const INBOX_SIGNATURE_CLOCK_SKEW_SECONDS = 60 * 60;
+
 @Injectable()
 export class ActivityPubServerService {
 	private inboxLogger: Logger;
@@ -139,7 +146,11 @@ export class ActivityPubServerService {
 		let signature;
 
 		try {
-			signature = httpSignature.parseRequest(request.raw, { 'headers': ['(request-target)', 'host', 'date'], authorizationHeaderName: 'signature' });
+			signature = httpSignature.parseRequest(request.raw, {
+				'headers': ['(request-target)', 'host', 'date'],
+				authorizationHeaderName: 'signature',
+				clockSkew: INBOX_SIGNATURE_CLOCK_SKEW_SECONDS,
+			});
 		} catch (err) {
 			this.rejectInbox(request, reply, `parseRequest: ${err instanceof Error ? err.message : String(err)}`);
 			return;
