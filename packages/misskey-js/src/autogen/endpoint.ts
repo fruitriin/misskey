@@ -294,6 +294,12 @@ import type {
 	DriveFilesCreateRequest,
 	DriveFilesCreateResponse,
 	DriveFilesDeleteRequest,
+	DriveFilesDirectUploadAbortRequest,
+	DriveFilesDirectUploadCompleteRequest,
+	DriveFilesDirectUploadInitRequest,
+	DriveFilesDirectUploadInitResponse,
+	DriveFilesDirectUploadStatusRequest,
+	DriveFilesDirectUploadStatusResponse,
 	DriveFilesFindRequest,
 	DriveFilesFindResponse,
 	DriveFilesFindByHashRequest,
@@ -863,6 +869,10 @@ export type Endpoints = {
 	'drive/files/check-existence': { req: DriveFilesCheckExistenceRequest; res: DriveFilesCheckExistenceResponse };
 	'drive/files/create': { req: DriveFilesCreateRequest; res: DriveFilesCreateResponse };
 	'drive/files/delete': { req: DriveFilesDeleteRequest; res: EmptyResponse };
+	'drive/files/direct-upload/abort': { req: DriveFilesDirectUploadAbortRequest; res: EmptyResponse };
+	'drive/files/direct-upload/complete': { req: DriveFilesDirectUploadCompleteRequest; res: EmptyResponse };
+	'drive/files/direct-upload/init': { req: DriveFilesDirectUploadInitRequest; res: DriveFilesDirectUploadInitResponse };
+	'drive/files/direct-upload/status': { req: DriveFilesDirectUploadStatusRequest; res: DriveFilesDirectUploadStatusResponse };
 	'drive/files/find': { req: DriveFilesFindRequest; res: DriveFilesFindResponse };
 	'drive/files/find-by-hash': { req: DriveFilesFindByHashRequest; res: DriveFilesFindByHashResponse };
 	'drive/files/move-bulk': { req: DriveFilesMoveBulkRequest; res: EmptyResponse };

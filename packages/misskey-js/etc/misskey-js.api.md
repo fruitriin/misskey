@@ -1315,6 +1315,24 @@ type DriveFilesCreateResponse = operations['drive___files___create']['responses'
 type DriveFilesDeleteRequest = operations['drive___files___delete']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+type DriveFilesDirectUploadAbortRequest = operations['drive___files___direct-upload___abort']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type DriveFilesDirectUploadCompleteRequest = operations['drive___files___direct-upload___complete']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type DriveFilesDirectUploadInitRequest = operations['drive___files___direct-upload___init']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type DriveFilesDirectUploadInitResponse = operations['drive___files___direct-upload___init']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type DriveFilesDirectUploadStatusRequest = operations['drive___files___direct-upload___status']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type DriveFilesDirectUploadStatusResponse = operations['drive___files___direct-upload___status']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
 type DriveFilesFindByHashRequest = operations['drive___files___find-by-hash']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
@@ -1840,6 +1858,12 @@ declare namespace entities {
         DriveFilesCreateRequest,
         DriveFilesCreateResponse,
         DriveFilesDeleteRequest,
+        DriveFilesDirectUploadAbortRequest,
+        DriveFilesDirectUploadCompleteRequest,
+        DriveFilesDirectUploadInitRequest,
+        DriveFilesDirectUploadInitResponse,
+        DriveFilesDirectUploadStatusRequest,
+        DriveFilesDirectUploadStatusResponse,
         DriveFilesFindRequest,
         DriveFilesFindResponse,
         DriveFilesFindByHashRequest,
