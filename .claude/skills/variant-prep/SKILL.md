@@ -75,10 +75,12 @@ orb-dev.sh status /Users/riin/workspace/misskey-worktrees/mistems-main
 ベース環境 (db / redis / web) が動いていなければ、次を実行する。初回は本番ビルドがあるので時間がかかる。`run_in_background` で実行して完了を待つ。
 
 ```bash
-orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod --seed
+orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod --no-slot --seed
 ```
 
 variant はベース環境の Redis とネットワークを使うので、ベース環境が動いていなければ `variant up` は断る。
+
+ベース環境は画面を開かないので、`--no-slot` で枠を取らずに起動する (url は `http://web.mistems-main.orb.local:3000/` になる)。seed のスナップショットの画像の URL もこの url なので、variant でもベースが動いていれば画像が表示される。
 
 ### 5. backend・migration のブランチを 1 本ずつ起動する
 
@@ -88,6 +90,8 @@ variant はベース環境の Redis とネットワークを使うので、ベ�
 orb-dev.sh variant prepare <branch>
 orb-dev.sh variant up <branch>
 ```
+
+variant は `up` のときに枠 (`devN`) を 1 つ取る。枠が埋まっていると `variant up` は枠の一覧を出して止まる。そのときは残りのブランチを起動せず、手順 6 の報告で「枠待ち」と書く。ほかのセッションの環境を止めて枠を空けない。
 
 `prepare` の終了コードで分岐する。
 
@@ -148,7 +152,7 @@ orb-dev.sh variant status
 | --- | --- |
 | ブランチ | riin のブランチ名 |
 | 種類 | frontend / backend / migration / other |
-| URL | backend・migration は `http://variant-<slug>.localhost:3080/`。frontend は「frontend-variants.yml に追記」と書く |
+| URL | backend・migration は、取った枠の `http://devN.localhost:3080/` (`variant status` の URL の列、または `orb-dev.sh slots`)。frontend は「frontend-variants.yml に追記」と書く。枠が足りずに起動しなかったものは「枠待ち」と書く |
 | DB | `base` (ベース環境の DB を共有) / `vdb` (自分専用の DB) / `-` (frontend) |
 
 起動できなかったブランチは、表の下に理由 (コンフリクトの未解消、メモリ不足など) を書く。
@@ -179,8 +183,8 @@ orb-dev.sh variant status
 3. 作り直す。順序を守る
    1. `orb-dev.sh variant down-all -v` で variant をすべて止め、volume も消す。variant の web がベースの network と pnpm のストアを使っているので、先に止めないとベースの `down` が途中で失敗する。種類 3 の `vdb` は古いベースの seed から作ったので、作り直す
    2. ベース環境を作り直す
-      - migration が進んだとき: `orb-dev.sh down /Users/riin/workspace/misskey-worktrees/mistems-main -v` → `orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod --seed`。`up --seed` は既存の DB に seed を重ねるので、`-v` で DB を消してから行う
-      - migration が同じでビルドだけが古いとき: `orb-dev.sh down /Users/riin/workspace/misskey-worktrees/mistems-main` → `orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod` (DB はそのまま使う)
+      - migration が進んだとき: `orb-dev.sh down /Users/riin/workspace/misskey-worktrees/mistems-main -v` → `orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod --no-slot --seed`。`up --seed` は既存の DB に seed を重ねるので、`-v` で DB を消してから行う
+      - migration が同じでビルドだけが古いとき: `orb-dev.sh down /Users/riin/workspace/misskey-worktrees/mistems-main` → `orb-dev.sh up /Users/riin/workspace/misskey-worktrees/mistems-main --prod --no-slot` (DB はそのまま使う)
    3. 各 variant の worktree とブランチを消す (`git -C /Users/riin/workspace/misskey-worktrees/mistems-main worktree remove <variant の worktree>` と `git -C /Users/riin/workspace/misskey-worktrees/mistems-main branch -D variant/<slug>`)
    4. 手順 1 から実行し直す。台帳の「統合待ち」に残っているブランチだけを `prepare` / `up` する。台帳から外れた (統合された、または栄誉の殿堂に移った) ブランチは作り直さない
 

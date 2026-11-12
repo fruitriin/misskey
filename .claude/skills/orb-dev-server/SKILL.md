@@ -1,45 +1,57 @@
 ---
 name: orb-dev-server
-description: Use whenever starting, stopping, or checking a Misskey dev server (`pnpm dev`) for a worktree on this machine — runs pnpm dev, PostgreSQL and Redis inside OrbStack containers per worktree so ports 3000 / 5173 / 5432 / 6379 never collide with other worktrees or projects. Prefer this over running `pnpm dev` on the host. "開発サーバー起動して"、"dev サーバー"、"動作確認したい"、"pnpm dev"、"検証環境を止めて" 等の発話で起動する。
+description: Use whenever starting, stopping, or checking a Misskey dev server (`pnpm dev`) for a worktree on this machine — runs pnpm dev, PostgreSQL and Redis inside OrbStack containers per worktree and serves each one on a fixed slot URL (`http://devN.localhost:3080/`), so ports never collide with other worktrees or projects and Claude can log in with the test admin account. Prefer this over running `pnpm dev` on the host. "開発サーバー起動して"、"dev サーバー"、"動作確認したい"、"pnpm dev"、"検証環境を止めて" 等の発話で起動する。
 ---
 
 # orb-dev-server
 
 worktree ごとに独立した Misskey 開発サーバーを OrbStack 上で立てる。
-DB・Redis・Misskey のポートはホストに公開しない。開発モードは `http://web.<project>.orb.local:3000/`、本番モード (`--prod`) と variant は `http://<project>.localhost:3080/` で開く (下の「*.localhost の共用プロキシ」を参照)。`--lan` のときだけ、LAN 内の端末向けにポートを公開する。
+DB・Redis・Misskey のポートはホストに公開しない。環境は `up` のときに空いている枠 (既定は `dev1`〜`dev10`) を 1 つ取り、`http://devN.localhost:3080/` で開く。開発モード・本番モード (`--prod`)・variant のどれも同じである (下の「枠と共用プロキシ」を参照)。ホストに公開するのは共用プロキシの 3080 番だけである。`--lan` のときだけ、LAN 内の端末向けにポートを公開する。
 
 ## コマンド
 
 ```bash
-.claude/skills/orb-dev-server/scripts/orb-dev.sh up     [worktree] [--prod] [--seed] [--lan | --lan-mdns]  # 起動して URL を表示 (初回は管理者も作成)
+.claude/skills/orb-dev-server/scripts/orb-dev.sh up     [worktree] [--prod] [--seed] [--slot=devN | --no-slot | --lan | --lan-mdns]  # 枠を取って起動し URL を表示 (初回は管理者も作成)
+.claude/skills/orb-dev-server/scripts/orb-dev.sh slots                # 枠の一覧 (枠・環境・状態・URL・ワークツリー)
 .claude/skills/orb-dev-server/scripts/orb-dev.sh status [worktree]
 .claude/skills/orb-dev-server/scripts/orb-dev.sh logs   [worktree]   # web のログを追う
-.claude/skills/orb-dev-server/scripts/orb-dev.sh down   [worktree] [-v]  # -v で DB・node_modules の volume も消す
+.claude/skills/orb-dev-server/scripts/orb-dev.sh down   [worktree] [-v]  # 止めて枠を返す。-v で DB・node_modules の volume も消す
 .claude/skills/orb-dev-server/scripts/orb-dev.sh seed     [worktree]          # 開発用データを入れてスナップショットを取る
 .claude/skills/orb-dev-server/scripts/orb-dev.sh snapshot [worktree] [名前]   # 今の DB と files/ を保存する (名前の既定は seed)
 .claude/skills/orb-dev-server/scripts/orb-dev.sh restore  [worktree] [名前]   # 保存した状態に戻す (名前の既定は seed)
 ```
 
+- `up` は空いている枠を取る。`--slot=dev3` のように指定もできる。既に枠を持っている環境は同じ枠を使い続ける。枠がすべて埋まっていれば起動せず、枠の一覧を表示して止まる。そのときは使っていない環境を `down` してから起動し直す (ほかのセッションの環境を勝手に止めない)
+- `up --no-slot` は枠を取らず、`http://web.<project>.orb.local:3000/` で起動する。variant のベース環境 (mistems-main) のように、画面を開かない環境に使う
 - `up --prod` は `pnpm dev` の代わりに本番ビルド (`pnpm build` → `pnpm migrate` → `pnpm start`) で起動する。初回はビルドがあるので待ち時間の上限を 30 分にしている (開発モードは 15 分)
 - `up --seed` は起動と管理者作成のあとに、キーの合う `seed` のスナップショットがあれば確認なしで `restore` する。現在のデータは上書きされる。無ければ `seed` を実行する
-- `up --lan` は、LAN 内の端末 (スマホの実機など) から `http://<Mac の LAN の IP アドレス>:<ポート>/` で開けるようにする。ポートは 3000 から順に、ホストで空いているものを使う。`--lan` なしで `up` し直すと orb.local に戻る (詳しくは「LAN 内の端末から開く」)
+- `up --lan` は、LAN 内の端末 (スマホの実機など) から `http://<Mac の LAN の IP アドレス>:<ポート>/` で開けるようにする。ポートは 3000 から順に、ホストで空いているものを使う。枠は返す。`--lan` なしで `up` し直すと枠に戻る (詳しくは「LAN 内の端末から開く」)
 - `seed` は管理者以外のユーザーがいない環境にだけ入れる。データが既にあるときは何も変えずに止まるので、`down -v` してから入れ直すか、`restore` で戻す
 - `worktree` を省略するとカレントディレクトリの worktree を対象にする
 - スクリプトはこのブランチ (skill の本籍) にしか無いことがある。対象 worktree に無ければ、mistems-main か claudeImplement worktree のものをフルパスで呼ぶ
 - 初回の `up` は依存のインストールで数分かかる。`run_in_background` で実行して完了通知を待つとよい
-- 管理者アカウントは `admin` / `admin1234`。ユーザーが 1 人もいないときだけ作る
-- 動作確認は Playwright MCP で上記 URL を開く
+- 管理者アカウントは `admin` / `admin1234`。ユーザーが 1 人もいないときだけ作る。トークンは全環境で `orbdevadmintoken` にそろえる (下の「ログインの維持」)
+- Claude が自分で確かめるときは、Playwright MCP (isolated) で `http://devN.localhost:3080/` を開き、`admin` / `admin1234` でログインする。`*.localhost` はローカルの開発用ホストなので、Claude がテスト用の認証情報を入力してよい。Playwright はセッションをまたいでログイン状態を残さないので、毎回ログインする
+- ユーザーに見せるときは、内蔵ブラウザで同じ URL を開く。サイトの許可の確認は枠ごとに最初の 1 回だけ出る
 
-## *.localhost の共用プロキシ
+## 枠と共用プロキシ
 
-本番モードの環境と variant は、Misskey の `url` を `http://<project>.localhost:3080/` にする。
+```
+ブラウザ ── http://devN.localhost:3080/ ──▶ ホスト 127.0.0.1:3080 の Caddy (orb-dev-proxy)
+  ├ /embed_vite/ の vite-hmr の WebSocket → devN.mistems-slot.local:5174
+  ├ それ以外の vite-hmr の WebSocket     → devN.mistems-slot.local:5173
+  └ 通常の HTTP と /streaming            → devN.mistems-slot.local:3080 (Misskey)
+```
 
-- ブラウザは `*.localhost` を 127.0.0.1 に向ける。ホストの `127.0.0.1:3080` に 1 つだけ置いた Caddy (compose のプロジェクト `orb-dev-proxy`、設定は `~/.cache/misskey-orb-dev/orb-dev-proxy/`) が、ホスト名で `web.<project>.orb.local:3000` へ振り分ける。ホストに公開するポートはこの 1 つだけなので、環境がいくつあっても取り合わない
-- Misskey はコンテナの中で今までどおり 3000 番で待ち受ける。orb.local の URL (seed のスナップショットに入っている画像の URL など) もそのまま開ける
-- Misskey が自分の url を取りに行くとき (画像のプロキシなど) のために、web コンテナでは `<project>.localhost` を `host-gateway` に向け、同じプロキシを通して自分に戻す
-- ポートは `ORB_DEV_LOCALHOST_PORT` で変えられる。プロキシは `up --prod` と `variant up` で自動で起動し、設定が変わっていれば作り直す。止めるときは `docker compose -p orb-dev-proxy -f ~/.cache/misskey-orb-dev/orb-dev-proxy/compose.yml down`
-- 開発モードは vite の HMR が url のホスト名を使うので、orb.local のままにする。プロジェクト名に `_` がある環境も、ホスト名にできないので orb.local のままにする
-- ログイン状態や設定はブラウザの中で URL (オリジン) ごとに分かれる。orb.local で開いていた環境を `*.localhost` に移すと、ログインし直しになる
+- 枠を取った環境の web コンテナには、OrbStack の独自ドメインのラベル `dev.orbstack.domains=devN.mistems-slot.local` を付ける。Caddy は Host の 1 つ目のラベル (`devN`) でそのドメインへ送るので、枠と環境の対応が変わっても Caddy の設定は変わらない。設定は `~/.cache/misskey-orb-dev/orb-dev-proxy/` にあり、`up` のたびに確かめて、違えば作り直す
+- 枠を取った環境の Misskey は、コンテナの中でも 3080 番で待ち受ける。web コンテナでは `devN.localhost` を 127.0.0.1 に向ける。Misskey が自分の url を取りに行くとき (画像のプロキシなど) も、backend が vite へ中継するとき (url のホスト名:5173) も、コンテナの中で自分につながる
+- **枠の台帳**は `~/.cache/misskey-orb-dev/slots/devN/owner` (プロジェクト名・ワークツリー・取った時刻) である。`mkdir` の成否で枠を取るので、並行セッションが同時に `up` しても同じ枠を取り合わない。web コンテナが無くなった環境の枠は、次の `up` が空きとして扱う。コンテナが止まっているだけの枠は空きにしない
+- 枠の数は環境変数 `ORB_DEV_SLOT_COUNT` (既定 10)、プロキシのポートは `ORB_DEV_LOCALHOST_PORT` (既定 3080) で変えられる
+- **HMR**: vite の HMR は `packages/frontend/vite.config.ts` の `hmr.clientPort: 5173` で接続先のポートが決め打ちされている。開発モードで枠を取った環境では、`clientPort` を 3080 に置き換えたコピーを `~/.cache/misskey-orb-dev/<project>/vite.config.frontend.ts` (埋め込みは `vite.config.frontend-embed.ts`) に作り、コンテナの中で重ねてマウントする。ワークツリーのファイルは変えない。上流で `clientPort: 5173,` の書き方が変わったら、`up` は止まって知らせる。そのときは `orb-dev.sh` の `write_vite_overlays` を直す
+- **URL の書き換え**: 添付・アバター・絵文字などの URL は絶対 URL で DB に残る。`up` は前回の url (生成済みの `default.yml`) と今回の url が違えば (枠が替わった、`--lan` や `--no-slot` と行き来した)、web を起動する前に `seed/rewrite-url.sql` で DB の中のオリジンを書き換え、Redis を空にする。`public` スキーマの文字列・json・文字列の配列の列をすべて見て、1 つのトランザクションで書き換える。スナップショットには取ったときの url (`<名前>.url`) を残し、`restore` のあとにも書き換える
+- **ログインの維持**: `up`・`seed`・`restore` のあとに、`admin` のトークンを固定値 `orbdevadmintoken` にそろえる。ブラウザは枠のホスト名ごとにトークンを覚えているので、枠につなぐ環境を替えてもログインしたままになる
+- ログイン状態や設定はブラウザの中で URL (オリジン) ごとに分かれる。`--lan` で開いていた環境を枠に戻すと、ログインし直しになる
+- 以前の版の `<project>.localhost:3080` で動いている環境は、`up` し直すまでは今までどおり開ける (Caddy が `devN` 以外のホストを `web.<project>.orb.local:3000` へ回す)。`up` し直すと枠を取り、URL を書き換える
 
 ## 仕組み
 
@@ -53,14 +65,14 @@ DB・Redis・Misskey のポートはホストに公開しない。開発モー�
 - **ホストで `pnpm dev` を動かさない理由**: vite のポート (5173 / 5174) は環境変数で変えられない。backend は `VITE_PORT` を読んでプロキシするが vite 側は読まないので、他の vite が 5173 にいると別プロジェクトへプロキシしてしまう
 - **node_modules はホストと分ける**: ホストの node_modules は macOS 向けのネイティブモジュール (sharp, re2 など) を含み、Linux コンテナでは動かない。ルートと `packages/*/node_modules` を名前付き volume にしている
 - **Node 25 以降は corepack が無い**: 公式イメージに同梱されなくなったので、`package.json` の `packageManager` のバージョンを `npm i -g` で入れている
-- **vite は `.config/default.yml` を固定パスで読む**: `allowedHosts` を URL のホスト名から作るので、URL を orb.local のものにしないと vite が接続を拒否する
-- **seed は web コンテナの中で実行する**: ホストの Node.js は `*.orb.local` を引けないことがある。そのため seed の API の段は web コンテナ内から `http://localhost:<Misskey が待ち受けるポート>` (通常は 3000、`--lan` では選んだポート) に対して実行する
+- **vite は `.config/default.yml` を固定パスで読む**: `allowedHosts` を url のホスト名 (`devN.localhost`) から作る。Caddy は Host ヘッダーをそのまま渡すので、vite は接続を受け付ける
+- **seed は web コンテナの中で実行する**: ホストの Node.js は `*.orb.local` を引けないことがある。そのため seed の API の段は web コンテナ内から `http://localhost:<Misskey が待ち受けるポート>` (枠では 3080、`--no-slot` では 3000、`--lan` では選んだポート) に対して実行する
 - **`files/` もスナップショットに含める**: 添付画像・アバターなどの実体は worktree の `files/` にあり、DB だけ戻すと参照先が無くなる。`files/` の tar はホスト側で作り、戻す
 - **新しい worktree でも migrate が動くように、開発モードでは起動のたびに `pnpm build-pre` を実行する**: `pnpm migrate` は `built/meta.json` を読む。バックエンドのビルドは `packages/backend/built/config.js` が無いときだけ行う。`--prod` では `pnpm build` がこれらを作るので実行しない
 
 ## LAN 内の端末から開く (`--lan`)
 
-`*.orb.local` は Mac の中でしか名前を引けないので、スマホなどの実機からは開けない。`up --lan` は次のように切り替える。
+`*.localhost` と `*.orb.local` は Mac の中でしか開けないので、スマホなどの実機からは開けない。`up --lan` は次のように切り替える。
 
 - `url` を `http://<Mac の LAN の IPv4 アドレス>:<ポート>/` にする。IP アドレスは既定ルートのインターフェースのもの (`route -n get default` の interface → `ipconfig getifaddr <interface>`) を使う
 - `--lan-mdns` は、IP アドレスの代わりに `<Mac のホスト名>.local` (`scutil --get LocalHostName`) を使う。Android の Chrome は mDNS の `.local` を引けない (`DNS_PROBE_FINISHED_NXDOMAIN` になる) ので、既定は IP アドレスにしている
@@ -69,7 +81,7 @@ DB・Redis・Misskey のポートはホストに公開しない。開発モー�
 - vite の HMR 用に 5173 番 (埋め込みは 5174 番) も同じ番号で公開する。vite の HMR は、ページを開いた端末から 5173 番へ直接つなぐ (`hmr.clientPort` が固定) ためで、つながらないと Misskey の起動処理が「読み込みに失敗しました」になる。ホストの 5173 番がほかに使われているときは `--lan` で起動しない。このため `--lan` の環境は同時に 1 つしか動かせない
 - backend は vite への中継先を「`url` のホスト名:5173」で作る。IP アドレスのときは、コンテナの中から Mac の 5173 番へ中継し、公開した 5173 番を経由して自分の vite に戻ってくる。`--lan-mdns` のときは、コンテナの中だけ `extra_hosts` でその名前を 127.0.0.1 に向ける
 - **IP アドレスが変わったら (別のネットワークにつないだときなど)、`up --lan` し直す**。URL が作り直される
-- **`url` を変えたら、データも入れ直す**。アップロードしたファイル・アバター・絵文字などの URL は絶対 URL で DB に残るので、古いホストのままだと画像が出ない。スナップショットも古い URL を持っているので `restore` では直らない。この環境で作ったデータしかないなら、web を止めて DB を作り直し (`dropdb` → `createdb`)、`files/` を空にし、Redis を `flushall` してから `up --lan` → `seed` する
+- `url` が変わったときの DB の中の URL は、`up` が書き換える (「枠と共用プロキシ」の「URL の書き換え」)。データを入れ直す必要はない
 - 開けないときは、端末が同じネットワークにいるかを確かめる。macOS のファイアウォールでは、ポートを待ち受ける「OrbStack Helper」の受信が許可されている必要がある (`/usr/libexec/ApplicationFirewall/socketfilterfw --listapps` で確認できる)
 
 ## 開発用データ (seed / snapshot / restore)
@@ -125,7 +137,7 @@ DB・Redis・Misskey のポートはホストに公開しない。開発モー�
 `<branch>` は riin のブランチ名 (例: `claude/renote-lock-feature-7J0NA`) である。
 
 - 種類は origin/develop との差分で決める。migration を追加するものは `vdb` (自分専用の DB)、backend を変えるものはベース環境の DB を使う。frontend だけのものは `prepare` / `up` を断る (frontend-variants.yml で確認する)
-- variant の worktree は `<ベースの親>/variant-<slug>`、ブランチは `variant/<slug>` (ローカルのみ)、compose のプロジェクトは `variant-<slug>`、URL は `http://variant-<slug>.localhost:3080/` である (`http://web.variant-<slug>.orb.local:3000/` でも開ける)。slug はブランチ名の最後の `/` 以降を小文字にし、`[a-z0-9-]` 以外を `-` にしたものである
+- variant の worktree は `<ベースの親>/variant-<slug>`、ブランチは `variant/<slug>` (ローカルのみ)、compose のプロジェクトは `variant-<slug>` である。URL は `variant up` で取った枠の `http://devN.localhost:3080/` である (`variant status` か `slots` で分かる)。枠が埋まっていれば `variant up` は止まる。ベース環境は `up --prod --no-slot --seed` で、枠を取らずに起動する。slug はブランチ名の最後の `/` 以降を小文字にし、`[a-z0-9-]` 以外を `-` にしたものである
 - `prepare` は、起点 (件名が `Version updated to:` の最新のコミット、無ければ merge-base) からブランチ先端までの差分を、ベースの HEAD に 3-way で当ててコミットする。コンフリクトの解消のコミットは、rerere の記録が `main-統合.sh` に影響しないよう `git -c rerere.enabled=false commit` で行う
 - variant のコンテナは `MK_ONLY_SERVER=1` と `MK_NO_DAEMONS=1` で起動する。キューのワーカーとデーモンが動かないので、積まれたジョブ (配送・通知の後処理など) は処理されず、定期ジョブも動かない。配送や通知の後処理を伴う動作は確認できない
 - Redis はベース環境のものを共有するが、キーの接頭辞は URL のホスト名から決まる (`packages/backend/src/config.ts` の `redis.prefix` の既定値) ので variant ごとに分かれる。接頭辞を揃えると、variant のコードがベース環境の定期ジョブを書き換えたり消したりするため、揃えてはならない
@@ -147,3 +159,4 @@ DB・Redis・Misskey のポートはホストに公開しない。開発モー�
 （実施したときの注意点などを自由に記載）
 
 - 2026-10-10: emojiDropUpload worktree で作成・動作確認。依存インストール込みで初回の起動は 1〜2 分だった
+- 2026-11-12: 枠の仕組みを入れた。mistems-trial を dev1 で起動し、orb.local からの URL の書き換え、Playwright での admin のログイン、HMR の WebSocket (Caddy 経由) を確かめた。variant も dev2 で起動し、ベースの画像が表示された
