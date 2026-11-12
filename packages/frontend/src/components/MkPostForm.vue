@@ -29,7 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</button>
 				<button v-else class="_button" :class="[$style.headerRightItem, $style.visibility]" disabled>
 					<span><i class="ti ti-device-tv"></i></span>
-					<span :class="$style.headerRightButtonText">{{ targetChannel.name }}</span>
+					<span :class="$style.headerRightButtonText"><MkChannelName :channel="targetChannel"/></span>
 				</button>
 			</template>
 			<button v-if="visibility !== 'specified'" v-tooltip="i18n.ts._visibility.disableFederation" class="_button" :class="[$style.headerRightItem, { [$style.danger]: localOnly }]" :disabled="targetChannel != null" @click="toggleLocalOnly">
@@ -127,6 +127,8 @@ import type { MenuItem } from '@/types/menu.js';
 import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import type { UploaderItem } from '@/composables/use-uploader.js';
 import MkNotePreview from '@/components/MkNotePreview.vue';
+import MkChannelName from '@/components/MkChannelName.vue';
+import { isFederatedChannel } from '@/utility/channel.js';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
 import XTextCounter from '@/components/MkPostForm.TextCounter.vue';
 import MkPollEditor from '@/components/MkPollEditor.vue';
@@ -385,8 +387,7 @@ if ($i.isSilenced && visibility.value === 'public') {
 }
 
 if (targetChannel.value) {
-	visibility.value = 'public';
-	localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
+	applyChannelVisibility(targetChannel.value);
 }
 
 // 公開以外へのリプライ時は元の公開範囲を引き継ぐ
@@ -521,10 +522,22 @@ function updateFileName(file: Misskey.entities.DriveFile, name: Misskey.entities
 	files.value[files.value.findIndex(x => x.id === file.id)].name = name;
 }
 
+/**
+ * チャンネル投稿の可視性と連合 (localOnly) を、チャンネル側の連合設定 (federationPolicy) に合わせる。
+ * サーバー側 (NoteCreateService.applyChannelFederationPolicy) の決定と一致させ、表示と実際の挙動が食い違わないようにする。
+ * - 連合しないチャンネル: public + localOnly (従来のチャンネル投稿)
+ * - 連合する (ひかえめ): home で連合
+ * - 連合する (公開): public で連合
+ */
+function applyChannelVisibility(channel: NonNullable<typeof targetChannel.value>) {
+	const federated = isFederatedChannel(channel);
+	localOnly.value = !federated;
+	visibility.value = federated && channel.federationPolicy === 'home' ? 'home' : 'public';
+}
+
 function setVisibility() {
 	if (targetChannel.value) {
-		visibility.value = 'public';
-		localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
+		applyChannelVisibility(targetChannel.value);
 		return;
 	}
 
@@ -546,8 +559,7 @@ function setVisibility() {
 
 async function toggleLocalOnly() {
 	if (targetChannel.value) {
-		visibility.value = 'public';
-		localOnly.value = true; // TODO: チャンネルが連合するようになった折には消す
+		applyChannelVisibility(targetChannel.value);
 		return;
 	}
 
