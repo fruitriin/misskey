@@ -100,10 +100,14 @@ export type DbUserImportToDbJobData = {
 	withReplies?: boolean;
 };
 
-export type ObjectStorageJobData = ObjectStorageFileJobData | Record<string, unknown>;
+export type ObjectStorageJobData = ObjectStorageFileJobData | ObjectStorageFinalizeDirectUploadJobData | Record<string, unknown>;
 
 export type ObjectStorageFileJobData = {
 	key: string;
+};
+
+export type ObjectStorageFinalizeDirectUploadJobData = {
+	uploadId: string;
 };
 
 export type EndedPollNotificationJobData = {
