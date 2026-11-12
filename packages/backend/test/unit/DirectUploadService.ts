@@ -5,6 +5,7 @@
 
 process.env.NODE_ENV = 'test';
 
+import { Readable } from 'node:stream';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import {
@@ -12,6 +13,7 @@ import {
 	CompleteMultipartUploadCommand,
 	CreateMultipartUploadCommand,
 	DeleteObjectCommand,
+	GetObjectCommand,
 	HeadObjectCommand,
 	S3Client,
 } from '@aws-sdk/client-s3';
@@ -19,13 +21,15 @@ import { mockClient } from 'aws-sdk-client-mock';
 import { GlobalModule } from '@/GlobalModule.js';
 import { CoreModule } from '@/core/CoreModule.js';
 import { DirectUploadError, DirectUploadService, DIRECT_UPLOAD_PART_SIZE } from '@/core/DirectUploadService.js';
+import { DriveService } from '@/core/DriveService.js';
+import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { RoleService } from '@/core/RoleService.js';
 import { QueueService } from '@/core/QueueService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import type { MiLocalUser } from '@/models/User.js';
-import type { MiMeta } from '@/models/_.js';
+import type { MiMeta, UsersRepository } from '@/models/_.js';
 import type { TestingModule } from '@nestjs/testing';
 
 const alice = { id: 'alice0000000', host: null } as MiLocalUser;
@@ -183,6 +187,64 @@ describe('DirectUploadService', () => {
 			await service.abort(alice, uploadId);
 			expect(s3Mock.commandCalls(AbortMultipartUploadCommand)).toHaveLength(1);
 			await expect(service.getStatus(alice, uploadId)).rejects.toBeInstanceOf(DirectUploadError);
+		});
+	});
+
+	describe('finalize', () => {
+		const prepare = async () => {
+			const size = 3 * DIRECT_UPLOAD_PART_SIZE;
+			const { uploadId } = await service.init(alice, initArgs(size));
+			s3Mock.on(HeadObjectCommand).resolves({ ContentLength: size });
+			await service.complete(alice, uploadId, partsFor(3));
+			s3Mock.on(GetObjectCommand).resolves({ Body: Readable.from([Buffer.from('dummy')]) as never });
+			vi.spyOn(app.get<UsersRepository>(DI.usersRepository), 'findOneByOrFail').mockResolvedValue(alice as never);
+			return uploadId;
+		};
+
+		test('passes the pending key to addFile and deletes the pending object', async () => {
+			const uploadId = await prepare();
+			const addFile = vi.spyOn(app.get(DriveService), 'addFile').mockResolvedValue({ id: 'file00000001' } as never);
+
+			await service.finalize(uploadId);
+
+			expect(addFile).toHaveBeenCalledWith(expect.objectContaining({
+				user: alice,
+				name: 'movie.mp4',
+				force: true,
+				preUploadedKey: `files/direct-upload-pending/${uploadId}`,
+			}));
+			expect(await service.getStatus(alice, uploadId)).toMatchObject({ status: 'done', fileId: 'file00000001' });
+			expect(s3Mock.commandCalls(DeleteObjectCommand).map(c => c.args[0].input.Key)).toContain(`files/direct-upload-pending/${uploadId}`);
+		});
+
+		test('keeps the existing file on hash match and still deletes the pending object', async () => {
+			const uploadId = await prepare();
+			// force: false で同一ハッシュがあると addFile は既存ファイルを返す
+			vi.spyOn(app.get(DriveService), 'addFile').mockResolvedValue({ id: 'existing0001' } as never);
+
+			await service.finalize(uploadId);
+
+			expect(await service.getStatus(alice, uploadId)).toMatchObject({ status: 'done', fileId: 'existing0001' });
+			expect(s3Mock.commandCalls(DeleteObjectCommand)).toHaveLength(1);
+		});
+
+		test('maps addFile errors to error codes', async () => {
+			const uploadId = await prepare();
+			vi.spyOn(app.get(DriveService), 'addFile').mockRejectedValue(
+				new IdentifiableError('bd71c601-f9b0-4808-9137-a330647ced9b', 'Unallowed file type'),
+			);
+
+			await service.finalize(uploadId);
+
+			expect(await service.getStatus(alice, uploadId)).toMatchObject({ status: 'failed', errorCode: 'UNALLOWED_FILE_TYPE' });
+			expect(s3Mock.commandCalls(DeleteObjectCommand)).toHaveLength(1);
+		});
+
+		test('ignores an upload that is not processing', async () => {
+			const { uploadId } = await service.init(alice, initArgs(100 * MB));
+			const addFile = vi.spyOn(app.get(DriveService), 'addFile');
+			await service.finalize(uploadId);
+			expect(addFile).not.toHaveBeenCalled();
 		});
 	});
 });

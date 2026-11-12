@@ -3,27 +3,33 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import * as fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import {
 	AbortMultipartUploadCommand,
 	CompleteMultipartUploadCommand,
 	CreateMultipartUploadCommand,
+	GetObjectCommand,
 	HeadObjectCommand,
 	UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
-import type { MiMeta } from '@/models/_.js';
+import type { MiMeta, UsersRepository } from '@/models/_.js';
 import type { MiLocalUser } from '@/models/User.js';
 import { bindThis } from '@/decorators.js';
+import { IdentifiableError } from '@/misc/identifiable-error.js';
+import { createTemp } from '@/misc/create-temp.js';
 import { S3Service } from '@/core/S3Service.js';
 import { IdService } from '@/core/IdService.js';
 import { RoleService } from '@/core/RoleService.js';
 import { DriveService } from '@/core/DriveService.js';
 import { QueueService } from '@/core/QueueService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
+import type { Readable } from 'node:stream';
 
 export const DIRECT_UPLOAD_PART_SIZE = 10 * 1024 * 1024;
 const DIRECT_UPLOAD_MAX_PARTS = 1000;
@@ -64,6 +70,14 @@ type DirectUploadState = DirectUploadInitArgs & {
 	errorCode: DirectUploadErrorCode | null;
 };
 
+// addFile が投げる IdentifiableError の id（DriveService.addFile 参照）
+const ADD_FILE_ERROR_CODES: Record<string, DirectUploadErrorCode> = {
+	'c6244ed2-a39a-4e1c-bf93-f0fbd7764fa6': 'NO_FREE_SPACE',
+	'f9e4e5f3-4df4-40b5-b400-f236945f7073': 'MAX_FILE_SIZE_EXCEEDED',
+	'bd71c601-f9b0-4808-9137-a330647ced9b': 'UNALLOWED_FILE_TYPE',
+	'282f77bf-5816-4f72-9264-aa14d8261a21': 'INAPPROPRIATE',
+};
+
 @Injectable()
 export class DirectUploadService {
 	constructor(
@@ -75,6 +89,9 @@ export class DirectUploadService {
 
 		@Inject(DI.redis)
 		private redisClient: Redis.Redis,
+
+		@Inject(DI.usersRepository)
+		private usersRepository: UsersRepository,
 
 		private s3Service: S3Service,
 		private idService: IdService,
@@ -211,8 +228,41 @@ export class DirectUploadService {
 
 	@bindThis
 	public async finalize(uploadId: string): Promise<void> {
-		// 次の段階で実装する
-		throw new Error(`not implemented: ${uploadId}`);
+		const state = await this.loadState(uploadId);
+		if (state == null || state.status !== 'processing') return;
+
+		const [path, cleanup] = await createTemp();
+		try {
+			const obj = await this.s3Service.getS3Client(this.meta).send(new GetObjectCommand({
+				Bucket: this.meta.objectStorageBucket!,
+				Key: state.key,
+			}));
+			await pipeline(obj.Body as Readable, fs.createWriteStream(path));
+
+			const user = await this.usersRepository.findOneByOrFail({ id: state.userId });
+			const file = await this.driveService.addFile({
+				user,
+				path,
+				name: state.name,
+				comment: state.comment,
+				folderId: state.folderId,
+				force: state.force,
+				sensitive: state.isSensitive,
+				requestIp: state.requestIp,
+				requestHeaders: state.requestHeaders,
+				preUploadedKey: state.key,
+			});
+			await this.saveState(uploadId, { ...state, status: 'done', fileId: file.id });
+		} catch (err) {
+			const errorCode = err instanceof IdentifiableError ? (ADD_FILE_ERROR_CODES[err.id] ?? 'FAILED') : 'FAILED';
+			await this.saveState(uploadId, { ...state, status: 'failed', errorCode });
+			// ユーザー起因でない失敗はジョブの失敗として残し、管理画面のキューから追えるようにする
+			if (errorCode === 'FAILED') throw err;
+		} finally {
+			cleanup();
+			// 成功時は CopyObject 済み、失敗時・重複時は不要なので、どの場合も削除する
+			await this.driveService.deleteObjectStorageFile(state.key).catch(() => {});
+		}
 	}
 
 	private stateKey(uploadId: string): string {

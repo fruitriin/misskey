@@ -37,6 +37,7 @@ import { DeleteAccountProcessorService } from './processors/DeleteAccountProcess
 import { ExportFavoritesProcessorService } from './processors/ExportFavoritesProcessorService.js';
 import { CleanRemoteFilesProcessorService } from './processors/CleanRemoteFilesProcessorService.js';
 import { DeleteFileProcessorService } from './processors/DeleteFileProcessorService.js';
+import { FinalizeDirectUploadProcessorService } from './processors/FinalizeDirectUploadProcessorService.js';
 import { RelationshipProcessorService } from './processors/RelationshipProcessorService.js';
 import { TickChartsProcessorService } from './processors/TickChartsProcessorService.js';
 import { ResyncChartsProcessorService } from './processors/ResyncChartsProcessorService.js';
@@ -121,6 +122,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private importAntennasProcessorService: ImportAntennasProcessorService,
 		private deleteAccountProcessorService: DeleteAccountProcessorService,
 		private deleteFileProcessorService: DeleteFileProcessorService,
+		private finalizeDirectUploadProcessorService: FinalizeDirectUploadProcessorService,
 		private cleanRemoteFilesProcessorService: CleanRemoteFilesProcessorService,
 		private relationshipProcessorService: RelationshipProcessorService,
 		private tickChartsProcessorService: TickChartsProcessorService,
@@ -465,6 +467,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 				switch (job.name) {
 					case 'deleteFile': return this.deleteFileProcessorService.process(job);
 					case 'cleanRemoteFiles': return this.cleanRemoteFilesProcessorService.process(job);
+					case 'finalizeDirectUpload': return this.finalizeDirectUploadProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for objectStorage`);
 				}
 			};
