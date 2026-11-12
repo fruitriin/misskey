@@ -13,8 +13,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div v-if="fetching" :class="$style.loading">
 			<MkEllipsis/>
 		</div>
-		<div v-else-if="failed && rawItems.length === 0" :class="$style.loading">
-			<i class="ti ti-alert-triangle"></i> {{ i18n.ts.somethingHappened }}
+		<div v-else-if="fetchError != null && rawItems.length === 0" :class="$style.loading">
+			<i class="ti ti-alert-triangle"></i> {{ getRssFetchErrorText(fetchError) }}
 		</div>
 		<div v-else>
 			<Transition :name="$style.change" mode="default" appear>
@@ -40,7 +40,8 @@ import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import MkContainer from '@/components/MkContainer.vue';
 import { shuffle } from '@/utility/shuffle.js';
 import { i18n } from '@/i18n.js';
-import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
+import type { RssFetchError } from '@/utility/fetch-rss.js';
+import { fetchRss, getRssFetchErrorText, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
 
 const name = 'rssTicker';
 
@@ -115,7 +116,7 @@ const items = computed(() => {
 });
 const fetching = ref(true);
 // 取れなかったときは、前に取れた項目があればそれを流したままにする
-const failed = ref(false);
+const fetchError = ref<RssFetchError | null>(null);
 
 const key = ref(0);
 
@@ -124,19 +125,19 @@ let generation = 0;
 
 const tick = async () => {
 	const current = ++generation;
-	const newItems = await fetchRssItems(widgetProps.url);
+	const result = await fetchRss(widgetProps.url);
 	if (current !== generation) return;
-	failed.value = newItems == null;
+	fetchError.value = result.error ?? null;
 	fetching.value = false;
-	if (newItems == null) return;
-	rawItems.value = newItems;
+	if (result.items == null) return;
+	rawItems.value = result.items;
 	key.value++;
 };
 
 watch(() => widgetProps.url, () => {
 	// 前の URL で取れた項目は出さない
 	rawItems.value = [];
-	failed.value = false;
+	fetchError.value = null;
 	fetching.value = true;
 	tick();
 });

@@ -43,6 +43,13 @@ export const meta = {
 			kind: 'server',
 			httpStatusCode: 422,
 		},
+		fetchRssRecentlyFailed: {
+			message: 'Failed to fetch this RSS recently. Try again later.',
+			code: 'FETCH_RSS_RECENTLY_FAILED',
+			id: '13b64124-0af5-4ce9-90b3-9961f7b313f3',
+			kind: 'server',
+			httpStatusCode: 422,
+		},
 		fetchRssUnavailable: {
 			message: 'RSS fetching is temporarily unavailable.',
 			code: 'FETCH_RSS_UNAVAILABLE',
@@ -261,7 +268,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps) => {
 			const url = this.normalizeUrl(ps.url);
 			if (this.isRecentlyFailed(url)) {
-				throw new ApiError(meta.errors.fetchRssFailed);
+				throw new ApiError(meta.errors.fetchRssRecentlyFailed);
 			}
 
 			const inFlightRequest = this.inFlightRequests.get(url);

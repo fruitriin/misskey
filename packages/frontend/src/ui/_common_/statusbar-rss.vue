@@ -32,7 +32,7 @@ import * as Misskey from 'misskey-js';
 import { useInterval } from '@@/js/use-interval.js';
 import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import { shuffle } from '@/utility/shuffle.js';
-import { fetchRssItems, getRssRefreshIntervalMs } from '@/utility/fetch-rss.js';
+import { fetchRss, getRssRefreshIntervalMs } from '@/utility/fetch-rss.js';
 
 const props = defineProps<{
 	url: string;
@@ -49,7 +49,7 @@ const fetching = ref(true);
 const key = ref(0);
 
 const tick = async () => {
-	const newItems = await fetchRssItems(props.url);
+	const { items: newItems } = await fetchRss(props.url);
 	// 取れなかったときは、前に取れた項目があればそれを流したままにする
 	fetching.value = false;
 	if (newItems == null) return;

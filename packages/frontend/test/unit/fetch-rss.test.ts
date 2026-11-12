@@ -4,7 +4,7 @@
  */
 
 import { afterEach, assert, describe, test, vi } from 'vitest';
-import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
+import { fetchRss, getRssFetchErrorText, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
 
 describe('getRssRefreshIntervalMs', () => {
 	test('間隔は分で受け取り、ミリ秒で返す', () => {
@@ -27,7 +27,7 @@ describe('getRssRefreshIntervalMs', () => {
 	});
 });
 
-describe('fetchRssItems', () => {
+describe('fetchRss', () => {
 	const fetchMock = vi.mocked(window.fetch);
 
 	afterEach(() => {
@@ -44,25 +44,40 @@ describe('fetchRssItems', () => {
 			{ title: 'b', link: 'javascript:alert(1)' },
 			{ title: 'c' },
 		] });
-		const items = await fetchRssItems('https://example.com/feed.xml');
-		assert.deepStrictEqual(items?.map(i => i.title), ['a']);
+		const result = await fetchRss('https://example.com/feed.xml');
+		assert.deepStrictEqual(result.items?.map(i => i.title), ['a']);
+		assert.isUndefined(result.error);
 		const requested = new URL(String(fetchMock.mock.calls[0][0]));
 		assert.strictEqual(requested.pathname, '/api/fetch-rss');
 		assert.strictEqual(requested.searchParams.get('url'), 'https://example.com/feed.xml');
 	});
 
-	test('サーバーがエラーを返したら null を返す (エラーの応答をフィードとして読まない)', async () => {
-		respond(422, { error: { code: 'FETCH_RSS_FAILED' } });
-		assert.isNull(await fetchRssItems('https://example.com/broken.xml'));
+	test.each([
+		['INVALID_URL', 400, 'invalidUrl'],
+		['FETCH_RSS_FAILED', 422, 'failed'],
+		['FETCH_RSS_RECENTLY_FAILED', 422, 'recentlyFailed'],
+		['FETCH_RSS_UNAVAILABLE', 503, 'unavailable'],
+		['SOMETHING_ELSE', 500, 'unknown'],
+	] as const)('サーバーが %s を返したら、理由 %s を返す', async (code, status, error) => {
+		respond(status, { error: { code } });
+		const result = await fetchRss('https://example.com/feed.xml');
+		assert.isUndefined(result.items);
+		assert.strictEqual(result.error, error);
 	});
 
-	test('通信に失敗したら null を返す', async () => {
+	test('通信に失敗したら unknown を返す', async () => {
 		fetchMock.mockRejectedValueOnce(new TypeError('network error'));
-		assert.isNull(await fetchRssItems('https://example.com/feed.xml'));
+		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).error, 'unknown');
 	});
 
-	test('items のない応答は null を返す', async () => {
+	test('items のない応答は failed を返す', async () => {
 		respond(200, { title: 'not a feed' });
-		assert.isNull(await fetchRssItems('https://example.com/feed.xml'));
+		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).error, 'failed');
+	});
+
+	test('理由ごとに、画面に出す文がある', () => {
+		for (const error of ['invalidUrl', 'failed', 'recentlyFailed', 'unavailable', 'unknown'] as const) {
+			assert.isNotEmpty(getRssFetchErrorText(error));
+		}
 	});
 });

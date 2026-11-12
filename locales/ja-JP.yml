@@ -2654,6 +2654,11 @@ _widgets:
   birthdayFollowings: "もうすぐ誕生日のユーザー"
   chat: "ダイレクトメッセージ"
 
+_rssFetchError:
+  invalidUrl: "URL の形式が正しくありません"
+  failed: "RSS を取得できませんでした。RSS ではないページか、サイトに接続できない可能性があります"
+  recentlyFailed: "少し前に取得に失敗した URL です。10 分ほどたってから、もう一度試してください"
+  unavailable: "サーバーが混み合っています。しばらくしてから、もう一度試してください"
 _widgetOptions:
   showHeader: "ヘッダーを表示"
   transparent: "背景を透明にする"

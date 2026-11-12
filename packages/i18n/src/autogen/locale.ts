@@ -10092,6 +10092,24 @@ export interface Locale extends ILocale {
          */
         "chat": string;
     };
+    "_rssFetchError": {
+        /**
+         * URL の形式が正しくありません
+         */
+        "invalidUrl": string;
+        /**
+         * RSS を取得できませんでした。RSS ではないページか、サイトに接続できない可能性があります
+         */
+        "failed": string;
+        /**
+         * 少し前に取得に失敗した URL です。10 分ほどたってから、もう一度試してください
+         */
+        "recentlyFailed": string;
+        /**
+         * サーバーが混み合っています。しばらくしてから、もう一度試してください
+         */
+        "unavailable": string;
+    };
     "_widgetOptions": {
         /**
          * ヘッダーを表示

@@ -6,6 +6,7 @@
 import * as Misskey from 'misskey-js';
 import { url as base } from '@@/js/config.js';
 import { tryParseUrl } from '@@/js/url.js';
+import { i18n } from '@/i18n.js';
 
 /**
  * RSS を取り直す間隔の下限・上限・既定値 (分)。
@@ -26,26 +27,58 @@ export function getRssRefreshIntervalMs(min: number): number {
 type RssItem = Misskey.entities.FetchRssResponse['items'][number];
 
 /**
- * fetch-rss でフィードを取る。取れなかったとき (サーバーがエラーを返した、通信に失敗した) は null を返す。
+ * 取れなかった理由。設定画面のプレビューで、閉じる前に URL が正しいかを確かめられるように分ける
+ * - invalidUrl: URL の形式が正しくない (http・https 以外、認証情報を含むなど)
+ * - failed: 取得か RSS としての解析に失敗した (RSS でないページ、サイトに接続できないなど)
+ * - recentlyFailed: 少し前に取得に失敗した URL なので、サーバーが取りに行かなかった
+ * - unavailable: サーバーが混み合っている
+ * - unknown: 通信の失敗など、それ以外
+ */
+export type RssFetchError = 'invalidUrl' | 'failed' | 'recentlyFailed' | 'unavailable' | 'unknown';
+
+export type RssFetchResult = { items: RssItem[]; error?: undefined } | { items?: undefined; error: RssFetchError };
+
+const ERROR_CODES: Record<string, RssFetchError> = {
+	INVALID_URL: 'invalidUrl',
+	FETCH_RSS_FAILED: 'failed',
+	FETCH_RSS_RECENTLY_FAILED: 'recentlyFailed',
+	FETCH_RSS_UNAVAILABLE: 'unavailable',
+};
+
+/**
+ * fetch-rss でフィードを取る。取れなかったときは、理由を返す。
  * 項目は、http・https のリンクを持つものだけを返す
  */
-export async function fetchRssItems(feedUrl: string): Promise<RssItem[] | null> {
+export async function fetchRss(feedUrl: string): Promise<RssFetchResult> {
 	const endpoint = new URL('/api/fetch-rss', base);
 	endpoint.searchParams.set('url', feedUrl);
 
-	let feed: Partial<Misskey.entities.FetchRssResponse>;
+	let body: unknown;
+	let ok: boolean;
 	try {
 		const res = await window.fetch(endpoint.toString());
-		if (!res.ok) return null;
-		feed = await res.json();
+		ok = res.ok;
+		body = await res.json();
 	} catch {
-		return null;
+		return { error: 'unknown' };
 	}
-	if (!Array.isArray(feed.items)) return null;
 
-	return feed.items.filter((item) => {
+	if (!ok) {
+		const code = (body as { error?: { code?: unknown } } | null)?.error?.code;
+		return { error: (typeof code === 'string' ? ERROR_CODES[code] : undefined) ?? 'unknown' };
+	}
+
+	const feed = body as Partial<Misskey.entities.FetchRssResponse> | null;
+	if (feed == null || !Array.isArray(feed.items)) return { error: 'failed' };
+
+	return { items: feed.items.filter((item) => {
 		if (!item.link) return false;
 		const itemUrl = tryParseUrl(item.link, base);
 		return itemUrl != null && ['http:', 'https:'].includes(itemUrl.protocol);
-	});
+	}) };
+}
+
+/** 取れなかった理由を、画面に出す文にする */
+export function getRssFetchErrorText(error: RssFetchError): string {
+	return error === 'unknown' ? i18n.ts.somethingHappened : i18n.ts._rssFetchError[error];
 }

@@ -190,8 +190,8 @@ describe('fetch-rss endpoint', () => {
 			expect(httpRequestService.send).toHaveBeenCalledTimes(1);
 
 			vi.advanceTimersByTime(9 * 60 * 1000);
-			// 正規化すると同じ URL になるものも同じに扱う
-			await expectApiError(exec('HTTPS://EXAMPLE.COM/broken.xml#x'), 'FETCH_RSS_FAILED', 422);
+			// 正規化すると同じ URL になるものも同じに扱う。覚えた失敗で断ったことは、別のエラーで分かる
+			await expectApiError(exec('HTTPS://EXAMPLE.COM/broken.xml#x'), 'FETCH_RSS_RECENTLY_FAILED', 422);
 			expect(httpRequestService.send).toHaveBeenCalledTimes(1);
 
 			vi.advanceTimersByTime(2 * 60 * 1000);
@@ -231,6 +231,7 @@ describe('fetch-rss endpoint', () => {
 	test('uses only the declared structured API errors', () => {
 		expect(new ApiError(meta.errors.invalidUrl)).toMatchObject({ code: 'INVALID_URL', httpStatusCode: 400 });
 		expect(new ApiError(meta.errors.fetchRssFailed)).toMatchObject({ code: 'FETCH_RSS_FAILED', httpStatusCode: 422 });
+		expect(new ApiError(meta.errors.fetchRssRecentlyFailed)).toMatchObject({ code: 'FETCH_RSS_RECENTLY_FAILED', httpStatusCode: 422 });
 		expect(new ApiError(meta.errors.fetchRssUnavailable)).toMatchObject({ code: 'FETCH_RSS_UNAVAILABLE', httpStatusCode: 503 });
 	});
 });
