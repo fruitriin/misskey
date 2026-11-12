@@ -40,7 +40,7 @@ import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import MkContainer from '@/components/MkContainer.vue';
 import { shuffle } from '@/utility/shuffle.js';
 import { i18n } from '@/i18n.js';
-import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_SEC } from '@/utility/fetch-rss.js';
+import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
 
 const name = 'rssTicker';
 
@@ -56,10 +56,13 @@ const widgetPropsDef = {
 		label: i18n.ts._widgetOptions._rssTicker.shuffle,
 		default: true,
 	},
-	refreshIntervalSec: {
-		type: 'number',
-		label: i18n.ts._widgetOptions._rss.refreshIntervalSec,
-		default: RSS_DEFAULT_REFRESH_INTERVAL_SEC,
+	refreshIntervalMin: {
+		type: 'range',
+		label: i18n.ts._widgetOptions._rss.refreshIntervalMin,
+		default: RSS_DEFAULT_REFRESH_INTERVAL_MIN,
+		min: RSS_MIN_REFRESH_INTERVAL_MIN,
+		max: RSS_MAX_REFRESH_INTERVAL_MIN,
+		step: RSS_REFRESH_INTERVAL_STEP_MIN,
 	},
 	maxEntries: {
 		type: 'number',
@@ -140,9 +143,9 @@ watch(() => widgetProps.url, () => {
 
 // useInterval は setup の中でしか開始できないので、間隔を変えたときに作り直せるよう、ここでは直接使う
 let intervalClear: (() => void) | null = null;
-watch(() => widgetProps.refreshIntervalSec, () => {
+watch(() => widgetProps.refreshIntervalMin, () => {
 	intervalClear?.();
-	intervalClear = createVisibilityAwareInterval(tick, getRssRefreshIntervalMs(widgetProps.refreshIntervalSec), {
+	intervalClear = createVisibilityAwareInterval(tick, getRssRefreshIntervalMs(widgetProps.refreshIntervalMin), {
 		immediate: true,
 	});
 }, { immediate: true });

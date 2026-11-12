@@ -4,22 +4,26 @@
  */
 
 import { afterEach, assert, describe, test, vi } from 'vitest';
-import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_SEC, RSS_MIN_REFRESH_INTERVAL_SEC } from '@/utility/fetch-rss.js';
+import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
 
 describe('getRssRefreshIntervalMs', () => {
-	test('下限より短い間隔は下限にする (これまでの既定値の 60 秒など)', () => {
-		assert.strictEqual(getRssRefreshIntervalMs(60), RSS_MIN_REFRESH_INTERVAL_SEC * 1000);
+	test('間隔は分で受け取り、ミリ秒で返す', () => {
+		assert.strictEqual(getRssRefreshIntervalMs(120), 120 * 60 * 1000);
+	});
+
+	test('下限より短い間隔は下限 (45 分) にする', () => {
+		assert.strictEqual(getRssRefreshIntervalMs(1), RSS_MIN_REFRESH_INTERVAL_MIN * 60 * 1000);
 		assert.strictEqual(getRssRefreshIntervalMs(1), 45 * 60 * 1000);
 	});
 
-	test('下限より長い間隔はそのまま使う', () => {
-		assert.strictEqual(getRssRefreshIntervalMs(2 * 60 * 60), 2 * 60 * 60 * 1000);
+	test('数でない値・0 以下は既定値 (180 分) にする', () => {
+		assert.strictEqual(getRssRefreshIntervalMs(Number.NaN), RSS_DEFAULT_REFRESH_INTERVAL_MIN * 60 * 1000);
+		assert.strictEqual(getRssRefreshIntervalMs(0), 180 * 60 * 1000);
+		assert.strictEqual(getRssRefreshIntervalMs(-1), 180 * 60 * 1000);
 	});
 
-	test('数でない値・0 以下は既定値にする', () => {
-		assert.strictEqual(getRssRefreshIntervalMs(Number.NaN), RSS_DEFAULT_REFRESH_INTERVAL_SEC * 1000);
-		assert.strictEqual(getRssRefreshIntervalMs(0), RSS_DEFAULT_REFRESH_INTERVAL_SEC * 1000);
-		assert.strictEqual(getRssRefreshIntervalMs(-1), RSS_DEFAULT_REFRESH_INTERVAL_SEC * 1000);
+	test('ステータスバーに保存されている秒の値 (これまでの既定値の 120 秒など) は、分に直すと下限になる', () => {
+		assert.strictEqual(getRssRefreshIntervalMs(120 / 60), 45 * 60 * 1000);
 	});
 });
 

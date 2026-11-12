@@ -60,7 +60,8 @@ const tick = async () => {
 	key.value++;
 };
 
-useInterval(tick, getRssRefreshIntervalMs(props.refreshIntervalSec), {
+// ステータスバーの設定は、ほかの種類と共通で秒で保存している
+useInterval(tick, getRssRefreshIntervalMs(props.refreshIntervalSec / 60), {
 	immediate: true,
 	afterMounted: true,
 });

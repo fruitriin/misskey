@@ -10205,6 +10205,10 @@ export interface Locale extends ILocale {
              */
             "refreshIntervalSec": string;
             /**
+             * 更新間隔(分)
+             */
+            "refreshIntervalMin": string;
+            /**
              * 最大表示件数
              */
             "maxEntries": string;

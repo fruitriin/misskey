@@ -37,9 +37,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkSwitch v-model="statusbar.props.shuffle">
 			<template #label>{{ i18n.ts.shuffle }}</template>
 		</MkSwitch>
-		<MkInput v-model="statusbar.props.refreshIntervalSec" manualSave type="number" :min="RSS_MIN_REFRESH_INTERVAL_SEC">
-			<template #label>{{ i18n.ts.refreshInterval }}</template>
-		</MkInput>
+		<MkRange v-model="rssRefreshIntervalMin" :min="RSS_MIN_REFRESH_INTERVAL_MIN" :max="RSS_MAX_REFRESH_INTERVAL_MIN" :step="RSS_REFRESH_INTERVAL_STEP_MIN" :textConverter="v => `${v}`">
+			<template #label>{{ i18n.ts._widgetOptions._rss.refreshIntervalMin }}</template>
+		</MkRange>
 		<MkRange v-model="statusbar.props.marqueeDuration" :min="5" :max="150" :step="1">
 			<template #label>{{ i18n.ts.speed }}</template>
 			<template #caption>{{ i18n.ts.fast }} &lt;-&gt; {{ i18n.ts.slow }}</template>
@@ -97,7 +97,7 @@ import MkRange from '@/components/MkRange.vue';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import { deepClone } from '@/utility/clone.js';
-import { RSS_DEFAULT_REFRESH_INTERVAL_SEC, RSS_MIN_REFRESH_INTERVAL_SEC } from '@/utility/fetch-rss.js';
+import { RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
 import { prefer } from '@/preferences.js';
 import type { MkSelectItem } from '@/components/MkSelect.vue';
 import type { StatusbarStore } from '@/preferences/def.js';
@@ -126,12 +126,20 @@ const userListsDef = computed(() => {
 	return (props.userLists ?? []).map(x => ({ label: x.name, value: x.id })) satisfies MkSelectItem[];
 });
 
+// ステータスバーの設定は、ほかの種類と共通で秒で保存するので、RSS の設定画面だけ分に直して見せる
+const rssRefreshIntervalMin = computed({
+	get: () => Math.max(RSS_MIN_REFRESH_INTERVAL_MIN, Math.round((statusbar.props.refreshIntervalSec ?? RSS_DEFAULT_REFRESH_INTERVAL_MIN * 60) / 60)),
+	set: (min: number) => {
+		statusbar.props.refreshIntervalSec = min * 60;
+	},
+});
+
 watch(() => statusbar.type, () => {
 	if (statusbar.type === 'rss') {
 		statusbar.name = 'NEWS';
 		statusbar.props.url = 'http://feeds.afpbb.com/rss/afpbb/afpbbnews';
 		statusbar.props.shuffle = true;
-		statusbar.props.refreshIntervalSec = RSS_DEFAULT_REFRESH_INTERVAL_SEC;
+		statusbar.props.refreshIntervalSec = RSS_DEFAULT_REFRESH_INTERVAL_MIN * 60;
 		statusbar.props.display = 'marquee';
 		statusbar.props.marqueeDuration = 100;
 		statusbar.props.marqueeReverse = false;

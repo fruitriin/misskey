@@ -8,16 +8,19 @@ import { url as base } from '@@/js/config.js';
 import { tryParseUrl } from '@@/js/url.js';
 
 /**
- * RSS を取り直す間隔の下限と既定値 (秒)。
+ * RSS を取り直す間隔の下限・上限・既定値 (分)。
  * RSS は頻繁に更新されるものではなく、取り直すたびにサーバーが相手のサイトへ取りに行くので、長めにとる
  */
-export const RSS_MIN_REFRESH_INTERVAL_SEC = 45 * 60;
-export const RSS_DEFAULT_REFRESH_INTERVAL_SEC = 180 * 60;
+export const RSS_MIN_REFRESH_INTERVAL_MIN = 45;
+export const RSS_MAX_REFRESH_INTERVAL_MIN = 24 * 60;
+export const RSS_DEFAULT_REFRESH_INTERVAL_MIN = 180;
+/** 設定画面のスライダーの刻み (分) */
+export const RSS_REFRESH_INTERVAL_STEP_MIN = 15;
 
-/** 設定の間隔 (秒) を、下限を守ったミリ秒にする */
-export function getRssRefreshIntervalMs(sec: number): number {
-	const value = Number.isFinite(sec) && sec > 0 ? sec : RSS_DEFAULT_REFRESH_INTERVAL_SEC;
-	return Math.max(RSS_MIN_REFRESH_INTERVAL_SEC, value) * 1000;
+/** 設定の間隔 (分) を、下限を守ったミリ秒にする */
+export function getRssRefreshIntervalMs(min: number): number {
+	const value = Number.isFinite(min) && min > 0 ? min : RSS_DEFAULT_REFRESH_INTERVAL_MIN;
+	return Math.max(RSS_MIN_REFRESH_INTERVAL_MIN, value) * 60 * 1000;
 }
 
 type RssItem = Misskey.entities.FetchRssResponse['items'][number];
