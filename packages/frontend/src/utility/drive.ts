@@ -17,6 +17,7 @@ import { instance } from '@/instance.js';
 import { globalEvents } from '@/events.js';
 import { getProxiedImageUrl } from '@/utility/media-proxy.js';
 import { genId } from '@/utility/id.js';
+import { DIRECT_UPLOAD_THRESHOLD, DirectUploadAbortedError, DirectUploadUnavailableError, directUploadFile } from '@/utility/drive-direct-upload.js';
 
 type UploadReturnType = {
 	filePromise: Promise<Misskey.entities.DriveFile>;
@@ -29,13 +30,37 @@ export class UploadAbortedError extends Error {
 	}
 }
 
-export function uploadFile(file: File | Blob, options: {
+type UploadOptions = {
 	name?: string;
 	folderId?: string | null;
 	isSensitive?: boolean;
 	caption?: string | null;
 	onProgress?: (ctx: { total: number; loaded: number; }) => void;
-} = {}): UploadReturnType {
+};
+
+export function uploadFile(file: File | Blob, options: UploadOptions = {}): UploadReturnType {
+	if (file.size <= DIRECT_UPLOAD_THRESHOLD || $i == null) return uploadFileLegacy(file, options);
+
+	const direct = directUploadFile(file, options);
+	let legacy: UploadReturnType | null = null;
+	const filePromise = direct.filePromise.catch(err => {
+		if (err instanceof DirectUploadAbortedError) throw new UploadAbortedError();
+		if (!(err instanceof DirectUploadUnavailableError)) throw err;
+		// 直接アップロードが使えないサーバーでは従来経路で送る
+		legacy = uploadFileLegacy(file, options);
+		return legacy.filePromise;
+	});
+
+	return {
+		filePromise,
+		abort: () => {
+			direct.abort();
+			legacy?.abort();
+		},
+	};
+}
+
+function uploadFileLegacy(file: File | Blob, options: UploadOptions = {}): UploadReturnType {
 	const xhr = new XMLHttpRequest();
 	const abortController = new AbortController();
 	const { signal } = abortController;
