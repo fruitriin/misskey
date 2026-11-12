@@ -70,6 +70,11 @@ describe('fetchRss', () => {
 		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).error, 'unknown');
 	});
 
+	test('フィードのタイトルも返す', async () => {
+		respond(200, { title: 'Example', items: [{ title: 'a', link: 'https://example.com/a' }] });
+		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).title, 'Example');
+	});
+
 	test('items のない応答は failed を返す', async () => {
 		respond(200, { title: 'not a feed' });
 		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).error, 'failed');

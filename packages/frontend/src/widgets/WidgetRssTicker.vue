@@ -30,9 +30,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, computed, onUnmounted } from 'vue';
-import * as Misskey from 'misskey-js';
-import { createVisibilityAwareInterval } from '@@/js/interval.js';
+import { ref, watch, computed } from 'vue';
 import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
@@ -40,8 +38,8 @@ import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import MkContainer from '@/components/MkContainer.vue';
 import { shuffle } from '@/utility/shuffle.js';
 import { i18n } from '@/i18n.js';
-import type { RssFetchError } from '@/utility/fetch-rss.js';
-import { fetchRss, getRssFetchErrorText, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
+import { getRssFetchErrorText, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
+import { useRssFeed } from '@/utility/use-rss-feed.js';
 
 const name = 'rssTicker';
 
@@ -106,7 +104,11 @@ const { widgetProps, configure } = useWidgetPropsManager(name,
 	emit,
 );
 
-const rawItems = ref<Misskey.entities.FetchRssResponse['items']>([]);
+// 取れなかったときは、前に取れた項目があればそれを流したままにする
+const { items: rawItems, fetching, error: fetchError } = useRssFeed({
+	url: () => widgetProps.url,
+	refreshIntervalMin: () => widgetProps.refreshIntervalMin,
+});
 const items = computed(() => {
 	const newItems = rawItems.value.slice(0, widgetProps.maxEntries);
 	if (widgetProps.shuffle) {
@@ -114,45 +116,11 @@ const items = computed(() => {
 	}
 	return newItems;
 });
-const fetching = ref(true);
-// 取れなかったときは、前に取れた項目があればそれを流したままにする
-const fetchError = ref<RssFetchError | null>(null);
 
+// 取れた項目が変わったら、流し直す
 const key = ref(0);
-
-// 取得中に URL が変わったら、古い応答は捨てる
-let generation = 0;
-
-const tick = async () => {
-	const current = ++generation;
-	const result = await fetchRss(widgetProps.url);
-	if (current !== generation) return;
-	fetchError.value = result.error ?? null;
-	fetching.value = false;
-	if (result.items == null) return;
-	rawItems.value = result.items;
+watch(rawItems, () => {
 	key.value++;
-};
-
-watch(() => widgetProps.url, () => {
-	// 前の URL で取れた項目は出さない
-	rawItems.value = [];
-	fetchError.value = null;
-	fetching.value = true;
-	tick();
-});
-
-// useInterval は setup の中でしか開始できないので、間隔を変えたときに作り直せるよう、ここでは直接使う
-let intervalClear: (() => void) | null = null;
-watch(() => widgetProps.refreshIntervalMin, () => {
-	intervalClear?.();
-	intervalClear = createVisibilityAwareInterval(tick, getRssRefreshIntervalMs(widgetProps.refreshIntervalMin), {
-		immediate: true,
-	});
-}, { immediate: true });
-
-onUnmounted(() => {
-	intervalClear?.();
 });
 
 defineExpose<WidgetComponentExpose>({

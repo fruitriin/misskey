@@ -21,15 +21,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, computed, onUnmounted } from 'vue';
-import * as Misskey from 'misskey-js';
-import { createVisibilityAwareInterval } from '@@/js/interval.js';
+import { computed } from 'vue';
 import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
 import { i18n } from '@/i18n.js';
-import type { RssFetchError } from '@/utility/fetch-rss.js';
-import { fetchRss, getRssFetchErrorText, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
+import { getRssFetchErrorText, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
+import { useRssFeed } from '@/utility/use-rss-feed.js';
 import MkContainer from '@/components/MkContainer.vue';
 
 const name = 'rss';
@@ -72,44 +70,11 @@ const { widgetProps, configure } = useWidgetPropsManager(name,
 	emit,
 );
 
-const rawItems = ref<Misskey.entities.FetchRssResponse['items']>([]);
+const { items: rawItems, fetching, error: fetchError } = useRssFeed({
+	url: () => widgetProps.url,
+	refreshIntervalMin: () => widgetProps.refreshIntervalMin,
+});
 const items = computed(() => rawItems.value.slice(0, widgetProps.maxEntries));
-const fetching = ref(true);
-// 取れなかったときは、前に取れた項目があればそれを出したままにする
-const fetchError = ref<RssFetchError | null>(null);
-
-// 取得中に URL が変わったら、古い応答は捨てる
-let generation = 0;
-
-const tick = async () => {
-	const current = ++generation;
-	const result = await fetchRss(widgetProps.url);
-	if (current !== generation) return;
-	if (result.items != null) rawItems.value = result.items;
-	fetchError.value = result.error ?? null;
-	fetching.value = false;
-};
-
-watch(() => widgetProps.url, () => {
-	// 前の URL で取れた項目は出さない
-	rawItems.value = [];
-	fetchError.value = null;
-	fetching.value = true;
-	tick();
-});
-
-// useInterval は setup の中でしか開始できないので、間隔を変えたときに作り直せるよう、ここでは直接使う
-let intervalClear: (() => void) | null = null;
-watch(() => widgetProps.refreshIntervalMin, () => {
-	intervalClear?.();
-	intervalClear = createVisibilityAwareInterval(tick, getRssRefreshIntervalMs(widgetProps.refreshIntervalMin), {
-		immediate: true,
-	});
-}, { immediate: true });
-
-onUnmounted(() => {
-	intervalClear?.();
-});
 
 defineExpose<WidgetComponentExpose>({
 	name,

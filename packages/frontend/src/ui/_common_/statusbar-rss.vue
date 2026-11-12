@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			mode="default"
 		>
 			<MkMarqueeText :key="key" :duration="marqueeDuration" :reverse="marqueeReverse">
-				<span v-for="item in items" :class="$style.item">
+				<span v-for="item in displayItems" :class="$style.item">
 					<a :href="item.link" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a><span :class="$style.divider"></span>
 				</span>
 			</MkMarqueeText>
@@ -27,12 +27,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import * as Misskey from 'misskey-js';
-import { useInterval } from '@@/js/use-interval.js';
+import { computed, ref, watch } from 'vue';
 import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import { shuffle } from '@/utility/shuffle.js';
-import { fetchRss, getRssRefreshIntervalMs } from '@/utility/fetch-rss.js';
+import { useRssFeed } from '@/utility/use-rss-feed.js';
 
 const props = defineProps<{
 	url: string;
@@ -44,26 +42,24 @@ const props = defineProps<{
 	refreshIntervalSec: number;
 }>();
 
-const items = ref<Misskey.entities.FetchRssResponse['items']>([]);
-const fetching = ref(true);
+// 設定で URL や間隔を変えたら、すぐに取り直す。取れなかったときは、前に取れた項目があればそれを流したままにする
+const { items, fetching } = useRssFeed({
+	url: () => props.url,
+	// ステータスバーの設定は、ほかの種類と共通で秒で保存している
+	refreshIntervalMin: () => props.refreshIntervalSec / 60,
+});
+
+const displayItems = computed(() => {
+	if (!props.shuffle) return items.value;
+	const newItems = [...items.value];
+	shuffle(newItems);
+	return newItems;
+});
+
+// 取れた項目が変わったら、流し直す
 const key = ref(0);
-
-const tick = async () => {
-	const { items: newItems } = await fetchRss(props.url);
-	// 取れなかったときは、前に取れた項目があればそれを流したままにする
-	fetching.value = false;
-	if (newItems == null) return;
-	if (props.shuffle) {
-		shuffle(newItems);
-	}
-	items.value = newItems;
+watch(displayItems, () => {
 	key.value++;
-};
-
-// ステータスバーの設定は、ほかの種類と共通で秒で保存している
-useInterval(tick, getRssRefreshIntervalMs(props.refreshIntervalSec / 60), {
-	immediate: true,
-	afterMounted: true,
 });
 </script>
 

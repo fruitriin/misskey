@@ -36,7 +36,7 @@ type RssItem = Misskey.entities.FetchRssResponse['items'][number];
  */
 export type RssFetchError = 'invalidUrl' | 'failed' | 'recentlyFailed' | 'unavailable' | 'unknown';
 
-export type RssFetchResult = { items: RssItem[]; error?: undefined } | { items?: undefined; error: RssFetchError };
+export type RssFetchResult = { items: RssItem[]; title?: string; error?: undefined } | { items?: undefined; title?: undefined; error: RssFetchError };
 
 const ERROR_CODES: Record<string, RssFetchError> = {
 	INVALID_URL: 'invalidUrl',
@@ -71,11 +71,14 @@ export async function fetchRss(feedUrl: string): Promise<RssFetchResult> {
 	const feed = body as Partial<Misskey.entities.FetchRssResponse> | null;
 	if (feed == null || !Array.isArray(feed.items)) return { error: 'failed' };
 
-	return { items: feed.items.filter((item) => {
-		if (!item.link) return false;
-		const itemUrl = tryParseUrl(item.link, base);
-		return itemUrl != null && ['http:', 'https:'].includes(itemUrl.protocol);
-	}) };
+	return {
+		items: feed.items.filter((item) => {
+			if (!item.link) return false;
+			const itemUrl = tryParseUrl(item.link, base);
+			return itemUrl != null && ['http:', 'https:'].includes(itemUrl.protocol);
+		}),
+		title: typeof feed.title === 'string' ? feed.title : undefined,
+	};
 }
 
 /** 取れなかった理由を、画面に出す文にする */
