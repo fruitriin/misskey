@@ -146,7 +146,7 @@ MISTEMS の README (mistems-readme ブランチ、`mistems-readme` スキルで�
 | 全体 lint (任意) | `pnpm lint` |
 | Backend unit test | `pnpm --filter backend test` |
 | Backend e2e test | `pnpm --filter backend test:e2e` |
-| Backend federation test | `pnpm --filter backend test:fed` |
+| Backend federation test | `orb-federation-test` スキル (a.test と b.test を OrbStack で起動して `test:fed` を実行する) |
 | Frontend unit test | `pnpm --filter frontend test` |
 | Migration 差分検査 (pending DDL) | `pnpm --filter backend check-migrations` |
 | `misskey-js` 再生成 (API 変更後必須) | `pnpm build-misskey-js-with-types` |
