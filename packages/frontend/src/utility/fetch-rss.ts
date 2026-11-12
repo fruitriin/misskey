@@ -15,8 +15,11 @@ import { i18n } from '@/i18n.js';
 export const RSS_MIN_REFRESH_INTERVAL_MIN = 45;
 export const RSS_MAX_REFRESH_INTERVAL_MIN = 24 * 60;
 export const RSS_DEFAULT_REFRESH_INTERVAL_MIN = 180;
-/** 設定画面のスライダーの刻み (分) */
-export const RSS_REFRESH_INTERVAL_STEP_MIN = 15;
+
+/** 設定画面で入力された間隔 (分) が、保存してよい値か。分の整数で、下限から上限まで */
+export function isValidRssRefreshIntervalMin(min: unknown): min is number {
+	return typeof min === 'number' && Number.isInteger(min) && min >= RSS_MIN_REFRESH_INTERVAL_MIN && min <= RSS_MAX_REFRESH_INTERVAL_MIN;
+}
 
 /** 設定の間隔 (分) を、下限を守ったミリ秒にする */
 export function getRssRefreshIntervalMs(min: number): number {

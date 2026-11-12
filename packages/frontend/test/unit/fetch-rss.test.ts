@@ -4,7 +4,7 @@
  */
 
 import { afterEach, assert, describe, test, vi } from 'vitest';
-import { fetchRss, getRssFetchErrorText, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
+import { fetchRss, getRssFetchErrorText, getRssRefreshIntervalMs, isValidRssRefreshIntervalMin, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
 
 describe('getRssRefreshIntervalMs', () => {
 	test('間隔は分で受け取り、ミリ秒で返す', () => {
@@ -24,6 +24,23 @@ describe('getRssRefreshIntervalMs', () => {
 
 	test('ステータスバーに保存されている秒の値 (これまでの既定値の 120 秒など) は、分に直すと下限になる', () => {
 		assert.strictEqual(getRssRefreshIntervalMs(120 / 60), 45 * 60 * 1000);
+	});
+});
+
+describe('isValidRssRefreshIntervalMin', () => {
+	test('45〜1,440 分の数は保存してよい', () => {
+		assert.isTrue(isValidRssRefreshIntervalMin(45));
+		assert.isTrue(isValidRssRefreshIntervalMin(180));
+		assert.isTrue(isValidRssRefreshIntervalMin(1440));
+	});
+
+	test('範囲の外の値・小数・数でない値は保存しない', () => {
+		assert.isFalse(isValidRssRefreshIntervalMin(44));
+		assert.isFalse(isValidRssRefreshIntervalMin(1441));
+		assert.isFalse(isValidRssRefreshIntervalMin(45.5));
+		assert.isFalse(isValidRssRefreshIntervalMin(Number.NaN));
+		assert.isFalse(isValidRssRefreshIntervalMin(''));
+		assert.isFalse(isValidRssRefreshIntervalMin(null));
 	});
 });
 

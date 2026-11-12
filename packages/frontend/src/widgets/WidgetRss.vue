@@ -26,7 +26,7 @@ import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
 import { i18n } from '@/i18n.js';
-import { getRssFetchErrorText, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN, RSS_REFRESH_INTERVAL_STEP_MIN } from '@/utility/fetch-rss.js';
+import { getRssFetchErrorText, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
 import { useRssFeed } from '@/utility/use-rss-feed.js';
 import MkContainer from '@/components/MkContainer.vue';
 
@@ -40,12 +40,13 @@ const widgetPropsDef = {
 		manualSave: true,
 	},
 	refreshIntervalMin: {
-		type: 'range',
+		type: 'number',
 		label: i18n.ts._widgetOptions._rss.refreshIntervalMin,
+		description: i18n.tsx._widgetOptions._rss.refreshIntervalMinDescription({ min: RSS_MIN_REFRESH_INTERVAL_MIN, max: RSS_MAX_REFRESH_INTERVAL_MIN }),
 		default: RSS_DEFAULT_REFRESH_INTERVAL_MIN,
 		min: RSS_MIN_REFRESH_INTERVAL_MIN,
 		max: RSS_MAX_REFRESH_INTERVAL_MIN,
-		step: RSS_REFRESH_INTERVAL_STEP_MIN,
+		suffix: i18n.ts._time.minute,
 	},
 	maxEntries: {
 		type: 'number',

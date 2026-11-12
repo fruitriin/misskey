@@ -10227,6 +10227,10 @@ export interface Locale extends ILocale {
              */
             "refreshIntervalMin": string;
             /**
+             * {min}〜{max} 分の範囲で入力してください
+             */
+            "refreshIntervalMinDescription": ParameterizedString<"min" | "max">;
+            /**
              * 最大表示件数
              */
             "maxEntries": string;

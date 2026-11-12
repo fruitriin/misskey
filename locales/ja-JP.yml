@@ -2691,6 +2691,7 @@ _widgetOptions:
     url: "RSSフィードのURL"
     refreshIntervalSec: "更新間隔(秒)"
     refreshIntervalMin: "更新間隔(分)"
+    refreshIntervalMinDescription: "{min}〜{max} 分の範囲で入力してください"
     maxEntries: "最大表示件数"
   _rssTicker:
     shuffle: "表示順をシャッフル"
