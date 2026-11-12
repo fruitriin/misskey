@@ -7,9 +7,23 @@
 slot_names="$(seq -f 'dev%g' 1 "${ORB_DEV_SLOT_COUNT:-10}" | tr '\n' ' ')"
 slot_names="${slot_names% }"
 
-# 持ち主の web コンテナがあるか。止まっているだけなら「ある」とする (Mac の再起動などで止まった環境の枠を奪わない)
+# 取ってからこの秒数のうちは、web コンテナがまだ無くても枠を奪わない。
+# 初めての環境は db・redis の起動や依存のインストール、variant の種類 3 は vdb の restore を待ってから web を作るため
+slot_grace_default=3600
+# owner を書く前にプロセスが落ちた枠は、この秒数がたてば空きとして扱う
+slot_ownerless_grace=60
+
+# 持ち主の web コンテナがあるか。0: ある (止まっているだけも含む)  1: 無い  2: 分からない (Docker に問い合わせられない)。
+# 止まっている環境や、Docker がまだ起動していないときに、ほかの環境の枠を奪わないようにする
 slot_owner_exists() {
-	docker inspect "$1-web-1" >/dev/null 2>&1
+	local out
+	if out="$(docker inspect "$1-web-1" 2>&1 >/dev/null)"; then
+		return 0
+	fi
+	case "$out" in
+		*"No such object"*|*"no such object"*) return 1 ;;
+		*) return 2 ;;
+	esac
 }
 
 slot_dir() { echo "$cache_root/slots/$1"; }
@@ -30,12 +44,42 @@ slot_of_project() {
 }
 
 slot_write_owner() {
-	printf '%s\n%s\n%s\n' "$2" "$3" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$(slot_dir "$1")/owner"
+	printf '%s\n%s\n%s\n%s\n' "$2" "$3" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(date +%s)" > "$(slot_dir "$1")/owner"
+}
+
+# 枠を空きとして扱ってよいか。持ち主の web コンテナが無く、取ってから猶予がたっているときだけ 0 を返す
+slot_is_stale() {
+	local dir owner since now
+	dir="$(slot_dir "$1")"
+	now="$(date +%s)"
+	owner="$(slot_owner "$1")"
+	if [ -z "$owner" ]; then
+		# owner を書く前に落ちた枠。ディレクトリを作ってから時間がたっていれば空き
+		since="$(stat -f %m "$dir" 2>/dev/null || echo "$now")"
+		[ $((now - since)) -ge "$slot_ownerless_grace" ]
+		return
+	fi
+	since="$(sed -n 4p "$dir/owner" 2>/dev/null)"
+	[ -n "$since" ] || since=0
+	[ $((now - since)) -ge "${ORB_DEV_SLOT_GRACE:-$slot_grace_default}" ] || return 1
+	slot_owner_exists "$owner"
+	[ $? -eq 1 ]
+}
+
+# 空きとして扱える枠を取り直す。同時に取り直そうとしたセッションのうち、mv できた 1 つだけが進む
+slot_take_stale() {
+	local dir tmp
+	dir="$(slot_dir "$1")"
+	tmp="$cache_root/slots/.stale-$1-$$"
+	mv "$dir" "$tmp" 2>/dev/null || return 1
+	rm -rf "$tmp"
+	mkdir "$dir" 2>/dev/null || return 1
+	slot_write_owner "$1" "$2" "$3"
 }
 
 # $1: プロジェクト名  $2: ワークツリーのパス  $3: 欲しい枠 (省略すると空いている最初の枠)
 slot_claim() {
-	local project="$1" wt="$2" wanted="${3:-}" s owner candidates
+	local project="$1" wt="$2" wanted="${3:-}" s candidates
 	if [ -n "$wanted" ] && [[ " $slot_names " != *" $wanted "* ]]; then
 		echo "枠の名前が不正です: $wanted (使えるのは $slot_names)" >&2
 		return 1
@@ -56,15 +100,10 @@ slot_claim() {
 			echo "$s"
 			return 0
 		fi
-		# 持ち主の web コンテナが無い枠は空きとして扱う。owner がまだ書かれていない (別のセッションが取っている途中) 枠は奪わない
-		owner="$(slot_owner "$s")"
-		if [ -n "$owner" ] && ! slot_owner_exists "$owner"; then
-			rm -rf "$(slot_dir "$s")"
-			if mkdir "$(slot_dir "$s")" 2>/dev/null; then
-				slot_write_owner "$s" "$project" "$wt"
-				echo "$s"
-				return 0
-			fi
+		# 持ち主の web コンテナが無く、取ってから猶予がたった枠は空きとして扱う (slot_is_stale)
+		if slot_is_stale "$s" && slot_take_stale "$s" "$project" "$wt"; then
+			echo "$s"
+			return 0
 		fi
 	done
 	if [ -n "$wanted" ]; then

@@ -238,12 +238,16 @@ slot_vite_mounts() {
 
 # DB の中のオリジンを書き換え、古い URL を持つキャッシュを消すため Redis を空にする。
 # $1: 古い url  $2: 新しい url (どちらも末尾の / はあってもなくてもよい)。同じなら何もしない
+# 書き換えが済んだら、DB の中のオリジンを $state_dir/db-origin に残す。default.yml は書き換えの前に新しい url で
+# 作り直すので、書き換えが途中で失敗したときに次の up がやり直せるよう、こちらを前回の url として使う (previous_url)
 rewrite_origin() {
 	local old="${1%/}" new="${2%/}"
-	[ -n "$old" ] && [ "$old" != "$new" ] || return 0
-	echo "DB の中の $old を $new に書き換えます..."
-	psql_db -q -v old="$old" -v new="$new" < "$script_dir/seed/rewrite-url.sql"
-	compose exec -T redis redis-cli FLUSHALL > /dev/null
+	if [ -n "$old" ] && [ "$old" != "$new" ]; then
+		echo "DB の中の $old を $new に書き換えます..."
+		psql_db -q -v old="$old" -v new="$new" < "$script_dir/seed/rewrite-url.sql"
+		compose exec -T redis redis-cli FLUSHALL > /dev/null
+	fi
+	echo "$new" > "$state_dir/db-origin"
 }
 
 # admin のトークンを全環境で同じ固定値にする。ブラウザは枠のホスト名ごとにトークンを覚えているので、
@@ -269,9 +273,14 @@ set_admin_token() {
 		"{\"channel\":\"internal\",\"message\":{\"type\":\"userTokenRegenerated\",\"body\":{\"id\":\"$id\",\"oldToken\":\"$old\",\"newToken\":\"$admin_token\"}}}" > /dev/null
 }
 
-# 前回 up したときの url (生成済みの default.yml から読む)。初めてなら空
+# DB の中のオリジン。書き換えが済んだときに残した db-origin を使い、無ければ (以前の版で作った環境)
+# 生成済みの default.yml の url を使う。初めてなら空
 previous_url() {
-	sed -nE 's/^url: *//p' "$state_dir/default.yml" 2>/dev/null || true
+	if [ -f "$state_dir/db-origin" ]; then
+		cat "$state_dir/db-origin"
+	else
+		sed -nE 's/^url: *//p' "$state_dir/default.yml" 2>/dev/null || true
+	fi
 }
 
 if [ "$cmd" != "variant" ] && [ "$cmd" != "slots" ]; then
@@ -353,7 +362,8 @@ configure_lan() {
 		rm -f "$state_dir/lan" "$state_dir/localhost"
 		lan_host=""
 		if [ -n "$no_slot" ]; then
-			slot_release "$project"
+			# 枠は web を作り直したあとで返す (途中で失敗したとき、まだラベルを持ったコンテナの枠を空けないため)
+			if [ -n "$slot" ]; then release_slot_after_up=1; fi
 			slot=""
 			url="http://web.$project.orb.local:3000/"
 			listen_port=3000
@@ -362,7 +372,7 @@ configure_lan() {
 		fi
 		return 0
 	fi
-	slot_release "$project"
+	if [ -n "$slot" ]; then release_slot_after_up=1; fi
 	slot=""
 	rm -f "$state_dir/localhost"
 	if [ -n "$lan_mdns" ]; then
@@ -413,12 +423,15 @@ configure_lan() {
 	echo "$lan_host $listen_port" > "$state_dir/lan"
 }
 
-generate() {
-	# variant の worktree で普通の up を実行して、variant の compose.yml を上書きしないようにする
+# variant の worktree で普通の up を実行して、variant の compose.yml や枠を変えないようにする
+require_not_variant() {
 	if grep -q 'orb-dev.variant.branch' "$state_dir/compose.yml" 2>/dev/null; then
 		echo "$project は variant の環境です。'$0 variant up <branch>' で起動してください。何も変更せずに終了します。" >&2
 		exit 1
 	fi
+}
+
+generate() {
 	mkdir -p "$state_dir"
 	local node_ver pnpm_ver
 	node_ver="$(tr -d '[:space:]' < "$wt/.node-version")"
@@ -1332,7 +1345,9 @@ variant_main() {
 
 case "$cmd" in
 	up)
+		require_not_variant
 		prev_url="$(previous_url)"
+		release_slot_after_up=""
 		configure_lan
 		generate
 		# 書き換えは web を起動する前に行う (古い url のままのキャッシュを作らせない)
@@ -1341,6 +1356,8 @@ case "$cmd" in
 		# DB があればトークンも web の起動前にそろえる (初めての環境は create_admin のあとでそろえる)
 		set_admin_token
 		compose up -d
+		# --no-slot / --lan に替えたときは、枠のラベルを持たない web に作り直してから枠を返す
+		if [ -n "$release_slot_after_up" ]; then slot_release "$project"; fi
 		echo "起動を待っています (初回は依存のインストールで数分かかります)..."
 		wait_ready
 		create_admin
@@ -1362,7 +1379,7 @@ case "$cmd" in
 		fi
 		;;
 	down)
-		compose down $remove_volumes
+		if [ -f "$state_dir/compose.yml" ]; then compose down $remove_volumes; fi
 		slot_release "$project"
 		;;
 	slots)

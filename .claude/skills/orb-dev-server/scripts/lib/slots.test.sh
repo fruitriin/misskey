@@ -10,9 +10,13 @@ trap 'rc=$?; rm -rf "$cache_root"; exit $rc' EXIT
 ORB_DEV_SLOT_COUNT=4
 . "$here/slots.sh"
 
-# テストでは docker を見ずに、ここに書いたプロジェクトだけコンテナがあることにする
+# テストでは docker を見ずに、ここに書いたプロジェクトだけコンテナがあることにする。
+# docker_down を 1 にすると、Docker に問い合わせられない (分からない) ことにする
 existing=" "
-slot_owner_exists() { [[ "$existing" == *" $1 "* ]]; }
+docker_down=0
+slot_owner_exists() { [ "$docker_down" = 1 ] && return 2; [[ "$existing" == *" $1 "* ]]; }
+# 既定では、取ってからの猶予を 0 秒にして、コンテナの無い枠をすぐ空きとして扱う
+ORB_DEV_SLOT_GRACE=0
 
 fail=0
 check() { if [ "$2" = "$3" ]; then echo "ok - $1"; else echo "not ok - $1: 期待 '$3' 実際 '$2'"; fail=1; fi; }
@@ -38,4 +42,25 @@ check "コンテナが無い持ち主の枠は空きとして扱う" "$(slot_cla
 check "不明な枠名は失敗" "$(slot_claim x /wt/x dev9 2>/dev/null || echo fail)" fail
 check "持ち主の無いプロジェクトの release は成功" "$(slot_release nobody && echo ok)" ok
 
+# 取ってから猶予のうちは、コンテナがまだ無くても (起動の途中) 奪わない
+slot_release a; slot_release b; slot_release c; slot_release d; slot_release e
+existing=" "
+check "空きを取る" "$(slot_claim p /wt/p)" dev1
+ORB_DEV_SLOT_GRACE=3600
+check "起動の途中の枠は奪わない" "$(slot_claim q /wt/q)" dev2
+ORB_DEV_SLOT_GRACE=0
+
+# Docker に問い合わせられないときは奪わない
+docker_down=1
+check "Docker が止まっていれば奪わない" "$(slot_claim r /wt/r dev1 2>/dev/null || echo fail)" fail
+check "持ち主はそのまま" "$(slot_of_project p)" dev1
+docker_down=0
+
+# owner を書く前に落ちた枠は、しばらくたてば空きとして扱う
+slot_release p; slot_release q
+mkdir "$cache_root/slots/dev3"
+touch -t 202001010000 "$cache_root/slots/dev3"
+check "owner の無い古い枠を取れる" "$(slot_claim s /wt/s dev3)" dev3
+mkdir "$cache_root/slots/dev4"
+check "owner の無い新しい枠は取らない" "$(slot_claim t /wt/t dev4 2>/dev/null || echo fail)" fail
 exit $fail
