@@ -526,13 +526,11 @@ function updateFileName(file: Misskey.entities.DriveFile, name: Misskey.entities
  * チャンネル投稿の可視性と連合 (localOnly) を、チャンネル側の連合設定 (federationPolicy) に合わせる。
  * サーバー側 (NoteCreateService.applyChannelFederationPolicy) の決定と一致させ、表示と実際の挙動が食い違わないようにする。
  * - 連合しないチャンネル: public + localOnly (従来のチャンネル投稿)
- * - 連合する (ひかえめ): home で連合
- * - 連合する (公開): public で連合
+ * - 連合する: public で連合
  */
 function applyChannelVisibility(channel: NonNullable<typeof targetChannel.value>) {
-	const federated = isFederatedChannel(channel);
-	localOnly.value = !federated;
-	visibility.value = federated && channel.federationPolicy === 'home' ? 'home' : 'public';
+	localOnly.value = !isFederatedChannel(channel);
+	visibility.value = 'public';
 }
 
 function setVisibility() {
