@@ -194,13 +194,13 @@ use_slot() {
 
 print_slots() {
 	local s p w t state
-	printf '%-6s %-32s %-10s %s\n' 枠 プロジェクト 状態 URL・ワークツリー
+	printf '%-6s %-40s %-8s %s\n' 枠 プロジェクト 状態 URL・ワークツリー
 	while IFS=$'\t' read -r s p w t; do
 		if [ "$p" = "-" ]; then
-			printf '%-6s %-32s %-10s %s\n' "$s" - 空き -
+			printf '%-6s %-40s %-8s %s\n' "$s" - 空き -
 		else
 			state="$(docker inspect -f '{{.State.Status}}' "$p-web-1" 2>/dev/null || echo なし)"
-			printf '%-6s %-32s %-10s %s\n' "$s" "$p" "$state" "http://$s.localhost:$localhost_port/  $w (取得 $t)"
+			printf '%-6s %-40s %-8s %s\n' "$s" "$p" "$state" "http://$s.localhost:$localhost_port/  $w (取得 $t)"
 		fi
 	done < <(slot_list)
 }
@@ -689,8 +689,8 @@ variant_usage() {
 	usage: $0 variant <subcommand>
 	  classify <branch>        種類 (frontend / backend / migration / other) を表示する
 	  prepare <branch> [base]  worktree を作り、ブランチ固有の差分を当てる。コンフリクトしたら終了コード 2
-	  up <branch> [base]       本番ビルドで起動し、応答するまで待つ
-	  down <branch> [-v]       止める。-v で DB (vdb)・node_modules の volume も消す
+	  up <branch> [base]       本番ビルドで起動し、応答するまで待つ。枠 (devN) を 1 つ取り、http://devN.localhost:3080/ で開く
+	  down <branch> [-v]       止めて枠を返す。-v で DB (vdb)・node_modules の volume も消す
 	  status                   全 variant のブランチ・種類・URL・DB・応答を一覧する
 	  up-all <branch>...       prepare と up を 1 本ずつ順に行う (ベース環境は既定のものだけ)
 	  down-all [-v]            全 variant を止める
@@ -1004,8 +1004,12 @@ generate_variant() {
 	fi
 	run_cmd+=" && NODE_ENV=production pnpm start"
 	write_default_yml "$db_host"
-	local localhost_entries
-	localhost_entries="$(localhost_extra_hosts)"
+	# 枠の独自ドメインのラベルは、variant のラベルと同じ labels: の下に入れる (slot_entries は labels: を重ねて出すので使わない)
+	local slot_label="" slot_hosts=""
+	if [ -n "$slot" ]; then
+		slot_label="      dev.orbstack.domains: \"$slot.$slot_domain\""
+		slot_hosts=$'    extra_hosts:\n'"      - \"$slot.localhost:127.0.0.1\""
+	fi
 
 	cat > "$state_dir/compose.yml" <<-EOF
 	services:
@@ -1022,6 +1026,7 @@ generate_variant() {
 	      orb-dev.variant.branch: "$v_branch"
 	      orb-dev.variant.category: "$v_category"
 	      orb-dev.variant.base: "$base_project"
+	$slot_label
 	    # ベース環境の network に繋ぎ、redis (と種類 2 では db) はベース環境のものを使う
 	    # compose はサービス名を必ず別名に足すので、ベースの network では web がベースと variant の両方を指す。
 	    # ベース環境の中では web という名前で通信しないこと (Misskey と seed は orb.local の URL を使うので影響しない)
@@ -1029,7 +1034,7 @@ generate_variant() {
 	      - default
 	      - base
 	$web_depends
-	$localhost_entries
+	$slot_hosts
 	    volumes:
 	      - $wt:/workspace
 	      - ./default.yml:/workspace/.config/default.yml:ro
@@ -1130,7 +1135,7 @@ variant_up() {
 		seed_dump="$snapshots_dir/$key/seed.dump"
 		if [ ! -f "$seed_dump" ]; then
 			echo "ベース環境の seed のスナップショットがありません: $seed_dump" >&2
-			echo "先に '$0 up $base_wt --prod --seed' でベース環境に seed を入れてください" >&2
+			echo "先に '$0 up $base_wt --prod --no-slot --seed' でベース環境に seed を入れてください" >&2
 			exit 1
 		fi
 	fi
@@ -1139,7 +1144,8 @@ variant_up() {
 	require_free_memory
 
 	use_env "$v_wt" "$v_project"
-	use_localhost_url
+	# variant も枠を 1 つ取る。埋まっていれば一覧を出して止まる
+	use_slot
 	generate_variant "$seed_dump"
 	if [ "$v_category" = "migration" ]; then
 		start_vdb
@@ -1189,6 +1195,7 @@ variant_down() {
 		exit 1
 	fi
 	compose down $remove_volumes
+	slot_release "$project"
 }
 
 # variant の compose のプロジェクト名を 1 行ずつ表示する (コンテナのラベルと、生成した compose.yml から集める)
@@ -1214,11 +1221,12 @@ variant_down_all() {
 		else
 			docker compose -p "$p" down $remove_volumes
 		fi
+		slot_release "$p"
 	done < <(variant_projects)
 }
 
 variant_status() {
-	local rows proj branch category base state u db code resp
+	local rows proj branch category base state u db code resp s
 	rows="$(docker ps -a --filter label=orb-dev.variant.branch \
 		--format '{{.Label "com.docker.compose.project"}}	{{.Label "orb-dev.variant.branch"}}	{{.Label "orb-dev.variant.category"}}	{{.Label "orb-dev.variant.base"}}	{{.State}}')"
 	if [ -z "$rows" ]; then
@@ -1228,8 +1236,8 @@ variant_status() {
 	{
 		printf 'ブランチ\t種類\tURL\tDB\t状態\t応答\n'
 		while IFS=$'\t' read -r proj branch category base state; do
-			if [ -f "$cache_root/$proj/localhost" ]; then
-				u="http://$proj.localhost:$localhost_port/"
+			if s="$(slot_of_project "$proj")"; then
+				u="http://$s.localhost:$localhost_port/"
 			else
 				u="http://web.$proj.orb.local:3000/"
 			fi
