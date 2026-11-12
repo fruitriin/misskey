@@ -31,6 +31,9 @@ import { IActivity } from '@/core/activitypub/type.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import * as Acct from '@/misc/acct.js';
 import { FanoutTimelineEndpointService } from '@/core/FanoutTimelineEndpointService.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import { describeInboxSignatureHeaders, InboxRejectLogThrottle } from '@/misc/inbox-reject-log.js';
+import type Logger from '@/logger.js';
 import type { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions, FastifyBodyParser } from 'fastify';
 import type { FindOptionsWhere } from 'typeorm';
 
@@ -39,6 +42,10 @@ const LD_JSON = 'application/ld+json; profile="https://www.w3.org/ns/activitystr
 
 @Injectable()
 export class ActivityPubServerService {
+	private inboxLogger: Logger;
+	// 同じ送り元から同じ理由の 401 が続くことがあるので (例: 1 日 2,000 件)、送り元と理由ごとに 10 分に 1 回だけ出す
+	private inboxRejectLogThrottle = new InboxRejectLogThrottle(1000 * 60 * 10);
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -77,7 +84,9 @@ export class ActivityPubServerService {
 		private userKeypairService: UserKeypairService,
 		private queryService: QueryService,
 		private fanoutTimelineEndpointService: FanoutTimelineEndpointService,
+		private loggerService: LoggerService,
 	) {
+		this.inboxLogger = this.loggerService.getLogger('ap-inbox');
 		//this.createServer = this.createServer.bind(this);
 	}
 
@@ -105,6 +114,21 @@ export class ActivityPubServerService {
 		return this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 	}
 
+	/**
+	 * inbox で署名の形式を受け付けられなかったときに、理由と署名まわりのヘッダーを warn で出して 401 を返す
+	 */
+	@bindThis
+	private rejectInbox(request: FastifyRequest, reply: FastifyReply, reason: string): void {
+		const body = request.body;
+		const actor = typeof body === 'object' && body != null && 'actor' in body ? body.actor : undefined;
+		const { host, summary } = describeInboxSignatureHeaders(request.headers, actor);
+		const suppressed = this.inboxRejectLogThrottle.check(host, reason);
+		if (suppressed != null) {
+			this.inboxLogger.warn(`inbox rejected (401): reason=${JSON.stringify(reason)} from=${host} ${summary}${suppressed > 0 ? ` (suppressed ${suppressed} same rejections)` : ''}`);
+		}
+		reply.code(401);
+	}
+
 	@bindThis
 	private inbox(request: FastifyRequest, reply: FastifyReply) {
 		if (this.meta.federation === 'none') {
@@ -116,28 +140,28 @@ export class ActivityPubServerService {
 
 		try {
 			signature = httpSignature.parseRequest(request.raw, { 'headers': ['(request-target)', 'host', 'date'], authorizationHeaderName: 'signature' });
-		} catch (_) {
-			reply.code(401);
+		} catch (err) {
+			this.rejectInbox(request, reply, `parseRequest: ${err instanceof Error ? err.message : String(err)}`);
 			return;
 		}
 
 		if (signature.params.headers.indexOf('host') === -1
 			|| request.headers.host !== this.config.host) {
 			// Host not specified or not match.
-			reply.code(401);
+			this.rejectInbox(request, reply, signature.params.headers.indexOf('host') === -1 ? 'host is not signed' : 'host does not match');
 			return;
 		}
 
 		if (signature.params.headers.indexOf('digest') === -1) {
 			// Digest not found.
-			reply.code(401);
+			this.rejectInbox(request, reply, 'digest is not signed');
 			return;
 		} else {
 			const digest = request.headers.digest;
 
 			if (typeof digest !== 'string') {
 				// Huh?
-				reply.code(401);
+				this.rejectInbox(request, reply, 'digest header is missing');
 				return;
 			}
 
@@ -146,7 +170,7 @@ export class ActivityPubServerService {
 
 			if (match == null) {
 				// Invalid digest
-				reply.code(401);
+				this.rejectInbox(request, reply, 'digest header is malformed');
 				return;
 			}
 
@@ -155,7 +179,7 @@ export class ActivityPubServerService {
 
 			if (algo !== 'SHA-256') {
 				// Unsupported digest algorithm
-				reply.code(401);
+				this.rejectInbox(request, reply, `unsupported digest algorithm: ${algo}`);
 				return;
 			}
 
@@ -169,7 +193,7 @@ export class ActivityPubServerService {
 
 			if (hash !== digestValue) {
 				// Invalid digest
-				reply.code(401);
+				this.rejectInbox(request, reply, 'digest does not match the body');
 				return;
 			}
 		}

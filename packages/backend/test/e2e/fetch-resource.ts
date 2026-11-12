@@ -7,7 +7,7 @@ process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
 import { beforeAll, beforeEach, describe, test } from 'vitest';
-import { api, channel, clip, galleryPost, page, play, post, signup, simpleGet, uploadFile } from '../utils.js';
+import { api, channel, clip, galleryPost, page, play, post, relativeFetch, signup, simpleGet, uploadFile } from '../utils.js';
 import type { SimpleGetResponse } from '../utils.js';
 import type * as misskey from 'misskey-js';
 
@@ -326,6 +326,28 @@ describe('Webリソース', () => {
 		}));
 
 		// test.todo('POSTできる？');
+
+		describe('署名の形式を受け付けられない POST は 401 を返す', () => {
+			const postInbox = async (headers: Record<string, string>) => await relativeFetch('/inbox', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/activity+json', ...headers },
+				body: JSON.stringify({ type: 'Create', actor: 'https://remote.example/users/1' }),
+			});
+
+			test('署名がない', async () => {
+				const res = await postInbox({});
+				assert.strictEqual(res.status, 401);
+			});
+
+			test('RFC 9421 の形式', async () => {
+				const res = await postInbox({
+					'Signature-Input': 'sig1=("@method" "@target-uri" "content-digest");created=1700000000;keyid="https://remote.example/users/1#main-key"',
+					'Signature': 'sig1=:AAAA:',
+					'Content-Digest': 'sha-256=:AAAA:',
+				});
+				assert.strictEqual(res.status, 401);
+			});
+		});
 	});
 
 	describe('/users/:id/inbox', () => {
