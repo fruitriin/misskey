@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import ms from 'ms';
 import { Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DirectUploadError, DirectUploadService } from '@/core/DirectUploadService.js';
@@ -14,6 +15,11 @@ export const meta = {
 	requireCredential: true,
 
 	kind: 'write:drive',
+
+	limit: {
+		duration: ms('1hour'),
+		max: 60,
+	},
 
 	description: 'Abort a direct upload.',
 

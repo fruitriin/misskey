@@ -170,6 +170,8 @@ export class DirectUploadService {
 	public async complete(user: MiLocalUser, uploadId: string, parts: { partNumber: number; etag: string }[]): Promise<void> {
 		const state = await this.getOwnState(user, uploadId);
 		if (state.status !== 'uploading') throw new DirectUploadError('INVALID_STATE');
+		// アップロード中にオブジェクトストレージが無効にされた
+		if (!this.isAvailable()) throw new DirectUploadError('FAILED');
 
 		const sorted = [...parts].sort((a, b) => a.partNumber - b.partNumber);
 		if (sorted.length !== state.partCount || sorted.some((p, i) => p.partNumber !== i + 1)) {
@@ -210,7 +212,7 @@ export class DirectUploadService {
 	@bindThis
 	public async abort(user: MiLocalUser, uploadId: string): Promise<void> {
 		const state = await this.getOwnState(user, uploadId);
-		if (state.status === 'uploading') {
+		if (state.status === 'uploading' && this.isAvailable()) {
 			await this.s3Service.getS3Client(this.meta).send(new AbortMultipartUploadCommand({
 				Bucket: this.meta.objectStorageBucket!,
 				Key: state.key,

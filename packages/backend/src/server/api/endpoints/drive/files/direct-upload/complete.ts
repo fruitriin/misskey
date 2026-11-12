@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import ms from 'ms';
 import { Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DirectUploadError, DirectUploadService } from '@/core/DirectUploadService.js';
@@ -16,6 +17,11 @@ export const meta = {
 	prohibitMoved: true,
 
 	kind: 'write:drive',
+
+	limit: {
+		duration: ms('1hour'),
+		max: 60,
+	},
 
 	description: 'Finish a direct upload. The file is processed in the background; poll drive/files/direct-upload/status.',
 
@@ -36,6 +42,12 @@ export const meta = {
 			message: 'Uploaded size does not match the declared size.',
 			code: 'SIZE_MISMATCH',
 			id: 'a9363514-1ce0-4576-a329-604075823dde',
+		},
+
+		uploadFailed: {
+			message: 'Failed to complete the upload on object storage.',
+			code: 'UPLOAD_FAILED',
+			id: '354bfa97-24b3-4c22-9f8b-8ce779132525',
 		},
 	},
 } as const;
@@ -74,6 +86,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					if (err.code === 'NO_SUCH_UPLOAD') throw new ApiError(meta.errors.noSuchUpload);
 					if (err.code === 'INVALID_STATE') throw new ApiError(meta.errors.invalidState);
 					if (err.code === 'SIZE_MISMATCH') throw new ApiError(meta.errors.sizeMismatch);
+					if (err.code === 'FAILED') throw new ApiError(meta.errors.uploadFailed);
 				}
 				throw err;
 			}

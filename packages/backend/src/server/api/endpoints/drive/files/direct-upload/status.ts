@@ -43,6 +43,7 @@ export const meta = {
 			errorCode: {
 				type: 'string',
 				optional: false, nullable: true,
+				enum: ['UNAVAILABLE', 'NO_SUCH_UPLOAD', 'INVALID_STATE', 'SIZE_MISMATCH', 'MAX_FILE_SIZE_EXCEEDED', 'NO_FREE_SPACE', 'UNALLOWED_FILE_TYPE', 'INAPPROPRIATE', 'FAILED'],
 			},
 		},
 	},

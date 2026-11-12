@@ -83,4 +83,34 @@ describe('Drive', () => {
 		assert.strictEqual(res.status, 400);
 		assert.strictEqual('error' in res.body, true);
 	});
+
+	describe('直接アップロード', () => {
+		test('enableDirectUpload が無効なら init は DIRECT_UPLOAD_UNAVAILABLE を返す', async () => {
+			const res = await api('drive/files/direct-upload/init', { size: 100 * 1024 * 1024, name: 'movie.mp4' }, alice);
+			assert.strictEqual(res.status, 400);
+			assert.strictEqual((res.body as unknown as { error: { code: string } }).error.code, 'DIRECT_UPLOAD_UNAVAILABLE');
+		});
+
+		test('不正なファイル名は INVALID_FILE_NAME になる', async () => {
+			const res = await api('drive/files/direct-upload/init', { size: 100 * 1024 * 1024, name: '../evil' }, alice);
+			assert.strictEqual(res.status, 400);
+			assert.strictEqual((res.body as unknown as { error: { code: string } }).error.code, 'INVALID_FILE_NAME');
+		});
+
+		test('存在しない uploadId は NO_SUCH_UPLOAD になる', async () => {
+			for (const endpoint of ['drive/files/direct-upload/status', 'drive/files/direct-upload/abort'] as const) {
+				const res = await api(endpoint, { uploadId: 'aaaaaaaaaaaaaaaa' }, alice);
+				assert.strictEqual(res.status, 400, endpoint);
+				assert.strictEqual((res.body as unknown as { error: { code: string } }).error.code, 'NO_SUCH_UPLOAD', endpoint);
+			}
+			const res = await api('drive/files/direct-upload/complete', { uploadId: 'aaaaaaaaaaaaaaaa', parts: [{ partNumber: 1, etag: '"x"' }] }, alice);
+			assert.strictEqual(res.status, 400);
+			assert.strictEqual((res.body as unknown as { error: { code: string } }).error.code, 'NO_SUCH_UPLOAD');
+		});
+
+		test('認証が無いと 401 になる', async () => {
+			const res = await api('drive/files/direct-upload/init', { size: 100 * 1024 * 1024 });
+			assert.strictEqual(res.status, 401);
+		});
+	});
 });
