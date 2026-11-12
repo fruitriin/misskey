@@ -10,7 +10,7 @@ import sharp from 'sharp';
 import type { Sharp } from 'sharp';
 import { sharpBmp } from '@misskey-dev/sharp-read-bmp';
 import { In, IsNull } from 'typeorm';
-import { DeleteObjectCommandInput, PutObjectCommandInput, NoSuchKey } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, DeleteObjectCommandInput, PutObjectCommandInput, NoSuchKey } from '@aws-sdk/client-s3';
 import { DI } from '@/di-symbols.js';
 import type { DriveFilesRepository, UsersRepository, DriveFoldersRepository, UserProfilesRepository, MiMeta } from '@/models/_.js';
 import type { Config } from '@/config.js';
@@ -71,6 +71,8 @@ type AddFileArgs = {
 
 	requestIp?: string | null;
 	requestHeaders?: Record<string, string> | null;
+	/** Key of the original already uploaded to object storage (direct upload). It is copied to the final key instead of uploaded again. */
+	preUploadedKey?: string | null;
 };
 
 type UploadFromUrlArgs = {
@@ -147,8 +149,12 @@ export class DriveService {
 	 * @param size Size for original
 	 */
 	@bindThis
-	private async save(file: MiDriveFile, path: string, name: string, type: string, hash: string, size: number): Promise<MiDriveFile> {
-	// thunbnail, webpublic を必要なら生成
+	private async save(file: MiDriveFile, path: string, name: string, type: string, hash: string, size: number, preUploadedKey: string | null = null): Promise<MiDriveFile> {
+		if (preUploadedKey != null && !this.meta.useObjectStorage) {
+			throw new Error('preUploadedKey requires object storage');
+		}
+
+		// thunbnail, webpublic を必要なら生成
 		const alts = await this.generateAlts(path, type, !file.uri);
 
 		if (this.meta.useObjectStorage) {
@@ -188,7 +194,9 @@ export class DriveService {
 			//#region Uploads
 			this.registerLogger.info(`uploading original: ${key}`);
 			const uploads = [
-				this.upload(key, fs.createReadStream(path), type, null, name),
+				preUploadedKey != null
+					? this.copyPreUploaded(preUploadedKey, key, type, name)
+					: this.upload(key, fs.createReadStream(path), type, null, name),
 			];
 
 			if (alts.webpublic) {
@@ -374,24 +382,12 @@ export class DriveService {
 	 */
 	@bindThis
 	private async upload(key: string, stream: fs.ReadStream | Buffer, type: string, ext?: string | null, filename?: string) {
-		if (type === 'image/apng') type = 'image/png';
-		if (!FILE_TYPE_BROWSERSAFE.includes(type)) type = 'application/octet-stream';
-
 		const params = {
 			Bucket: this.meta.objectStorageBucket,
 			Key: key,
 			Body: stream,
-			ContentType: type,
-			CacheControl: 'max-age=31536000, immutable',
+			...this.buildObjectHeaders(type, ext, filename),
 		} as PutObjectCommandInput;
-
-		if (filename) params.ContentDisposition = contentDisposition(
-			'inline',
-			// 拡張子からContent-Typeを設定してそうな挙動を示すオブジェクトストレージ (upcloud?) も存在するので、
-			// 許可されているファイル形式でしか拡張子をつけない
-			ext ? correctFilename(filename, ext) : filename,
-		);
-		if (this.meta.objectStorageSetPublicRead) params.ACL = 'public-read';
 
 		await this.s3Service.upload(this.meta, params)
 			.then(
@@ -407,6 +403,43 @@ export class DriveService {
 					this.registerLogger.error(`Upload Failed: key = ${key}, filename = ${filename}`, err);
 				},
 			);
+	}
+
+	@bindThis
+	private buildObjectHeaders(type: string, ext: string | null | undefined, filename: string | undefined) {
+		if (type === 'image/apng') type = 'image/png';
+		if (!FILE_TYPE_BROWSERSAFE.includes(type)) type = 'application/octet-stream';
+
+		const headers: Pick<PutObjectCommandInput, 'ContentType' | 'CacheControl' | 'ContentDisposition' | 'ACL'> = {
+			ContentType: type,
+			CacheControl: 'max-age=31536000, immutable',
+		};
+
+		if (filename) headers.ContentDisposition = contentDisposition(
+			'inline',
+			// 拡張子からContent-Typeを設定してそうな挙動を示すオブジェクトストレージ (upcloud?) も存在するので、
+			// 許可されているファイル形式でしか拡張子をつけない
+			ext ? correctFilename(filename, ext) : filename,
+		);
+		if (this.meta.objectStorageSetPublicRead) headers.ACL = 'public-read';
+
+		return headers;
+	}
+
+	/**
+	 * Move a directly uploaded original to its final key with proper headers.
+	 * Unlike upload(), errors are thrown so that no DB record points to a missing object.
+	 */
+	@bindThis
+	private async copyPreUploaded(srcKey: string, destKey: string, type: string, filename: string) {
+		const bucket = this.meta.objectStorageBucket!;
+		await this.s3Service.getS3Client(this.meta).send(new CopyObjectCommand({
+			Bucket: bucket,
+			Key: destKey,
+			CopySource: `${bucket}/${srcKey.split('/').map(encodeURIComponent).join('/')}`,
+			MetadataDirective: 'REPLACE',
+			...this.buildObjectHeaders(type, null, filename),
+		}));
 	}
 
 	// Expire oldest file (without avatar or banner) of remote user
@@ -457,6 +490,7 @@ export class DriveService {
 		requestIp = null,
 		requestHeaders = null,
 		ext = null,
+		preUploadedKey = null,
 	}: AddFileArgs): Promise<MiDriveFile> {
 		let skipNsfwCheck = false;
 		const userRoleNSFW = user && (await this.roleService.getUserPolicies(user.id)).alwaysMarkNsfw;
@@ -655,7 +689,7 @@ export class DriveService {
 				}
 			}
 		} else {
-			file = await (this.save(file, path, detectedName, info.type.mime, info.md5, info.size));
+			file = await (this.save(file, path, detectedName, info.type.mime, info.md5, info.size, preUploadedKey));
 		}
 
 		this.registerLogger.succ(`drive file has been created ${file.id}`);
