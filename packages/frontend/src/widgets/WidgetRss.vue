@@ -11,6 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 	<div class="ekmkgxbj">
 		<MkLoading v-if="fetching"/>
+		<MkResult v-else-if="failed && items.length === 0" type="error"/>
 		<MkResult v-else-if="(!items || items.length === 0) && widgetProps.showHeader" type="empty"/>
 		<div v-else :class="$style.feed">
 			<a v-for="item in items" :key="item.link" :class="$style.item" :href="item.link" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a>
@@ -20,15 +21,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onUnmounted } from 'vue';
 import * as Misskey from 'misskey-js';
-import { url as base } from '@@/js/config.js';
-import { useInterval } from '@@/js/use-interval.js';
-import { tryParseUrl } from '@@/js/url.js';
+import { createVisibilityAwareInterval } from '@@/js/interval.js';
 import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
 import { i18n } from '@/i18n.js';
+import { fetchRssItems, getRssRefreshIntervalMs, RSS_DEFAULT_REFRESH_INTERVAL_SEC } from '@/utility/fetch-rss.js';
 import MkContainer from '@/components/MkContainer.vue';
 
 const name = 'rss';
@@ -43,7 +43,7 @@ const widgetPropsDef = {
 	refreshIntervalSec: {
 		type: 'number',
 		label: i18n.ts._widgetOptions._rss.refreshIntervalSec,
-		default: 60,
+		default: RSS_DEFAULT_REFRESH_INTERVAL_SEC,
 	},
 	maxEntries: {
 		type: 'number',
@@ -71,36 +71,41 @@ const { widgetProps, configure } = useWidgetPropsManager(name,
 const rawItems = ref<Misskey.entities.FetchRssResponse['items']>([]);
 const items = computed(() => rawItems.value.slice(0, widgetProps.maxEntries));
 const fetching = ref(true);
-const fetchEndpoint = computed(() => {
-	const url = new URL('/api/fetch-rss', base);
-	url.searchParams.set('url', widgetProps.url);
-	return url.toString();
-});
-let intervalClear: (() => void) | null | undefined = null;
+// 取れなかったときは、前に取れた項目があればそれを出したままにする
+const failed = ref(false);
 
-const tick = () => {
-	window.fetch(fetchEndpoint.value, {})
-		.then(res => res.json())
-		.then((feed: Misskey.entities.FetchRssResponse) => {
-			rawItems.value = feed.items.filter((item) => {
-				if (!item.link) return false;
-				const itemUrl = tryParseUrl(item.link, base);
-				return itemUrl != null && ['http:', 'https:'].includes(itemUrl.protocol);
-			});
-			fetching.value = false;
-		});
+// 取得中に URL が変わったら、古い応答は捨てる
+let generation = 0;
+
+const tick = async () => {
+	const current = ++generation;
+	const newItems = await fetchRssItems(widgetProps.url);
+	if (current !== generation) return;
+	if (newItems != null) rawItems.value = newItems;
+	failed.value = newItems == null;
+	fetching.value = false;
 };
 
-watch(fetchEndpoint, tick);
+watch(() => widgetProps.url, () => {
+	// 前の URL で取れた項目は出さない
+	rawItems.value = [];
+	failed.value = false;
+	fetching.value = true;
+	tick();
+});
+
+// useInterval は setup の中でしか開始できないので、間隔を変えたときに作り直せるよう、ここでは直接使う
+let intervalClear: (() => void) | null = null;
 watch(() => widgetProps.refreshIntervalSec, () => {
-	if (intervalClear != null) {
-		intervalClear();
-	}
-	intervalClear = useInterval(tick, Math.max(10000, widgetProps.refreshIntervalSec * 1000), {
+	intervalClear?.();
+	intervalClear = createVisibilityAwareInterval(tick, getRssRefreshIntervalMs(widgetProps.refreshIntervalSec), {
 		immediate: true,
-		afterMounted: true,
 	});
 }, { immediate: true });
+
+onUnmounted(() => {
+	intervalClear?.();
+});
 
 defineExpose<WidgetComponentExpose>({
 	name,

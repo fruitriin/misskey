@@ -30,10 +30,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { ref } from 'vue';
 import * as Misskey from 'misskey-js';
 import { useInterval } from '@@/js/use-interval.js';
-import { url as baseUrl } from '@@/js/config.js';
-import { tryParseUrl } from '@@/js/url.js';
 import MkMarqueeText from '@/components/MkMarqueeText.vue';
 import { shuffle } from '@/utility/shuffle.js';
+import { fetchRssItems, getRssRefreshIntervalMs } from '@/utility/fetch-rss.js';
 
 const props = defineProps<{
 	url: string;
@@ -49,24 +48,19 @@ const items = ref<Misskey.entities.FetchRssResponse['items']>([]);
 const fetching = ref(true);
 const key = ref(0);
 
-const tick = () => {
-	window.fetch(`/api/fetch-rss?url=${encodeURIComponent(props.url)}`, {}).then(res => {
-		res.json().then((feed: Misskey.entities.FetchRssResponse) => {
-			if (props.shuffle) {
-				shuffle(feed.items);
-			}
-			items.value = feed.items.filter((item) => {
-				if (!item.link) return false;
-				const itemUrl = tryParseUrl(item.link, baseUrl);
-				return itemUrl != null && ['http:', 'https:'].includes(itemUrl.protocol);
-			});
-			fetching.value = false;
-			key.value++;
-		});
-	});
+const tick = async () => {
+	const newItems = await fetchRssItems(props.url);
+	// 取れなかったときは、前に取れた項目があればそれを流したままにする
+	fetching.value = false;
+	if (newItems == null) return;
+	if (props.shuffle) {
+		shuffle(newItems);
+	}
+	items.value = newItems;
+	key.value++;
 };
 
-useInterval(tick, Math.max(5000, props.refreshIntervalSec * 1000), {
+useInterval(tick, getRssRefreshIntervalMs(props.refreshIntervalSec), {
 	immediate: true,
 	afterMounted: true,
 });

@@ -37,7 +37,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkSwitch v-model="statusbar.props.shuffle">
 			<template #label>{{ i18n.ts.shuffle }}</template>
 		</MkSwitch>
-		<MkInput v-model="statusbar.props.refreshIntervalSec" manualSave type="number" :min="1">
+		<MkInput v-model="statusbar.props.refreshIntervalSec" manualSave type="number" :min="RSS_MIN_REFRESH_INTERVAL_SEC">
 			<template #label>{{ i18n.ts.refreshInterval }}</template>
 		</MkInput>
 		<MkRange v-model="statusbar.props.marqueeDuration" :min="5" :max="150" :step="1">
@@ -97,6 +97,7 @@ import MkRange from '@/components/MkRange.vue';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import { deepClone } from '@/utility/clone.js';
+import { RSS_DEFAULT_REFRESH_INTERVAL_SEC, RSS_MIN_REFRESH_INTERVAL_SEC } from '@/utility/fetch-rss.js';
 import { prefer } from '@/preferences.js';
 import type { MkSelectItem } from '@/components/MkSelect.vue';
 import type { StatusbarStore } from '@/preferences/def.js';
@@ -130,7 +131,7 @@ watch(() => statusbar.type, () => {
 		statusbar.name = 'NEWS';
 		statusbar.props.url = 'http://feeds.afpbb.com/rss/afpbb/afpbbnews';
 		statusbar.props.shuffle = true;
-		statusbar.props.refreshIntervalSec = 120;
+		statusbar.props.refreshIntervalSec = RSS_DEFAULT_REFRESH_INTERVAL_SEC;
 		statusbar.props.display = 'marquee';
 		statusbar.props.marqueeDuration = 100;
 		statusbar.props.marqueeReverse = false;
