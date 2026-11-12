@@ -10,6 +10,9 @@ DECLARE
 	r record;
 	o text := current_setting('orb.old');
 	n text := current_setting('orb.new');
+	-- アバターのプロキシの url= のように、URL エンコード (encodeURIComponent) された形でも残っている
+	oe text := replace(replace(current_setting('orb.old'), ':', '%3A'), '/', '%2F');
+	ne text := replace(replace(current_setting('orb.new'), ':', '%3A'), '/', '%2F');
 	cnt bigint;
 	total bigint := 0;
 BEGIN
@@ -28,8 +31,8 @@ BEGIN
 	LOOP
 		-- 長さ付きの型 (varchar(512) など) へ明示的にキャストすると、PostgreSQL は黙って切り詰める。
 		-- 長さを外した型にキャストし、列への代入で長さを確かめさせる (超えたらエラーで全体が巻き戻る)
-		EXECUTE format('UPDATE public.%I SET %I = replace(%I::text, $1, $2)::%s WHERE strpos(%I::text, $1) > 0',
-			r.tbl, r.col, r.col, r.typ, r.col) USING o, n;
+		EXECUTE format('UPDATE public.%I SET %I = replace(replace(%I::text, $1, $2), $3, $4)::%s WHERE strpos(%I::text, $1) > 0 OR strpos(%I::text, $3) > 0',
+			r.tbl, r.col, r.col, r.typ, r.col, r.col) USING o, n, oe, ne;
 		GET DIAGNOSTICS cnt = ROW_COUNT;
 		total := total + cnt;
 	END LOOP;

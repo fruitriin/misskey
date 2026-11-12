@@ -247,9 +247,23 @@ rewrite_origin() {
 }
 
 # admin のトークンを全環境で同じ固定値にする。ブラウザは枠のホスト名ごとにトークンを覚えているので、
-# 枠につなぐ環境を替えてもログインしたままになる
+# 枠につなぐ環境を替えてもログインしたままになる。
+# Misskey はトークンから引いたユーザーを、見つからなかった結果も含めて 5 分間メモリに残す。そろえる前に
+# 固定トークンで問い合わせたブラウザがいると「見つからない」が残るので、Misskey がトークンを作り直したときと
+# 同じ内部イベント (userTokenRegenerated) を Redis で流し、動いている Misskey のキャッシュを入れ替える。
+# DB にユーザーの表が無い (migrate 前) か admin がいなければ何もしない
 set_admin_token() {
-	psql_db -q -c "UPDATE \"user\" SET token = '$admin_token' WHERE \"usernameLower\" = '$admin_user' AND host IS NULL" > /dev/null
+	local row id old host
+	[ "$(psql_db -Atc "SELECT to_regclass('public.user') IS NOT NULL")" = "t" ] || return 0
+	row="$(psql_db -Atc "SELECT id || ' ' || coalesce(token, '') FROM \"user\" WHERE \"usernameLower\" = '$admin_user' AND host IS NULL")"
+	[ -n "$row" ] || return 0
+	read -r id old <<< "$row"
+	psql_db -q -c "UPDATE \"user\" SET token = '$admin_token' WHERE id = '$id'" > /dev/null
+	# Misskey は url のホスト (ポートを含む) の名前のチャンネルで内部イベントを受ける
+	host="${url#*://}"
+	host="${host%/}"
+	compose exec -T redis redis-cli PUBLISH "$host" \
+		"{\"channel\":\"internal\",\"message\":{\"type\":\"userTokenRegenerated\",\"body\":{\"id\":\"$id\",\"oldToken\":\"$old\",\"newToken\":\"$admin_token\"}}}" > /dev/null
 }
 
 # 前回 up したときの url (生成済みの default.yml から読む)。初めてなら空
@@ -501,7 +515,8 @@ wait_ready() {
 	if is_prod_compose; then limit_min=30; fi
 	[ -n "$since" ] && since_args=(--since "$since")
 	for _ in $(seq 1 $((limit_min * 12))); do
-		if compose logs ${since_args[@]+"${since_args[@]}"} web 2>/dev/null | grep -q "Now listening"; then
+		# grep -q はログを読み切らずに終わり、pipefail で compose logs が SIGPIPE の失敗扱いになるので使わない
+		if compose logs ${since_args[@]+"${since_args[@]}"} web 2>/dev/null | grep -F "Now listening" > /dev/null; then
 			return 0
 		fi
 		status="$(compose ps -a web --format '{{.State}}' 2>/dev/null || true)"
@@ -1314,6 +1329,8 @@ case "$cmd" in
 		# 書き換えは web を起動する前に行う (古い url のままのキャッシュを作らせない)
 		compose up -d --wait db redis
 		rewrite_origin "$prev_url" "$url"
+		# DB があればトークンも web の起動前にそろえる (初めての環境は create_admin のあとでそろえる)
+		set_admin_token
 		compose up -d
 		echo "起動を待っています (初回は依存のインストールで数分かかります)..."
 		wait_ready

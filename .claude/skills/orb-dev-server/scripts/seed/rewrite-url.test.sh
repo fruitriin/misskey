@@ -13,7 +13,7 @@ CREATE TABLE "user" (id text PRIMARY KEY, "avatarUrl" varchar(512), name varchar
 CREATE TABLE emoji (id text PRIMARY KEY, aliases varchar(128)[], "publicUrl" text);
 CREATE TABLE user_profile (id text PRIMARY KEY, fields jsonb);
 CREATE TABLE counts (id int PRIMARY KEY, n int);
-INSERT INTO "user" VALUES ('u1', 'http://web.a.orb.local:3000/files/x.png', 'http://web.a.orb.local:3000 さん'), ('u2', NULL, 'other');
+INSERT INTO "user" VALUES ('u1', 'http://web.a.orb.local:3000/files/x.png', 'http://web.a.orb.local:3000 さん'), ('u2', NULL, 'other'), ('u3', 'http://web.a.orb.local:3000/proxy/avatar.webp?url=http%3A%2F%2Fweb.a.orb.local%3A3000%2Ffiles%2Fy&avatar=1', 'enc');
 INSERT INTO emoji VALUES ('e1', ARRAY['http://web.a.orb.local:3000/e', 'plain'], 'http://web.a.orb.local:3000/emoji/e1.png');
 INSERT INTO user_profile VALUES ('p1', '[{"name":"site","value":"http://web.a.orb.local:3000/@admin"}]');
 INSERT INTO counts VALUES (1, 3);
@@ -29,6 +29,7 @@ check "NULL はそのまま" "$(q -c "SELECT coalesce(\"avatarUrl\", 'NULL') FRO
 check "配列" "$(q -c "SELECT aliases[1] || ',' || aliases[2] FROM emoji")" "http://dev2.localhost:3080/e,plain"
 check "text" "$(q -c "SELECT \"publicUrl\" FROM emoji")" "http://dev2.localhost:3080/emoji/e1.png"
 check "jsonb" "$(q -c "SELECT fields->0->>'value' FROM user_profile")" "http://dev2.localhost:3080/@admin"
+check "URL エンコードされたオリジン" "$(q -c "SELECT \"avatarUrl\" FROM \"user\" WHERE id='u3'")" "http://dev2.localhost:3080/proxy/avatar.webp?url=http%3A%2F%2Fdev2.localhost%3A3080%2Ffiles%2Fy&avatar=1"
 check "数値の列は触らない" "$(q -c "SELECT n FROM counts")" "3"
 
 # 長さの制限を超える書き換えは全体が巻き戻る
