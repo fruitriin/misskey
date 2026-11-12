@@ -10110,6 +10110,16 @@ export interface Locale extends ILocale {
          */
         "unavailable": string;
     };
+    "_rssPreview": {
+        /**
+         * {n} 件
+         */
+        "itemsCount": ParameterizedString<"n">;
+        /**
+         * 入力した URL から取れる内容を、下のプレビューで確かめてから保存できます
+         */
+        "checkBeforeSave": string;
+    };
     "_widgetOptions": {
         /**
          * ヘッダーを表示

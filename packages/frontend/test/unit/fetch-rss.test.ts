@@ -92,6 +92,11 @@ describe('fetchRss', () => {
 		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).title, 'Example');
 	});
 
+	test.each(['', 'example.com/feed.xml', 'https://', 'ftp://example.com/feed.xml'])('URL でないもの (%s) は、サーバーに問い合わせずに invalidUrl を返す', async (url) => {
+		assert.strictEqual((await fetchRss(url)).error, 'invalidUrl');
+		assert.strictEqual(fetchMock.mock.calls.length, 0);
+	});
+
 	test('items のない応答は failed を返す', async () => {
 		respond(200, { title: 'not a feed' });
 		assert.strictEqual((await fetchRss('https://example.com/feed.xml')).error, 'failed');

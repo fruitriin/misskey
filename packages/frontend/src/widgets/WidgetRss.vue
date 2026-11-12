@@ -10,12 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<template #func="{ buttonStyleClass }"><button class="_button" :class="buttonStyleClass" @click="configure"><i class="ti ti-settings"></i></button></template>
 
 	<div class="ekmkgxbj">
-		<MkLoading v-if="fetching"/>
-		<MkResult v-else-if="fetchError != null && items.length === 0" type="error" :text="getRssFetchErrorText(fetchError)"/>
-		<MkResult v-else-if="(!items || items.length === 0) && widgetProps.showHeader" type="empty"/>
-		<div v-else :class="$style.feed">
-			<a v-for="item in items" :key="item.link" :class="$style.item" :href="item.link" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a>
-		</div>
+		<MkRssFeedItems :items="items" :fetching="fetching" :error="fetchError" :showEmpty="widgetProps.showHeader"/>
 	</div>
 </MkContainer>
 </template>
@@ -26,9 +21,10 @@ import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
 import { i18n } from '@/i18n.js';
-import { getRssFetchErrorText, RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
+import { RSS_DEFAULT_REFRESH_INTERVAL_MIN, RSS_MAX_REFRESH_INTERVAL_MIN, RSS_MIN_REFRESH_INTERVAL_MIN } from '@/utility/fetch-rss.js';
 import { useRssFeed } from '@/utility/use-rss-feed.js';
 import MkContainer from '@/components/MkContainer.vue';
+import MkRssFeedItems from '@/components/MkRssFeedItems.vue';
 
 const name = 'rss';
 
@@ -83,23 +79,3 @@ defineExpose<WidgetComponentExpose>({
 	id: props.widget ? props.widget.id : null,
 });
 </script>
-
-<style lang="scss" module>
-.feed {
-	padding: 0;
-	font-size: 0.9em;
-}
-
-.item {
-	display: block;
-	padding: 8px 16px;
-	color: var(--MI_THEME-fg);
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow: hidden;
-
-	&:nth-child(even) {
-		background: rgba(#000, 0.05);
-	}
-}
-</style>

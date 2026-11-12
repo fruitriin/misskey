@@ -53,6 +53,10 @@ const ERROR_CODES: Record<string, RssFetchError> = {
  * 項目は、http・https のリンクを持つものだけを返す
  */
 export async function fetchRss(feedUrl: string): Promise<RssFetchResult> {
+	// 明らかに URL でないものは、サーバーに問い合わせずに断る (入力途中の URL でプレビューが問い合わせないように)
+	const parsedFeedUrl = tryParseUrl(feedUrl);
+	if (parsedFeedUrl == null || !['http:', 'https:'].includes(parsedFeedUrl.protocol)) return { error: 'invalidUrl' };
+
 	const endpoint = new URL('/api/fetch-rss', base);
 	endpoint.searchParams.set('url', feedUrl);
 

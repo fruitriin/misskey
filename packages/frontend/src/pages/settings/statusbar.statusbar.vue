@@ -31,9 +31,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</MkRadios>
 
 	<template v-if="statusbar.type === 'rss'">
-		<MkInput v-model="statusbar.props.url" manualSave type="url">
-			<template #label>URL</template>
-		</MkInput>
+		<div class="_gaps_s">
+			<MkInput v-model="rssUrlDraft" type="url">
+				<template #label>URL</template>
+				<template #caption>{{ i18n.ts._rssPreview.checkBeforeSave }}</template>
+			</MkInput>
+			<MkRssFeedPreview :url="rssPreviewUrl"/>
+			<div v-if="rssUrlDraft !== statusbar.props.url" class="_buttons">
+				<MkButton primary @click="saveRssUrl"><i class="ti ti-check"></i> {{ i18n.ts.save }}</MkButton>
+				<MkButton @click="rssUrlDraft = statusbar.props.url ?? ''">{{ i18n.ts.cancel }}</MkButton>
+			</div>
+		</div>
 		<MkSwitch v-model="statusbar.props.shuffle">
 			<template #label>{{ i18n.ts.shuffle }}</template>
 		</MkSwitch>
@@ -90,12 +98,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { reactive, computed, ref, watch } from 'vue';
 import * as Misskey from 'misskey-js';
+import { debounce } from 'throttle-debounce';
 import MkSelect from '@/components/MkSelect.vue';
 import MkInput from '@/components/MkInput.vue';
 import MkSwitch from '@/components/MkSwitch.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkRange from '@/components/MkRange.vue';
+import MkRssFeedPreview from '@/components/MkRssFeedPreview.vue';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import { deepClone } from '@/utility/clone.js';
@@ -127,6 +137,25 @@ const statusbarTypeDef = computed(() => {
 const userListsDef = computed(() => {
 	return (props.userLists ?? []).map(x => ({ label: x.name, value: x.id })) satisfies MkSelectItem[];
 });
+
+// URL は、プレビューで確かめてから保存する
+const rssUrlDraft = ref<string>(statusbar.props.url ?? '');
+watch(() => statusbar.props.url, (url) => {
+	rssUrlDraft.value = url ?? '';
+});
+
+// 入力の途中で取りに行かないよう、プレビューは入力が止まってから切り替える (保存するのは入力欄の今の値)
+const rssPreviewUrl = ref<string>(rssUrlDraft.value);
+const updateRssPreviewUrl = debounce(1000, (url: string) => {
+	rssPreviewUrl.value = url;
+});
+watch(rssUrlDraft, (url) => {
+	updateRssPreviewUrl(url);
+});
+
+function saveRssUrl() {
+	statusbar.props.url = rssUrlDraft.value;
+}
 
 // ステータスバーの設定は、ほかの種類と共通で秒で保存するので、RSS の設定画面だけ分に直して見せる
 function getSavedRssRefreshIntervalMin(): number {
