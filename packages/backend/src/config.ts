@@ -94,6 +94,7 @@ type Source = {
 	allowedPrivateNetworks?: string[];
 
 	maxFileSize?: number;
+	enableDirectUpload?: boolean;
 
 	clusterLimit?: number;
 	threadPoolSize?: number;
@@ -173,6 +174,7 @@ export type Config = {
 	proxyBypassHosts: string[] | undefined;
 	allowedPrivateNetworks: string[] | undefined;
 	maxFileSize: number;
+	enableDirectUpload: boolean;
 	clusterLimit: number | undefined;
 	threadPoolSize: number;
 	id: string;
@@ -332,6 +334,7 @@ export function loadConfig(): Config {
 		proxyBypassHosts: config.proxyBypassHosts,
 		allowedPrivateNetworks: config.allowedPrivateNetworks,
 		maxFileSize: config.maxFileSize ?? 262144000,
+		enableDirectUpload: config.enableDirectUpload ?? false,
 		clusterLimit: config.clusterLimit,
 		threadPoolSize: config.threadPoolSize ?? 1,
 		outgoingAddress: config.outgoingAddress,

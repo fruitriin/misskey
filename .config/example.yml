@@ -437,6 +437,10 @@ proxyBypassHosts:
 # Upload or download file size limits (bytes)
 #maxFileSize: 262144000
 
+# Upload large files directly from the browser to object storage with presigned URLs.
+# Requires object storage, plus a CORS rule on the bucket that allows PUT from this server's origin and exposes the ETag header.
+#enableDirectUpload: false
+
 # PID File of master process
 #pidFile: /tmp/misskey.pid
 
