@@ -439,7 +439,7 @@ git commit -a -m "fix(backend): inbox で Date が 5 分を超えて古い署名
 squash_merge riin/feat/upload-image-rotate
 git commit -a -m "feat(frontend): アップロード前の画像の編集に左右の回転を追加"
 
-# DB サーバーの統計 (CPU・メモリ・ディスク・接続数) をウィジェットで見る。閲覧者がいる間だけ読み、管理画面で有効にするまでウィジェットの一覧に出さない
+# DB サーバーの統計 (CPU・メモリ・ディスク・接続数) をウィジェットで見る。閲覧者がいる間だけ読み、管理画面で有効にするまでウィジェットの一覧に出さない。有効にすれば誰でも使える
 # migration (DbServerStats) あり。DB サーバー側の収集スクリプトは ops-sub/db-server-stats/ (本番での実機確認待ち)
 squash_merge riin/feat/db-stats-widget
 git commit -a -m "feat: DB サーバーの統計を見るウィジェットを追加"
@@ -451,7 +451,7 @@ echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を�
 # (2026-11-12 clips-pagination・pages-mfm-toolbar・uploader-drag-handle は統合に入れた、または入っていたので外した)' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 119
+set MISVER 120
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -564,7 +564,7 @@ exit
 [統合済み] perf/stats-reaction-count-estimate — /api/stats のリアクション数を reltuples 概算に (2026-11-12 gamelore の遅延の原因。最新 develop へ載せ直し) [2026-11-12 main-統合.sh に追加、次回の統合から入る]
 [統合済み][作業中] fix/outbox-missing-renote — Renote の元のノートがないと outbox が 500 になる問題 (outbox の statement timeout は本番の EXPLAIN 待ち) [2026-11-12 main-統合.sh に追加、次回の統合から入る]
 [統合済み] fix/inbox-threads-signature — Threads からの POST /inbox が 401 になる問題。署名の Date の許容幅を 300 秒から前後 1 時間に広げ、401 の理由を warn で出す [2026-11-12 main-統合.sh に追加、次回の統合から入る]
-[統合済み] feat/db-stats-widget — DB サーバー統計ウィジェット (閲覧者がいる間だけ読む。管理画面で有効にするまで一覧に出さない。DB サーバーでの収集スクリプトの実機確認待ち) [2026-11-12 claude/review-performance-widget-keMRa から改名、最新 develop へ載せ直し、main-統合.sh に追加]
+[統合済み] feat/db-stats-widget — DB サーバー統計ウィジェット (閲覧者がいる間だけ読む。管理画面で有効にするまで一覧に出さない。有効にすれば誰でも使える。収集は本番 3 台で稼働中 (2026-11-14、peer 認証)) [2026-11-12 claude/review-performance-widget-keMRa から改名、最新 develop へ載せ直し、main-統合.sh に追加]
 [統合済み] perf/server-stats-no-spawn — サーバーメトリクス収集で子プロセスを起動しない (/proc 直読み・閲覧者がいないときは停止) [2026-11-08 main-統合.sh に追加、次回の統合から入る]
 [上流マージ済み] perf/chat-history-limit — チャットの履歴の取得で getOne() に limit(1) を付け、全件を読まないようにする → 栄誉の殿堂へ (本家 develop c08cecea8f に同じ修正、2026-11-12)
 [統合済み] perf/chat-history-polling — チャットの履歴を newChatMessage で取り直し、定期取得を 10 秒から 60 秒に (リアルタイムモード有効時) [2026-11-12 main-統合.sh に追加、次回の統合から入る]
@@ -715,14 +715,23 @@ riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Key�
 ----------------------------------------------------------------
 
 ■ CHANGELOG
+CHANGELOG 120
+- 連合チャンネル機能の改善
+  - チャンネルの「だいたいぜんぶみる」で、連合チャンネルに目印が付き、連合チャンネルだけに絞れるようになった
+  - ほかのサーバーの連合チャンネルのハッシュタグから、同じハッシュタグのチャンネルをすぐ作れるようになった
+  - 収蔵したノートの末尾にあるチャンネルのハッシュタグを表示しないようにした
+  - 連合チャンネルへの投稿は、公開範囲によらず常に連合するようになった
+- DB サーバーのパフォーマンスウィジェットを、管理画面で有効にすれば誰でも使えるようにし、英訳を追加
+
 CHANGELOG 119
 - 連合チャンネル機能
   - 設定はチャンネルごと
 	- 連合が有効になっているチャンネルは全てPublic投稿になります
+- タイムマシンのUIを調整、使い方の説明を追加
 - アップロード前の画像の編集で、左右に回転できるようになった
 - Misskey PagesでMFMの入力ツールバーをちょっと改善
 - RSSウィジェット・RSSステータスバーを大幅に改修
-- DB サーバーのパフォーマンスウィジェットを追加
+- DB サーバーのパフォーマンスウィジェットを追加 (管理画面で有効にすると、誰でも使える)
 - お知らせに並び順を持たせられるようになった
 - ハッシュタグを右クリックしてミュートするメニューが復活
 - パフォーマンスの改善
