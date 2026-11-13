@@ -124,11 +124,10 @@ git commit -a -m "絵文字検索ひらカナ大統一 (大文字・全角も区
 squash_merge riin/emojiChotMiel
 git commit -a -m "絵文字ちょっと見えてほしい"
 
-# NOTE: 2026-10-23 統合から一時除外。上流 misskey-dev#17995「MFM描画部を共通化」で MkMfm.ts が
-#       createMfmRenderer を使う形に全面的に書き換わり、本ブランチの MkMfm.ts の変更が当たらなくなった。
-#       復帰条件: 本ブランチを最新 develop の createMfmRenderer の構造に合わせて作り直すこと (方針はユーザーと相談)。
-#squash_merge riin/hashtag-mutable
-#git commit -a -m "ハッシュタグでミュートできるようにする"
+# ノートのハッシュタグの右クリックのメニューから、そのハッシュタグをワードミュート・ハードワードミュートする
+# 2026-11-12 hashtag-mutable (2026-10-23 に MFM 描画の共通化と衝突して除外) を、createMfmRenderer に合わせて作り直した。計画書: docs/2026-11-12-ハッシュタグをメニューからミュート.md
+squash_merge riin/feat/hashtag-mute-menu
+git commit -a -m "feat(frontend): ノートのハッシュタグの右クリックのメニューから、そのハッシュタグをミュートできるように"
 
 # 検索を本文のみと 本文+CWにできるように
 squash_merge riin/search-enhance
@@ -163,6 +162,11 @@ git commit -a -m "通知の残カウントバグを直す"
 
 squash_merge riin/release/mkPages-mkDraggable
 git commit -a -m "MkPagesエディター拡張/ドラッグアンドドロップのスマホ拡張とアニメーション"
+
+# MkPages のテキストブロックで、$MFM ボタンから $ の補完と同じ MFM 関数のメニュー ($[rotate 回転] の形) を開き、選択範囲を $[タグ ] で囲む (旧 claude/issue-26-20260510-1119 + variant/issue-26-20260510-1119)
+# release/mkPages-mkDraggable の上に積んだブランチ (テキストブロックのツールバーが release にあるため)。release を作り直したら、このブランチも載せ直す
+squash_merge riin/feat/pages-mfm-format-menu
+git commit -a -m "feat(frontend): MkPages のテキストブロックで、\$MFM ボタンから MFM 関数のメニューを開き、選択範囲を囲めるように"
 # --------------------------------------
 
 
@@ -194,13 +198,16 @@ git commit -a -m "添付ファイルのエンコーディングがSJISになる�
 # MkPostFormの宛先にチャンネルを追加, 翻訳を追加 swap-CW
 # チャンネルの既読を同期, registory-item endpointを追加 router.definition, main-boot
 # 追加, MkHelp, 投稿フォームでセンシティブワードを警告・ハイライト表示
+# チャンネル連合 (channel.federationPolicy: none / public) も、このブランチに含めて統合する
+#   (投稿フォームのチャンネル宛先と、チャンネル投稿の公開範囲・連合の決め方が絡むため。2026-11-12 に feat/channel-federation を混ぜた)
 squash_merge  riin/mkPostFormExtend # チャンネル既読の同期を統合
 git commit -a -m "投稿機能周の拡張"
 
 
-# コンフリクトしたので取り込んでない
-# squash_merge riin/safe-rss &&\
-# git commit -a -m "saferRSS" &&\
+# RSS の取得を安全にする (失敗した URL を 10 分は取りに行かない、ウィジェットが読み込み中のまま止まらない、取り直しは分で設定・最小 45 分・既定 180 分。ja-JP.yml あり)
+# 2026-11-12 safe-rss (本家の fetch-rss の安全化と衝突して除外) を、目的から作り直した。計画書: docs/2026-11-12-RSSの取得を安全にする.md
+squash_merge riin/fix/rss-fetch-safety
+git commit -a -m "fix: RSS の取得を安全にする (失敗した URL を何度も取りに行かず、ウィジェットが読み込み中のまま止まらないように)"
 
 # コンフリクトの修正が必要
 #squash_merge riin/readble-message-ratelimitservice
@@ -359,9 +366,10 @@ git commit -a -m "feat: 複数ブランチのフロントエンドを本番に�
 squash_merge riin/perf/server-stats-no-spawn
 git commit -a -m "perf(backend): サーバーメトリクスの収集で子プロセスを起動しないようにする"
 
-# チャットの履歴 (chat/history) の取得で、getOne() に LIMIT が付かず、条件に合うメッセージを全件読んでいた問題 (gamelore の pg_stat_statements で約 7 億行、2026-11-11)
-squash_merge riin/perf/chat-history-limit
-git commit -a -m "perf(backend): チャットの履歴の取得で、1 件だけ読むようにする"
+# 2026-11-12 本家の develop (c08cecea8f「チャット履歴の取得時に必要ない情報の取得が行われていた問題を修正」) に同じ修正が入ったので外した (栄誉の殿堂へ)
+## チャットの履歴 (chat/history) の取得で、getOne() に LIMIT が付かず、条件に合うメッセージを全件読んでいた問題 (gamelore の pg_stat_statements で約 7 億行、2026-11-11)
+#squash_merge riin/perf/chat-history-limit
+#git commit -a -m "perf(backend): チャットの履歴の取得で、1 件だけ読むようにする"
 
 # お知らせのグループ (グループごとのタブ・未読バッジ・タブごとの非通知・表示順の並べ替え。migration あり)
 # リノートロックとモデレーションログの種類・ja-JP.yml・misskey-js の autogen が隣り合わせで衝突する。両方を残し、autogen は生成し直す
@@ -372,20 +380,53 @@ git commit -a -m "feat: お知らせをグループに分けてタブで表示�
 squash_merge riin/feat/image-menu-copy-link-emoji-preview
 git commit -a -m "feat(frontend): 画像メニューに「リンクをコピー」と「絵文字として確認」を追加"
 
+# ローカルユーザーの凍結・解除で、知り得る全 SharedInbox を求めるために following をテーブルごと読み込み、JS で重複を除いていた問題
+# 大きいサーバーでは OOM になる。出典: https://github.com/MisskeyIO/misskey/pull/598 (DISTINCT を DB に任せる考え方を参考にし、一括投入にした)
+squash_merge riin/perf/suspend-shared-inbox-distinct
+git commit -a -m "perf(backend): 凍結・解除時の SharedInbox の取得で、following を全件読み込まないように"
+
+# /api/stats が note_reaction の全件 COUNT (gamelore で約 4,500 万行) を実行し、毎回 statement timeout で失敗するのでキャッシュも効かなかった問題
+# 2026-11-12 に gamelore で Tencent Cloud から繰り返し呼ばれ、DB が詰まって遅延した。pg_class.reltuples の概算で返す。計画書: docs/2026-07-28-statsのリアクション数を概算に.md
+squash_merge riin/perf/stats-reaction-count-estimate
+git commit -a -m "perf(backend): /api/stats のリアクション数を pg_class.reltuples の概算で返す"
+
+# Renote の元のノートが削除されていると、outbox のページ全体と /notes/:id/activity が 500 になる問題 (本家の脱CASCADE削除以降。2026-11-12 の点検で gamelore 44 件/日など)
+# 計画書: docs/planning/2026-11-12-outboxのRenote元がないと500になる問題.md (outbox の statement timeout は調査中)
+squash_merge riin/fix/outbox-missing-renote
+git commit -a -m "fix(backend): Renote の元のノートがないと outbox と /notes/:id/activity が 500 になる問題を修正"
+
+# チャットの履歴 (MkChatHistories) が表示中のタブから 10 秒ごとに chat/history を 2 回呼んでいた問題 (gamelore で 1 接続元が 1 日 7,764 回、2026-11-12)
+# リアルタイムモードでは newChatMessage で取り直し、定期取得を 60 秒にする。計画書: docs/2026-11-12-チャットの履歴の定期取得を減らす.md
+squash_merge riin/perf/chat-history-polling
+git commit -a -m "perf(frontend): チャットの履歴を新着の通知で取り直し、定期取得の間隔を延ばす"
+
+# Threads (facebookexternalua) からの POST /inbox が 401 になる問題 (2026-11-12 の点検で gamelore・favskey とも 1 日 2,000 件弱)
+# 原因: 署名の Date のずれをライブラリの既定値 300 秒で弾いていた。Threads は配送が遅れても最初の Date のまま送ってくる。許容幅を前後 1 時間にする
+# あわせて、inbox が 401 を返すときに理由を warn で出す (送り元と理由ごとに 10 分に 1 回)
+# 計画書: docs/2026-11-12-Threadsからの受信が401になる問題の調査.md / fix/outbox-missing-renote と同じファイル (ActivityPubServerService.ts) を触るが、別の箇所
+squash_merge riin/fix/inbox-threads-signature
+git commit -a -m "fix(backend): inbox で Date が 5 分を超えて古い署名付きの要求を 401 にしていた問題を修正"
+
+# my/clips で「もっと見る」を押すと同じクリップが出続ける問題。返ってきた件数が上限未満なら末尾と判定する
+# 2026-11-12 外した (栄誉の殿堂へ)。本家の develop (1eabb21d69「クリップ一覧APIをページネーションに対応させる」) の API で、
+# 最新 develop だけでもクリップが重複せず、末尾で「もっと見る」も消えることを確かめた (違いは末尾で空の要求が 1 回出るだけ)
+#squash_merge riin/fix-clips-pagination
+#git commit -a -m "fix(frontend): my/clips のページ送りの末尾判定を修正"
+
+# アップロード前の画像の編集に、左右の回転を追加
+squash_merge riin/feat/upload-image-rotate
+git commit -a -m "feat(frontend): アップロード前の画像の編集に左右の回転を追加"
+
+# DB サーバーの統計 (CPU・メモリ・ディスク・接続数) をウィジェットで見る。閲覧者がいる間だけ読み、管理画面で有効にするまでウィジェットの一覧に出さない
+# migration (DbServerStats) あり。DB サーバー側の収集スクリプトは ops-sub/db-server-stats/ (本番での実機確認待ち)
+squash_merge riin/feat/db-stats-widget
+git commit -a -m "feat: DB サーバーの統計を見るウィジェットを追加"
+
 # 本番で確認するフロントエンド variant の一覧。下の台帳の [統合待ち（要チェック）] から、frontend だけを変えるブランチを選ぶ。
 # branch は riin (fruitriin/misskey) 上のブランチ名。mode を省略すると、この時点の HEAD に squash merge してビルドする。
 # backend の変更を含むブランチは、本番の backend に反映されないので variant では正しく確認できない (コメントアウトして理由を残す)。
 echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を直すこと。
-- name: clips-pagination
-  branch: fix-clips-pagination
-# 古い mistems-main から派生していて HEAD に squash merge できないので、コンフリクトを解消した variant のブランチ (mistems-main 114 が土台) をそのままビルドする
-- name: pages-mfm-toolbar
-  branch: variant/issue-26-20260510-1119
-  mode: as-is
-# 投稿フォームのアップロード中の一覧をハンドルで並べ替える。mistems-main 114 には別のブランチ経由で同じ機能が入っており、本流 (origin/develop) には無い
-- name: uploader-drag-handle
-  branch: variant/misskey-pr-34-continue-5ywvl
-  mode: as-is' > frontend-variants.yml
+# (2026-11-12 clips-pagination・pages-mfm-toolbar・uploader-drag-handle は統合に入れた、または入っていたので外した)' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
 set MISVER 118
@@ -445,8 +486,10 @@ exit
 [統合済み] mkNoteExtend — チャンネル Renote の出所表示 + リノートティッカー
 [統合済み] MkNoteDetailed-loadReplies — ノート詳細で返信を自動読み込み
 [統合済み] feat/renote-lock — リノートロック [上流#17554 CLOSED → MISTEMS 向け。2026-10-24 最新 develop へ rebase し、引用リノートにもロックを適用。claude/renote-lock-feature-7J0NA から改名、PR#56]
-[保留] hashtag-mutable — ハッシュタグをメニューからミュート (2026-10-23 上流の MFM 描画部共通化と衝突して統合から一時除外。createMfmRenderer に合わせて作り直しが必要)
-[保留] safer-rss — RSS の安全化 (コンフリクトで統合保留中)
+[統合済み] feat/hashtag-mute-menu — ハッシュタグをメニューからミュート (正規表現で # タグだけに当てる) [2026-11-12 hashtag-mutable を作り直し、main-統合.sh に追加。2026-11-13 動作確認 OK]
+[残骸] hashtag-mutable — ↑の作り直し前 (MkA の複製。MFM 描画の共通化と衝突)
+[統合済み] fix/rss-fetch-safety — RSS の取得の安全化 (失敗した URL の記憶、ウィジェットのエラー表示、取り直しの間隔の下限)。取り直しの間隔は数値の入力欄、ステータスバーの設定画面にも URL のプレビュー、URL を変えたらすぐ取り直す [2026-11-12 safe-rss を作り直し、main-統合.sh に追加。2026-11-13 設定画面を直して動作確認 OK]
+[残骸] safe-rss (safer-rss) — ↑の作り直し前
 
 ◇ 絵文字・リアクション
 [統合済み] emojiDetailDialog — リアクションビューアに読み仮名など表示
@@ -457,23 +500,21 @@ exit
 
 ◇ 検索
 [統合済み] search-enhance — ノート検索強化 (本文/CW 切替・UI 改善) + PGroonga 計画書
-[統合済み] index-optimize — 検索インデックス最適化
+[統合済み] index-optimize — 検索インデックス最適化 (ユーザー・ハッシュタグの前方一致に text_pattern_ops)。2026-11-13 に本番で使われていないインデックス 25 個を消す migration を追加
 
 ◇ 投稿フォーム・エディタ・D&D
-[統合済み] mkPostformExtend — 投稿フォーム機能拡張 (チャンネル宛先・センシティブ警告・既読同期ほか)
+[統合済み] mkPostformExtend — 投稿フォーム機能拡張 (チャンネル宛先・センシティブ警告・既読同期ほか)。2026-11-12 に最新 develop へ載せ直し、チャンネル連合 (feat/channel-federation) を混ぜた。連合するチャンネルの目印はグローバル TL のアイコン (ti-whirl)。2026-11-13 動作確認 OK
 [統合済み] mkPages — ページエディタ narrow タブ切替 (release 経由)
 [統合済み] mkdraggable-animation — MkDraggable アニメーション + オートスクロール (release 経由)
 [上流レビュー中] mkdraggable-pointerevents — MkDraggable の PointerEvents 対応 [上流#17535]
-[作業中] feat/mk-draggable-swipe-tansition — MkDraggable トランジション改善
 [統合済み] release/mkPages-mkDraggable, rebuild/mkPages-mkDraggable — ↑の統合用 release
 
 ◇ タイムマシン・ふぁぼったー
 [統合済み][作業中] timemachine — タイムマシン本体 (release 経由で統合済み)。フィードバック対応計画書で改修中
 [統合済み] favstar-rebased — ふぁぼったー (squash 済み、release 経由)
-[統合済み] release/FavstarAndTimemachine — ↑2つの release。2026-11-11 に最新 develop へ載せ直し、統合は release/FavstarTimemachineGapMarker 経由になった
-[統合済み] feat/timeline-gap-marker — スリープや WebSocket の切断でタイムラインに取りこぼした区間を歯抜けマーカーで示し、押すと補給する。実験的機能の設定で、既定はオフ (fork PR#54)。release/FavstarAndTimemachine の上に積んだブランチで、release 経由で統合 [2026-11-11 claude/confident-cerf-49qdy1 (mistems-main 96 派生) から作り直し]
+[統合済み] release/FavstarAndTimemachine — ↑2つの release。2026-11-11 に最新 develop へ載せ直し、統合は release/FavstarTimemachineGapMarker 経由になった。2026-11-13 にタイムマシンのツアーの見直し (サンプルのノートで各モードを操作しながら進む) と、ノートの時刻の右クリックメニューの統合をコミットし、feat/timeline-gap-marker → release/FavstarTimemachineGapMarker の順に積み直して push 済み
+[統合済み] feat/timeline-gap-marker — スリープや WebSocket の切断でタイムラインに取りこぼした区間を歯抜けマーカーで示し、押すと補給する。実験的機能の設定 (fork PR#54)。2026-11-12 に既定をオンにした。2026-11-13 にマーカーのボタンを「下に読み込む」(上のノートを動かさない)「上に読み込む」(下のノートを動かさない) の 2 つにした。release/FavstarAndTimemachine の上に積んだブランチで、release 経由で統合 [2026-11-11 claude/confident-cerf-49qdy1 (mistems-main 96 派生) から作り直し]
 [統合済み] release/FavstarTimemachineGapMarker — release/FavstarAndTimemachine + feat/timeline-gap-marker の統合用 release [2026-11-11 作成、main-統合.sh に追加、次回の統合から入る]
-[作業中] fix-mkpaginator-type — paginator の allowPartial 特性化テスト+代替実装 (未コミット作業のみ。タイムマシン期の上流 PR 準備の名残と推定)
 
 ◇ タイムライン (FTT)
 [統合済み] fix/fanout-timeline — FTTL 歯抜けバグ修正
@@ -498,16 +539,18 @@ exit
 [上流レビュー中] fix/resync-charts-statement-timeout — ↑の上流 PR 用切り出し [上流#17778]
 [統合済み][上流準備中] fix/instance-chart-smallint-overflow — instance チャート smallint 溢れ修正 [上流Issue#17930・PR これから]
   （fix/instance-chart-requests-overflow は同一コミットの別名）
-[作業中] perf/stats-reaction-count-estimate — /api/stats のリアクション数を reltuples 概算に
-[作業中] claude/review-performance-widget-keMRa — DB パフォーマンスウィジェット
+[統合済み] perf/stats-reaction-count-estimate — /api/stats のリアクション数を reltuples 概算に (2026-11-12 gamelore の遅延の原因。最新 develop へ載せ直し) [2026-11-12 main-統合.sh に追加、次回の統合から入る]
+[統合済み][作業中] fix/outbox-missing-renote — Renote の元のノートがないと outbox が 500 になる問題 (outbox の statement timeout は本番の EXPLAIN 待ち) [2026-11-12 main-統合.sh に追加、次回の統合から入る]
+[統合済み] fix/inbox-threads-signature — Threads からの POST /inbox が 401 になる問題。署名の Date の許容幅を 300 秒から前後 1 時間に広げ、401 の理由を warn で出す [2026-11-12 main-統合.sh に追加、次回の統合から入る]
+[統合済み] feat/db-stats-widget — DB サーバー統計ウィジェット (閲覧者がいる間だけ読む。管理画面で有効にするまで一覧に出さない。DB サーバーでの収集スクリプトの実機確認待ち) [2026-11-12 claude/review-performance-widget-keMRa から改名、最新 develop へ載せ直し、main-統合.sh に追加]
 [統合済み] perf/server-stats-no-spawn — サーバーメトリクス収集で子プロセスを起動しない (/proc 直読み・閲覧者がいないときは停止) [2026-11-08 main-統合.sh に追加、次回の統合から入る]
-[統合済み] perf/chat-history-limit — チャットの履歴の取得で getOne() に limit(1) を付け、全件を読まないようにする [2026-11-11 main-統合.sh に追加、次回の統合から入る]
+[上流マージ済み] perf/chat-history-limit — チャットの履歴の取得で getOne() に limit(1) を付け、全件を読まないようにする → 栄誉の殿堂へ (本家 develop c08cecea8f に同じ修正、2026-11-12)
+[統合済み] perf/chat-history-polling — チャットの履歴を newChatMessage で取り直し、定期取得を 10 秒から 60 秒に (リアルタイムモード有効時) [2026-11-12 main-統合.sh に追加、次回の統合から入る]
 [統合済み] perf/emojis-cache — /api/emojis の一覧を emojis/stats と同じ鍵でメモリにキャッシュ (party/17758-emoji-cache の上に積み、17758 の行を置き換え) [2026-11-11 main-統合.sh に追加、次回の統合から入る]
 
 ◇ 通知
 [統合済み][上流レビュー中] fix/notification-unread-count — 通知残カウントバグ + 100 件打ち切り [上流#17530]
 [退避] claude/issue-26-20260505-0757 — ↑の元となった fork Issue #26 の作業ブランチ
-[作業中] list — 通知の未読バッジが消えない問題 （#17427 関連）
 [統合済み] block-mentions-from-unfamiliar — 無名リモートユーザーからのメンション拒否
 
 ◇ 単発 fix
@@ -525,13 +568,13 @@ exit
 ※ party/pr-* は上流 PR の生コピー (コミット他者名義) のため台帳対象外
 
 ◇ backup/*
-[退避] backup/* 17 本 — 作業前退避。`git branch --list 'backup/*'` 参照
+[退避] backup/* — 2026-11-12 にすべて削除した
 
 ◇ 残骸候補 (整理対象)
 [残骸] blank-image — 名前と無関係にタイムマシン開発の旧作業ブランチ
 [残骸] renote-lock — mistems-main の MISTEMS.93 時点スナップショット (機能本体は feat/renote-lock)
 [残骸] timeout — mistems-main の MISTEMS.103 時点スナップショット
-[残骸] fanout-rebase / loadReplies-rebase / mkNoteExtend-rebase / favstar-rebase / favstar-backup-01da813237 / tmp-release-FavstarAndTimemachine — rebase 作業の中間残骸
+[残骸] fanout-rebase / loadReplies-rebase / favstar-rebase / favstar-backup-01da813237 / tmp-release-FavstarAndTimemachine — rebase 作業の中間残骸
 [残骸] release/mkPostExtendAndTimemachine / releate/clips-and-draggable (typo) — 旧 release 試行
 [残骸] hoge / tmp / claudeImplement (同名 worktree の実体は add-claude-github-actions…) / release/mkPages-mkDraggablee — 独自コミットなし
 [残骸] riin/ プレフィックス付きローカルブランチ 5 本 (riin/claude/2fa-register-key-auth-error-w3c1m5,
@@ -549,8 +592,9 @@ exit
 [上流レビュー中] mkdraggable-sp — MkDraggable タッチイベント追加版 [上流#17534]
 
 ◇ 構想・計画・素材
-[作業中] channel-federation — チャンネル連合の実装 + 計画 (2026-08)
-[作業中] claude/channel-federation-plan-fqtna3 — 同計画書の連合モード enum 方式改稿版
+[統合済み] feat/channel-federation — チャンネル連合 (連合モードは none / public の 2 択)。2026-11-12 に mkPostFormExtend に混ぜたので、統合は mkPostFormExtend 経由。直すときは mkPostFormExtend で直す
+[統合済み] feat/channel-federation-hashtag — チャンネル連合のハッシュタグ (#連合チャンネル_チャンネル名。ノートのハッシュタグ (AP の tag) と本文の付記に付け、同じハッシュタグのリモートの公開ノートと、ほかのサーバーの同じ名前の連合チャンネルのノートを収蔵する)。2026-11-13 に mkPostFormExtend へ fast-forward で混ぜた。同日、ハッシュタグのページから辿れるよう tag に入れ、付記をハッシュタグだけにした (From と URL をやめた)。チャンネル投稿・連合まわりは今後 mkPostFormExtend 1 本で扱う
+[残骸] channel-federation / claude/channel-federation-plan-fqtna3 — ↑の作り直し前 (実装と、enum 方式に改稿した計画書)
 [退避] speculative/owner-checksheet — 要オーナー確認事項の一括チェックシート
 [退避] speculative/terms-drafts — 利用規約ドラフト (ペルソナ並列レビュー反映)
 [退避] speculative/channelindex-hashtags-cleanup — MkChannelIndex の未使用宣言 cleanup 案
@@ -558,14 +602,16 @@ exit
 [退避] claude/checkout-time-machine-VvPem — タイムマシン追加ロジックの unit test 素材
 
 ◇ 実装ありだが未統合 (要チェック)
-[統合待ち（要チェック）] claude/issue-26-20260510-1119 — MkPages テキストブロックに MFM ツールバー (Phase 2)
-[統合待ち（要チェック）] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 (fork PR#34 続き)
+[統合済み] feat/pages-mfm-format-menu — MkPages のテキストブロックで $MFM ボタンから MFM 関数のメニュー (Phase 2。2026-11-12 に $ の補完と同じ一覧と $[タグ 意味] の表記に直した)。release/mkPages-mkDraggable の上に積んだブランチ [2026-11-12 claude/issue-26-20260510-1119 と variant/issue-26-20260510-1119 から改名して作り直し、main-統合.sh に追加]
+[残骸] claude/issue-26-20260510-1119, variant/issue-26-20260510-1119 — ↑の作り直しの素材 (古い mistems-main 派生)
+[統合済み(別ブランチ)] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 (fork PR#34 続き)。同じ機能 (専用ハンドルからの並べ替え・reorderItems) が release/mkPages-mkDraggable 経由で mistems-main に入っているので統合しない [2026-11-12 確認。fork PR#41 は OPEN のまま]
 [統合済み] feat/remote-note-refetch — リモートノート再取得の改善 [2026-10-24 最新 develop に作り直し、claude/remote-emoji-refetch-2nbU9 から改名、PR#57。旧 PR#35・#55 は close]
-[統合待ち（要チェック）] fix-clips-pagination — my/clips ページネーション末尾判定の修正
-[統合済み] feat/announcement-groups — お知らせのグループ (グループごとのタブ・未読バッジ・非通知・表示順の並べ替え。migration あり) [2026-11-11 main-統合.sh に追加、次回の統合から入る]
+[上流マージ済み] fix-clips-pagination — my/clips ページネーション末尾判定の修正 → 栄誉の殿堂へ (本家 develop 1eabb21d69 の API で解決済み、2026-11-12 に統合から外した)
+[統合済み] feat/announcement-groups — お知らせのグループ (グループごとのタブ・未読バッジ・非通知・表示順。migration あり) [2026-11-11 main-統合.sh に追加。2026-11-13 表示順をお知らせ全体で 1 つにし、コントロールパネルの一覧の項目をドラッグや矢印で入れ替える形に直した (表示順を振り直す migration を追加)]
 [統合済み] feat/image-menu-copy-link-emoji-preview — 画像メニューに「リンクをコピー」「絵文字として確認」を追加 [2026-11-11 main-統合.sh に追加、次回の統合から入る]
-[統合待ち（要チェック）] feat/upload-image-rotate — アップロード前の画像の編集に左右の回転を追加 [2026-11-11 最新 develop へ rebase]
-[作業中] feat/drive-direct-upload — ドライブ直接アップロード (R2 署名付き URL とマルチパート)。計画書のみ
+[統合済み] perf/suspend-shared-inbox-distinct — 凍結・解除時の SharedInbox の取得で following を全件読み込まない [2026-11-12 main-統合.sh に追加、次回の統合から入る]
+[統合済み] feat/upload-image-rotate — アップロード前の画像の編集に左右の回転を追加 [2026-11-12 最新 develop へ rebase、main-統合.sh に追加。2026-11-13 動作確認 OK]
+[作業中] feat/drive-direct-upload — ドライブ直接アップロード (R2 署名付き URL とマルチパート)。API・処理・フロントは実装済み、ブラウザでの確認と R2 の本番手順が残り [2026-11-12 最新 develop へ載せ直し]
 [保留] readble-message-ratelimitservice — レートリミットメッセージの可読化 (統合スクリプトでコメントアウト中・要コンフリクト修正)
 
 ◇ 吸収済み・置換済み (リモート削除候補)
@@ -600,12 +646,21 @@ exit
 ※ 別名 (ローカル台帳のエントリと同一コミットなので個別掲載しない):
    safe-rss = safer-rss / favstar = favstar-rebased /
    fix/emoji-picker-resize-when-arrive-new-note = ローカル …-new-not /
-   mkPostFormExtend = ローカル mkPostformExtend (docs 2 コミット分だけローカルが先行)
+   mkPostFormExtend = ローカル mkPostformExtend (2026-11-13 にそろえた)
 
 --------------------------------------------------------
 
 ■ 栄誉の殿堂
 本家の方に入ったのでもう不要
+後始末: ここへ移したら、ショーケース PR (systems) とレビュー PR (riin) を閉じ、riin と systems のリモートからブランチを消す。消す前の SHA はここに書き残す
+2026-11-13 の後始末: PR を閉じた (systems #78、riin #53・#27)。riin から消したブランチと SHA は
+  fix-clips-pagination 9b3b768c2d / perf/clean-remote-notes-cursor ee3a540470 / fix/clean-remote-notes-delete-timeout db5723d5df /
+  perf/chat-history-limit 04ae5e8bcd / claude/fix-database-queries-i0dvC 4c776f2bbf (systems には元から無かった)。
+  ローカルのブランチと worktree も消した (perf/clean-remote-notes-cursor のローカルは 1c9a315980 で、riin と中身が違っていた)。fix/clips-pagination の検証環境の volume も消した
+
+riin/fix-clips-pagination — my/clips のページ送りの末尾判定の修正
+  → 本家 develop 1eabb21d69「クリップ一覧APIをページネーションに対応させる」で clips/list が untilId でページ送りするようになり、
+  最新 develop だけで同じクリップが出続ける問題は起きない (2026-11-12 に確認して統合から外した)。
 
 
 riin/fix/timeline-moreview — タイムライン自動「もっと見る」
@@ -623,6 +678,10 @@ riin/perf/clean-remote-notes-cursor + riin/fix/clean-remote-notes-delete-timeout
     MISTEMS.110 で統合から除外 (2026-09-24)。
   復帰条件: 本家 #17957 が revert された場合のみ再検討。
 
+riin/perf/chat-history-limit — チャットの履歴の取得で getOne() に limit(1) を付ける (gamelore で約 7 億行を読んでいた、2026-11-11)
+  → 本家 develop のコミット c08cecea8f「チャット履歴の取得時に必要ない情報の取得が行われていた問題を修正」(2026-11-12) で、
+    ChatService.ts が同じ内容になった。MISTEMS.118 で統合・デプロイしたが、次の統合から外す (2026-11-12)。
+
 riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Keyで操作できるようにする")
 → 1週間後の misskey-dev#16621 (2025-10-09, develop統合済み)
   「[カスタム絵文字beta]MacのCmdキー対応とCtrl/Cmd+Arrowキー対応」が
@@ -634,22 +693,41 @@ riin/enhance/emoji-grid-keyshortcuts (2025-10-02, "EmojiGrid MacのCommand Key�
 ----------------------------------------------------------------
 
 ■ CHANGELOG
+CHANGELOG 119
+- 連合チャンネル機能
+  - 設定はチャンネルごと
+	- 連合が有効になっているチャンネルは全てPublic投稿になります
+- アップロード前の画像の編集で、左右に回転できるようになった
+- Misskey PagesでMFMの入力ツールバーをちょっと改善
+- RSSウィジェット・RSSステータスバーを大幅に改修
+- DB サーバーのパフォーマンスウィジェットを追加
+- お知らせに並び順を持たせられるようになった
+- ハッシュタグを右クリックしてミュートするメニューが復活
+- パフォーマンスの改善
+  - サーバーの統計 (/api/stats) のリアクション数を概算で返す
+  - チャットの履歴を新着の通知で取り直すようにし、定期的な取得を減らした
+  - ハッシュタグの入力補完が高速になった
+	- 使われていないDBのindexを削除
+- リノートの元のノートが削除されていると、連合先からの投稿一覧 (outbox) の取得がエラーになる問題を修正
+- Threads からの配送が遅れて届くと受け取れない問題を修正
+
 CHANGELOG 118
-- カスタム絵文字の一覧の取得をキャッシュし、絵文字が変わったときだけデータベースから読むように (サーバーの負荷を下げた)
+- パフォーマンスの改善
+  - カスタム絵文字の一覧の取得をキャッシュし、絵文字が変わったときだけデータベースから読むように (サーバーの負荷を下げた)
 
 CHANGELOG 117
 - タイムラインをもっと見れなくなるバグを修正
 
 CHANGELOG 116
-- お知らせをグループに分けてタブで表示できるように (グループごとの未読バッジ・非通知・表示順の並べ替え)
+- お知らせのタブグループ化機能追加
 - 画像メニューに「リンクをコピー」と「絵文字として確認」を追加
-- サーバーメトリクスの収集で子プロセスを起動しないようにし、サーバーの負荷を下げた
-- チャットの履歴の取得を高速化
-- タイムラインの切断中追加読み込み (実験的機能): 通信の切断やスリープのあいだに取りこぼしたノートを、再接続したときに取り直せるように
+- タイムラインの切断中追加読み込み
+- 絵文字の入力補完で、IME の変換中に候補を選べない・候補が消える問題を修正
 - リモートのノートを再取得するときに、リアクションの数と付けたユーザーも相手のサーバーから取り込むように (取り消しも反映)
-- 絵文字の入力補完で、IME の変換中に候補を選べない・候補が消える問題を修正 (iOS を含む)。AND 検索は実験的機能の設定でオフにできるように
-- ドライブの使用量の集計を高速化
-
+- パフォーマンスの改善
+  - サーバーメトリクスの収集で子プロセスを起動しないようにし、サーバーの負荷を下げた
+  - チャットの履歴の取得を高速化
+  - ドライブの使用量の集計を高速化
 
 CHANGELOG 115
 - リノートロック: 投稿者とモデレーターが、ノートのリノートと引用を禁止できるように
