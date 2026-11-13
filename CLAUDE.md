@@ -53,6 +53,10 @@ git push riin origin/develop:refs/heads/develop
 git push systems origin/develop:refs/heads/develop
 ```
 
+### commit
+
+作業ブランチ (機能ブランチ、`riin/release/*`、claudeImplement など) へのコミットは、**ユーザーに確認せずに行ってよい**。変更がひと区切りついたら、`shipping-misskey-change` スキルのチェックを通してからコミットする。`mistems-main` には直接コミットしない (「特殊ブランチ」の節)。
+
 ### force push
 
 develop への rebase や作り直しを日常的に行う開発スタイルなので、`riin` の自分のブランチ (機能ブランチ、`riin/release/*`、claudeImplement など) への force push は日常的に使ってよい。**ユーザーへの許可取りは不要**である。他人の push を上書きしないよう `--force-with-lease` を使う。`origin` (misskey-dev) へは、force push も通常の push もしない。
