@@ -258,6 +258,10 @@ git commit -a -m "debug(backend): node-fetch の AbortError に request.url を�
 # キャッシュ非ウォーム時に数秒〜十秒級の遅延を起こす問題の高速化 (LATERAL 方式)
 squash_merge riin/fix/timeline-dbfallback-lateral
 git commit -a -m "perf(backend): フォロー数が多いユーザーのホームタイムライン DB フォールバックを高速化"
+# 統合のつなぎ: mkPostFormExtend (チャンネル連合) が notes/timeline.ts の getFromDb に足した withCollectedChannelNotes を、
+#   このブランチの buildQuery の引数の型にも足す。どちらのブランチ単体では起きず、2 本を合わせたときだけ型エラーになる (2026-11-13)
+perl -0pi -e 's/(private buildQuery\(\n\t\tps: \{[^}]*withRenotes: boolean;) \},/$1 withCollectedChannelNotes: boolean; },/' packages/backend/src/server/api/endpoints/notes/timeline.ts
+git commit -a -m "fix(backend): ホームタイムラインの buildQuery の引数に withCollectedChannelNotes を足す (チャンネル連合と LATERAL 化のつなぎ)"
 
 # FileServerService の errorHandler は /files/:key (drive) と /proxy/:url* (画像プロキシ) で
 # 共有されているが、エラーログに発生元リクエストの情報が無く追跡できなかった問題の改善
@@ -334,11 +338,12 @@ git commit -a -m "カスタム絵文字の更新をサーバーに確認して�
 # ---- 仮氏パーティ ここまで ----
 
 
-# fix: instance チャートの smallint 溢れと、チャート UPDATE 失敗時にバッファが増え続ける問題 (本家 Issue/PR 予定)
-# NOTE: chart/core.ts の「Updated」ログ行で「正常系ログをデバッグレベルに落とす」とコンフリクトする。
-#       解消方針: 本entry の try/catch 構造を採用しつつ、ログレベルは debug を維持 (rerere 学習済 2026-09-08)
+# fix: instance チャートのリクエスト数のカラムを integer に広げる (migration あり。本番は適用済み)
+# 2026-11-13 最新 develop へ載せ直した。バッファが増え続ける問題と値の丸めは本家 develop (70506ec9a3「チャートの保持上限に達した場合記録に失敗し続ける問題を修正」) で直ったので、
+#   core.ts の try/catch とテストは外した。本家はカラムを広げない方針なので、カラムを広げる migration だけを残す
+# NOTE: 2026-09-08 に覚えさせた core.ts の rerere の解消は古い (本家が消した buffer.filter の行を戻してしまう)。core.ts で rerere が効いたら中身を確かめる
 squash_merge riin/fix/instance-chart-smallint-overflow
-git commit -a -m "fix(backend): チャート UPDATE 失敗時にバッファが増え続ける問題と instance チャートの smallint 溢れを修正"
+git commit -a -m "fix(backend): instance チャートのリクエスト数のカラムを integer に広げ、smallint の上限で頭打ちにならないように"
 
 pnpm run build-misskey-js-with-types
 git commit -a -m "misskey-js autogen 再生成 (仮氏パーティ統合後の整合)"
@@ -429,7 +434,7 @@ echo '# main-統合.sh が生成する。直接編集せず main-統合.sh を�
 # (2026-11-12 clips-pagination・pages-mfm-toolbar・uploader-drag-handle は統合に入れた、または入っていたので外した)' > frontend-variants.yml
 git commit -a -m "フロントエンド variant の一覧を更新"
 
-set MISVER 118
+set MISVER 119
 set file_path "package.json"
 # JSONからversionを取得 -MISTEMS.XX を追加した新しいバージョンを作成
 set current_version (jq -r '.version' $file_path)
@@ -486,7 +491,7 @@ exit
 [統合済み] mkNoteExtend — チャンネル Renote の出所表示 + リノートティッカー
 [統合済み] MkNoteDetailed-loadReplies — ノート詳細で返信を自動読み込み
 [統合済み] feat/renote-lock — リノートロック [上流#17554 CLOSED → MISTEMS 向け。2026-10-24 最新 develop へ rebase し、引用リノートにもロックを適用。claude/renote-lock-feature-7J0NA から改名、PR#56]
-[統合済み] feat/hashtag-mute-menu — ハッシュタグをメニューからミュート (正規表現で # タグだけに当てる) [2026-11-12 hashtag-mutable を作り直し、main-統合.sh に追加。2026-11-13 動作確認 OK]
+[統合済み] feat/hashtag-mute-menu — ハッシュタグをメニューからミュート （正規表現で # タグだけに当てる） [2026-11-12 hashtag-mutable を作り直し、main-統合.sh に追加。2026-11-13 動作確認 OK]
 [残骸] hashtag-mutable — ↑の作り直し前 (MkA の複製。MFM 描画の共通化と衝突)
 [統合済み] fix/rss-fetch-safety — RSS の取得の安全化 (失敗した URL の記憶、ウィジェットのエラー表示、取り直しの間隔の下限)。取り直しの間隔は数値の入力欄、ステータスバーの設定画面にも URL のプレビュー、URL を変えたらすぐ取り直す [2026-11-12 safe-rss を作り直し、main-統合.sh に追加。2026-11-13 設定画面を直して動作確認 OK]
 [残骸] safe-rss (safer-rss) — ↑の作り直し前
@@ -593,7 +598,7 @@ exit
 
 ◇ 構想・計画・素材
 [統合済み] feat/channel-federation — チャンネル連合 (連合モードは none / public の 2 択)。2026-11-12 に mkPostFormExtend に混ぜたので、統合は mkPostFormExtend 経由。直すときは mkPostFormExtend で直す
-[統合済み] feat/channel-federation-hashtag — チャンネル連合のハッシュタグ (#連合チャンネル_チャンネル名。ノートのハッシュタグ (AP の tag) と本文の付記に付け、同じハッシュタグのリモートの公開ノートと、ほかのサーバーの同じ名前の連合チャンネルのノートを収蔵する)。2026-11-13 に mkPostFormExtend へ fast-forward で混ぜた。同日、ハッシュタグのページから辿れるよう tag に入れ、付記をハッシュタグだけにした (From と URL をやめた)。チャンネル投稿・連合まわりは今後 mkPostFormExtend 1 本で扱う
+[統合済み] feat/channel-federation-hashtag — チャンネル連合のハッシュタグ （#連合チャンネル_チャンネル名。ノートのハッシュタグ （AP の tag） と本文の付記に付け、同じハッシュタグのリモートの公開ノートと、ほかのサーバーの同じ名前の連合チャンネルのノートを収蔵する）。2026-11-13 に mkPostFormExtend へ fast-forward で混ぜた。同日、ハッシュタグのページから辿れるよう tag に入れ、付記をハッシュタグだけにした （From と URL をやめた）。チャンネル投稿・連合まわりは今後 mkPostFormExtend 1 本で扱う
 [残骸] channel-federation / claude/channel-federation-plan-fqtna3 — ↑の作り直し前 (実装と、enum 方式に改稿した計画書)
 [退避] speculative/owner-checksheet — 要オーナー確認事項の一括チェックシート
 [退避] speculative/terms-drafts — 利用規約ドラフト (ペルソナ並列レビュー反映)
@@ -602,9 +607,9 @@ exit
 [退避] claude/checkout-time-machine-VvPem — タイムマシン追加ロジックの unit test 素材
 
 ◇ 実装ありだが未統合 (要チェック)
-[統合済み] feat/pages-mfm-format-menu — MkPages のテキストブロックで $MFM ボタンから MFM 関数のメニュー (Phase 2。2026-11-12 に $ の補完と同じ一覧と $[タグ 意味] の表記に直した)。release/mkPages-mkDraggable の上に積んだブランチ [2026-11-12 claude/issue-26-20260510-1119 と variant/issue-26-20260510-1119 から改名して作り直し、main-統合.sh に追加]
+[統合済み] feat/pages-mfm-format-menu — MkPages のテキストブロックで $MFM ボタンから MFM 関数のメニュー （Phase 2。2026-11-12 に ＄ の補完と同じ一覧と ＄[タグ 意味] の表記に直した）。release/mkPages-mkDraggable の上に積んだブランチ [2026-11-12 claude/issue-26-20260510-1119 と variant/issue-26-20260510-1119 から改名して作り直し、main-統合.sh に追加]
 [残骸] claude/issue-26-20260510-1119, variant/issue-26-20260510-1119 — ↑の作り直しの素材 (古い mistems-main 派生)
-[統合済み(別ブランチ)] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 (fork PR#34 続き)。同じ機能 (専用ハンドルからの並べ替え・reorderItems) が release/mkPages-mkDraggable 経由で mistems-main に入っているので統合しない [2026-11-12 確認。fork PR#41 は OPEN のまま]
+[統合済み（別ブランチ）] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 （fork PR#34 続き）。同じ機能 （専用ハンドルからの並べ替え・reorderItems） が release/mkPages-mkDraggable 経由で mistems-main に入っているので統合しない [2026-11-12 確認。fork PR#41 は OPEN のまま]
 [統合済み] feat/remote-note-refetch — リモートノート再取得の改善 [2026-10-24 最新 develop に作り直し、claude/remote-emoji-refetch-2nbU9 から改名、PR#57。旧 PR#35・#55 は close]
 [上流マージ済み] fix-clips-pagination — my/clips ページネーション末尾判定の修正 → 栄誉の殿堂へ (本家 develop 1eabb21d69 の API で解決済み、2026-11-12 に統合から外した)
 [統合済み] feat/announcement-groups — お知らせのグループ (グループごとのタブ・未読バッジ・非通知・表示順。migration あり) [2026-11-11 main-統合.sh に追加。2026-11-13 表示順をお知らせ全体で 1 つにし、コントロールパネルの一覧の項目をドラッグや矢印で入れ替える形に直した (表示順を振り直す migration を追加)]
@@ -653,7 +658,7 @@ exit
 ■ 栄誉の殿堂
 本家の方に入ったのでもう不要
 後始末: ここへ移したら、ショーケース PR (systems) とレビュー PR (riin) を閉じ、riin と systems のリモートからブランチを消す。消す前の SHA はここに書き残す
-2026-11-13 の後始末: PR を閉じた (systems #78、riin #53・#27)。riin から消したブランチと SHA は
+2026-11-13 の後始末: PR を閉じた（systems #78、riin #53・#27）。riin から消したブランチと SHA は
   fix-clips-pagination 9b3b768c2d / perf/clean-remote-notes-cursor ee3a540470 / fix/clean-remote-notes-delete-timeout db5723d5df /
   perf/chat-history-limit 04ae5e8bcd / claude/fix-database-queries-i0dvC 4c776f2bbf (systems には元から無かった)。
   ローカルのブランチと worktree も消した (perf/clean-remote-notes-cursor のローカルは 1c9a315980 で、riin と中身が違っていた)。fix/clips-pagination の検証環境の volume も消した
