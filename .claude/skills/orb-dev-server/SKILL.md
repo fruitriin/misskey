@@ -28,7 +28,7 @@ DB・Redis・Misskey のポートはホストに公開しない。環境は `up`
 - `up --lan` は、LAN 内の端末 (スマホの実機など) から `http://<Mac の LAN の IP アドレス>:<ポート>/` で開けるようにする。ポートは 3000 から順に、ホストで空いているものを使う。枠は返す。`--lan` なしで `up` し直すと枠に戻る (詳しくは「LAN 内の端末から開く」)
 - `seed` は管理者以外のユーザーがいない環境にだけ入れる。データが既にあるときは何も変えずに止まるので、`down -v` してから入れ直すか、`restore` で戻す
 - `worktree` を省略するとカレントディレクトリの worktree を対象にする
-- スクリプトはこのブランチ (skill の本籍) にしか無いことがある。対象 worktree に無ければ、mistems-main か claudeImplement worktree のものをフルパスで呼ぶ
+- スクリプトはこのブランチ (skill の本籍) にしか無いことがある。対象 worktree に無ければ、claudeImplement worktree (`/Users/riin/workspace/misskey-worktrees/claudeImplement`) のものをフルパスで呼ぶ。mistems-main の worktree のものは前回の統合のときの写しで、古いことがある (古い版は枠を取らず `web.<project>.orb.local:3000` で起動し、Claude がログインできない)
 - 初回の `up` は依存のインストールで数分かかる。`run_in_background` で実行して完了通知を待つとよい
 - 管理者アカウントは `admin` / `admin1234`。ユーザーが 1 人もいないときだけ作る。トークンは全環境で `orbdevadmintoken` にそろえる (下の「ログインの維持」)
 - Claude が自分で確かめるときは、Playwright MCP (isolated) で `http://devN.localhost:3080/` を開き、`admin` / `admin1234` でログインする。`*.localhost` はローカルの開発用ホストなので、Claude がテスト用の認証情報を入力してよい。Playwright はセッションをまたいでログイン状態を残さないので、毎回ログインする

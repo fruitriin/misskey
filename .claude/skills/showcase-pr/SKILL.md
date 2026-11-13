@@ -43,7 +43,7 @@ git push systems origin/develop:refs/heads/develop
 ### 3. 画面を撮る (画面が変わる機能のとき)
 
 - riin のレビュー用 PR にスクリーンショットがあれば、その URL を流用する
-- 無ければ、`orb-dev-server` スキルでブランチの環境を起動し、Playwright で撮る。統合済みの機能は、本番モードで動いている mistems-main の環境 (`http://mistems-main.localhost:3080/`) でまとめて撮れる。シードに無いデータ (お知らせなど) は、ブラウザから管理 API で作ってから撮る。動きのある変更 (アニメーション、ドラッグ、画面遷移) は GIF にする
+- 無ければ、`orb-dev-server` スキルでブランチの環境を起動し、Playwright で撮る。統合済みの機能は、mistems-main の環境でまとめて撮れる。どちらも枠の URL (`http://devN.localhost:3080/`。`orb-dev.sh slots` で確かめる) で開き、`admin` / `admin1234` でログインする。シードに無いデータ (お知らせなど) は、ブラウザから管理 API で作ってから撮る。動きのある変更 (アニメーション、ドラッグ、画面遷移) は GIF にする
 - 撮った画像は `--attach` で PR に添付する (手順 4)。リポジトリにコミットしたり、別のブランチに置いたりしない
 
 ### 4. PR を作る
@@ -78,5 +78,5 @@ PR の URL を報告する。画面を撮らなかったときは、その理由
   - zsh では `$b:r` のような変数の後ろの `:` が修飾子として解釈され、`read -a` も使えない。ループは `${b}` と書くか、bash で実行する
 
 - 2026-11-11: `feat/image-menu-copy-link-emoji-preview` で初めて実行した (mistems/mistems #62)。`--attach` の画像は `user-attachments` の URL に書き換えられ、差分は機能のコミットだけになった
-  - 開発モードの環境 (`pnpm dev`) は `*.localhost:3080` から開くと初期化に失敗する。統合済みの機能なら、本番モードで動いている mistems-main の環境 (`http://mistems-main.localhost:3080/`) で撮るとよい
+  - 開発モードの環境 (`pnpm dev`) は `*.localhost:3080` から開くと初期化に失敗した。2026-11-12 に orb-dev-server が枠 (`devN.localhost:3080`) で開く形になり、開発モードでも開けるようになった
   - Playwright MCP が別のセッションで使用中のときは、アプリ内蔵のブラウザで撮った。`zoom` で切り抜いた画像は PNG で tool-results に保存されるので、それを添付した

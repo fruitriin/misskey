@@ -29,7 +29,8 @@ FED_DIR="$worktree/packages/backend/test-federation"
 
 export NODE_VERSION
 NODE_VERSION="$(cat "$worktree/.node-version")"
-PROJECT="fed-$(basename "$worktree")"
+# compose のプロジェクト名は小文字・数字・「-」「_」だけなので、worktree の名前を小文字にする (例: mkPostformExtend)
+PROJECT="fed-$(basename "$worktree" | tr '[:upper:]' '[:lower:]')"
 compose() { (cd "$FED_DIR" && docker compose -p "$PROJECT" "$@"); }
 
 # 固定サブネット (172.20/16・172.23/16) を使うので、同時に動かせるのは 1 組だけ

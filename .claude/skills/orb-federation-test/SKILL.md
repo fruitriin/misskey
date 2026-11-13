@@ -19,10 +19,10 @@ $S status [worktree]
 $S down   [worktree] [-v]          # -v で DB のデータ (test-federation/volumes) も消す
 ```
 
-- `worktree` を省略すると、カレントディレクトリの worktree を対象にする。スクリプトが対象の worktree に無ければ、claudeImplement か mistems-main の worktree のものをフルパスで呼ぶ
+- `worktree` を省略すると、カレントディレクトリの worktree を対象にする。スクリプトが対象の worktree に無ければ、claudeImplement の worktree (`/Users/riin/workspace/misskey-worktrees/claudeImplement`) のものをフルパスで呼ぶ (mistems-main のものは前回の統合のときの写しで、古いことがある)
 - `up` と全体の `test` は数分かかる。`run_in_background` で実行して完了の通知を待つ
 - テストは名前だけ (`channel`)、ファイル名 (`channel.test.ts`)、パス (`packages/backend/test-federation/test/channel.test.ts`) のどれで渡してもよい。tester の作業ディレクトリは `packages/backend` なので、スクリプトが `test-federation/test/<名前>.test.ts` に直して渡す (上流の README のパスのままでは見つからない)
-- compose のプロジェクト名は `fed-<worktree のディレクトリ名>`。ログは `$S exec -- logs misskey.a.test`、DB は `$S exec -- exec -T db.a.test psql -U postgres -d misskey -c '...'` で見る
+- compose のプロジェクト名は `fed-<worktree のディレクトリ名を小文字にしたもの>` (compose のプロジェクト名に大文字は使えないため。例: `mkPostformExtend` → `fed-mkpostformextend`)。ログは `$S exec -- logs misskey.a.test`、DB は `$S exec -- exec -T db.a.test psql -U postgres -d misskey -c '...'` で見る
 
 ## テストを足すとき
 
