@@ -94,9 +94,10 @@ MISTEMS の README (mistems-readme ブランチ、`mistems-readme` スキルで�
    - `node scripts/check-spdx.mjs` を 1 回実行し、欠落は `--fix` で補う。`SPDX: OK` なら追加の目視確認はしない
    - `packages/misskey-js` は MIT ライセンスのサブパッケージなので、この AGPL ヘッダーを一律に付けない (サブパッケージ固有の `package.json` / `LICENSE` / 既存ファイルのヘッダーに従う)
 
-2. **`locales/ja-JP.yml` 以外の locale YAML を手動編集しない**
-   - 他言語ファイル (`en-US.yml` など `ja-JP.yml` 以外すべて) は Crowdin の自動配信先。手動編集すると次の同期で上書き喪失する
-   - 根拠: [locales/README.md](locales/README.md) と [crowdin.yml](crowdin.yml)
+2. **`locales/ja-JP.yml` 以外の locale YAML で、上流にあるキーを書き換えない**
+   - 他言語ファイル (`en-US.yml` など) は、上流 (misskey-dev) では Crowdin の自動配信先である ([locales/README.md](locales/README.md)、[crowdin.yml](crowdin.yml))。上流にあるキーの訳を変えたり消したりすると、統合のたびにコンフリクトし、上流の更新とも食い違う
+   - MISTEMS は Crowdin とつながっていないので、**MISTEMS 独自のキー (上流にないキー) は他言語ファイルにも手で書いてよい**。`ja-JP.yml` に MISTEMS 独自のキーを足したら、`en-US.yml` にも同じキーの訳を足す
+   - 判定は `node scripts/check-shipping.mjs` の locale safety が行う (起点の同じファイルにあるキーの変更・削除を違反とする)
 
 3. **マージ済 migration ファイルを編集しない**
    - 対象: `packages/backend/migration/{unixMs}-{name}.js` のうち、既に `develop` / `mistems-main` に入っているもの
@@ -138,7 +139,7 @@ MISTEMS の README (mistems-readme ブランチ、`mistems-readme` スキルで�
 2. **backend API 変更時**: `pnpm build-misskey-js-with-types` を実行し `packages/misskey-js/src/autogen/` の差分も commit に含めた
 3. **entity / migration 変更時**: `pnpm --filter backend check-migrations` が pending DDL 0 件で通る / 新規 migration は `up()` と `down()` 両方実装済
 4. **SPDX**: `node scripts/check-spdx.mjs` が `SPDX: OK` を返すことを確認する
-5. **locale safety**: commit 済み・未commit・untracked の変更集合に `locales/ja-JP.yml` 以外の locale YAML が無いことを確認する
+5. **locale safety**: `locales/ja-JP.yml` 以外の locale YAML で、上流にあるキーを変えたり消したりしていないことを確認する。MISTEMS 独自のキーの追加・修正はかまわない
 6. **CHANGELOG**: ユーザーが明示しない限り編集しない (統合時に破棄される)。ユーザー影響がある変更では引き継ぎに候補を 1 行だけ示す
 
 ### Validation commands

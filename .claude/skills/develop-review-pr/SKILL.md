@@ -61,7 +61,7 @@ git -C <worktree> status --short   # U の付いたファイルがコンフリ�
 ### 4. 規約違反を直してコミットする
 
 - リポジトリのルートにある計画書・設計書を、日付付きの日本語の名前で `docs/` (未完了なら `docs/planning/`) へ `git mv` する。中のリンクも直す
-- `locales/ja-JP.yml` 以外の locale を変えていたら、起点の内容に戻す
+- `locales/ja-JP.yml` 以外の locale で上流にあるキーを変えていたら、そのキーを起点の内容に戻す。MISTEMS 独自のキーはそのまま残す
 - `git -c rerere.enabled=false commit` でコミットする
 
 ### 5. コンテナで生成と検証を行う
