@@ -49,13 +49,31 @@ git switch mistems-main
 git reset origin/develop --hard
 
 # ブランチ存在チェック付き squash merge
+# squash_merge <branch> [--base <base>]
+#   --base を付けると、<base> の上に積んだ <branch> の固有の変更 (<base>..<branch> の差分) だけを当てる。
+#   <base> (release など) は先に統合してあるので、そのまま squash merge すると <base> の変更が「両側の変更」として衝突する
 function squash_merge
     set -l branch $argv[1]
-    if not command git rev-parse --verify $branch >/dev/null 2>&1
-        echo "エラー: ブランチ '$branch' が見つかりません。スクリプトを終了します。" >&2
-        exit 1
+    set -l base
+    if test (count $argv) -ge 3 -a "$argv[2]" = "--base"
+        set base $argv[3]
     end
-    command git merge --squash $branch
+    for ref in $branch $base
+        if not command git rev-parse --verify $ref >/dev/null 2>&1
+            echo "エラー: ブランチ '$ref' が見つかりません。スクリプトを終了します。" >&2
+            exit 1
+        end
+    end
+    if test -n "$base"
+        if not command git merge-base --is-ancestor $base $branch
+            echo "エラー: '$branch' が '$base' の上に積まれていません。'$branch' を '$base' に載せ直してください。スクリプトを終了します。" >&2
+            exit 1
+        end
+        # --3way はコンフリクトしたファイルを unmerged にし、rerere も効く
+        command git diff --binary $base $branch | command git apply --3way --index
+    else
+        command git merge --squash $branch
+    end
     set -l merge_status $status
     # NOTE: grep は rg の alias なので使わない (rg -c はマッチ 0 件で無出力になる)
     set -l unmerged (command git ls-files -u | count)
@@ -160,12 +178,13 @@ git commit -a -m "通知の残カウントバグを直す"
 # riin/mkdraggable-animation
 # git commit -a -m "MkDraggable アニメーションとスマホ対応"
 
+# 2026-11-13 最新 develop から作り直した (mkPages + mkdraggable-animation)。作り直したら、上に積んだ feat/pages-mfm-format-menu と feat/announcement-groups も載せ直す
 squash_merge riin/release/mkPages-mkDraggable
 git commit -a -m "MkPagesエディター拡張/ドラッグアンドドロップのスマホ拡張とアニメーション"
 
 # MkPages のテキストブロックで、$MFM ボタンから $ の補完と同じ MFM 関数のメニュー ($[rotate 回転] の形) を開き、選択範囲を $[タグ ] で囲む (旧 claude/issue-26-20260510-1119 + variant/issue-26-20260510-1119)
 # release/mkPages-mkDraggable の上に積んだブランチ (テキストブロックのツールバーが release にあるため)。release を作り直したら、このブランチも載せ直す
-squash_merge riin/feat/pages-mfm-format-menu
+squash_merge riin/feat/pages-mfm-format-menu --base riin/release/mkPages-mkDraggable
 git commit -a -m "feat(frontend): MkPages のテキストブロックで、\$MFM ボタンから MFM 関数のメニューを開き、選択範囲を囲めるように"
 # --------------------------------------
 
@@ -256,12 +275,9 @@ git commit -a -m "debug(backend): node-fetch の AbortError に request.url を�
 
 # フォロー数が多いユーザーのホームタイムライン DB フォールバックが
 # キャッシュ非ウォーム時に数秒〜十秒級の遅延を起こす問題の高速化 (LATERAL 方式)
+# NOTE: buildQuery の引数の withCollectedChannelNotes? は、mkPostFormExtend (チャンネル連合) と合わせたときのためのもの (2026-11-13)。上流に出すときは外す
 squash_merge riin/fix/timeline-dbfallback-lateral
 git commit -a -m "perf(backend): フォロー数が多いユーザーのホームタイムライン DB フォールバックを高速化"
-# 統合のつなぎ: mkPostFormExtend (チャンネル連合) が notes/timeline.ts の getFromDb に足した withCollectedChannelNotes を、
-#   このブランチの buildQuery の引数の型にも足す。どちらのブランチ単体では起きず、2 本を合わせたときだけ型エラーになる (2026-11-13)
-perl -0pi -e 's/(private buildQuery\(\n\t\tps: \{[^}]*withRenotes: boolean;) \},/$1 withCollectedChannelNotes: boolean; },/' packages/backend/src/server/api/endpoints/notes/timeline.ts
-git commit -a -m "fix(backend): ホームタイムラインの buildQuery の引数に withCollectedChannelNotes を足す (チャンネル連合と LATERAL 化のつなぎ)"
 
 # FileServerService の errorHandler は /files/:key (drive) と /proxy/:url* (画像プロキシ) で
 # 共有されているが、エラーログに発生元リクエストの情報が無く追跡できなかった問題の改善
@@ -378,12 +394,9 @@ git commit -a -m "perf(backend): サーバーメトリクスの収集で子プ�
 
 # お知らせのグループ (グループごとのタブ・未読バッジ・タブごとの非通知・表示順の並べ替え。migration あり)
 # リノートロックとモデレーションログの種類・ja-JP.yml・misskey-js の autogen が隣り合わせで衝突する。両方を残し、autogen は生成し直す
-squash_merge riin/feat/announcement-groups
+# 2026-11-13 release/mkPages-mkDraggable の上に積んだ (並べ替えのハンドルが release の MkDraggable の pointerStart を使うため)。release を作り直したら、このブランチも載せ直す
+squash_merge riin/feat/announcement-groups --base riin/release/mkPages-mkDraggable
 git commit -a -m "feat: お知らせをグループに分けてタブで表示し、グループごとに非通知にできるように"
-# 統合のつなぎ: release/mkPages-mkDraggable で MkDraggable のスロットが dragStart (HTML5 の D&D) から pointerStart (Pointer Events) に変わったので、
-#   お知らせの管理画面 (上流の dragStart 前提) のハンドルを pointerStart に合わせる。合わせないとハンドルでドラッグできない (2026-11-13)
-perl -0pi -e 's/, dragStart \}">/, pointerStart }">/g; s/ :draggable="true"( :aria-label="[^"]*")? \@dragstart\.stop="dragStart"/$1 \@pointerdown.stop="pointerStart"/g; s/(\n\.handle \{\n(?:\t[^\n]*\n)*?\tcursor: move;\n)/$1\ttouch-action: none;\n/' packages/frontend/src/pages/admin/announcements.vue packages/frontend/src/pages/admin/announcements.groups.vue
-git commit -a -m "fix(frontend): お知らせの管理画面の並べ替えのハンドルを、MkDraggable の pointerStart に合わせる"
 
 # 画像メニューに「リンクをコピー」「絵文字として確認」を追加 (frontend と ja-JP.yml)
 squash_merge riin/feat/image-menu-copy-link-emoji-preview
@@ -616,7 +629,7 @@ exit
 [統合済み（別ブランチ）] claude/misskey-pr-34-continue-5YwvL — 添付ファイル D&D を専用ハンドルからの操作に変更 （fork PR#34 続き）。同じ機能 （専用ハンドルからの並べ替え・reorderItems） が release/mkPages-mkDraggable 経由で mistems-main に入っているので統合しない [2026-11-12 確認。fork PR#41 は OPEN のまま]
 [統合済み] feat/remote-note-refetch — リモートノート再取得の改善 [2026-10-24 最新 develop に作り直し、claude/remote-emoji-refetch-2nbU9 から改名、PR#57。旧 PR#35・#55 は close]
 [上流マージ済み] fix-clips-pagination — my/clips ページネーション末尾判定の修正 → 栄誉の殿堂へ (本家 develop 1eabb21d69 の API で解決済み、2026-11-12 に統合から外した)
-[統合済み] feat/announcement-groups — お知らせのグループ (グループごとのタブ・未読バッジ・非通知・表示順。migration あり) [2026-11-11 main-統合.sh に追加。2026-11-13 表示順をお知らせ全体で 1 つにし、コントロールパネルの一覧の項目をドラッグや矢印で入れ替える形に直した (表示順を振り直す migration を追加)]
+[統合済み] feat/announcement-groups — 2026-11-13 release/mkPages-mkDraggable の上に積み直し、並べ替えのハンドルを pointerStart にした。お知らせのグループ (グループごとのタブ・未読バッジ・非通知・表示順。migration あり) [2026-11-11 main-統合.sh に追加。2026-11-13 表示順をお知らせ全体で 1 つにし、コントロールパネルの一覧の項目をドラッグや矢印で入れ替える形に直した (表示順を振り直す migration を追加)]
 [統合済み] feat/image-menu-copy-link-emoji-preview — 画像メニューに「リンクをコピー」「絵文字として確認」を追加 [2026-11-11 main-統合.sh に追加、次回の統合から入る]
 [統合済み] perf/suspend-shared-inbox-distinct — 凍結・解除時の SharedInbox の取得で following を全件読み込まない [2026-11-12 main-統合.sh に追加、次回の統合から入る]
 [統合済み] feat/upload-image-rotate — アップロード前の画像の編集に左右の回転を追加 [2026-11-12 最新 develop へ rebase、main-統合.sh に追加。2026-11-13 動作確認 OK]
