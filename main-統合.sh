@@ -380,6 +380,10 @@ git commit -a -m "perf(backend): サーバーメトリクスの収集で子プ�
 # リノートロックとモデレーションログの種類・ja-JP.yml・misskey-js の autogen が隣り合わせで衝突する。両方を残し、autogen は生成し直す
 squash_merge riin/feat/announcement-groups
 git commit -a -m "feat: お知らせをグループに分けてタブで表示し、グループごとに非通知にできるように"
+# 統合のつなぎ: release/mkPages-mkDraggable で MkDraggable のスロットが dragStart (HTML5 の D&D) から pointerStart (Pointer Events) に変わったので、
+#   お知らせの管理画面 (上流の dragStart 前提) のハンドルを pointerStart に合わせる。合わせないとハンドルでドラッグできない (2026-11-13)
+perl -0pi -e 's/, dragStart \}">/, pointerStart }">/g; s/ :draggable="true"( :aria-label="[^"]*")? \@dragstart\.stop="dragStart"/$1 \@pointerdown.stop="pointerStart"/g; s/(\n\.handle \{\n(?:\t[^\n]*\n)*?\tcursor: move;\n)/$1\ttouch-action: none;\n/' packages/frontend/src/pages/admin/announcements.vue packages/frontend/src/pages/admin/announcements.groups.vue
+git commit -a -m "fix(frontend): お知らせの管理画面の並べ替えのハンドルを、MkDraggable の pointerStart に合わせる"
 
 # 画像メニューに「リンクをコピー」「絵文字として確認」を追加 (frontend と ja-JP.yml)
 squash_merge riin/feat/image-menu-copy-link-emoji-preview
