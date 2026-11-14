@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <component :is="prefer.s.enablePullToRefresh ? MkPullToRefresh : 'div'" :refresher="() => reloadTimeline()">
+	<!-- 歯抜けマーカーの動作確認用 (ワンショット。確認が終わったら revert する) -->
+	<MkTimelineGapDevPanel v-if="devGapPanelChannel != null" :channel="devGapPanelChannel" :reload="reloadTimeline" :getRoot="() => rootEl ?? null" :getScrollContainer="() => scrollContainer"/>
 	<MkLoading v-if="paginator.fetching.value"/>
 
 	<MkError v-else-if="paginator.error.value" @retry="paginator.init()"/>
@@ -70,7 +72,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, watch, onUnmounted, provide, useTemplateRef, TransitionGroup, onMounted, shallowRef, ref, markRaw } from 'vue';
+import { computed, watch, onUnmounted, provide, useTemplateRef, TransitionGroup, onMounted, shallowRef, ref, markRaw, defineAsyncComponent } from 'vue';
 import * as Misskey from 'misskey-js';
 import { useInterval } from '@@/js/use-interval.js';
 import { useDocumentVisibility } from '@@/js/use-document-visibility.js';
@@ -520,6 +522,15 @@ function reloadTimeline() {
 		});
 	});
 }
+
+// 歯抜けマーカーの動作確認用 (ワンショット。確認が終わったら revert する)
+const MkTimelineGapDevPanel = defineAsyncComponent(() => import('@/components/MkTimelineGapDevPanel.vue'));
+const devGapPanelChannel = _DEV_ && store.s.realtimeMode ? ({
+	home: 'homeTimeline',
+	local: 'localTimeline',
+	social: 'hybridTimeline',
+	global: 'globalTimeline',
+} as Record<string, string>)[props.src] ?? null : null;
 
 defineExpose({
 	reloadTimeline,
