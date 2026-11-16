@@ -32,8 +32,9 @@ MISTEMS 開発全体で使うファイル (規約、スキル、開発ツール�
 2. **1 機能 1 ブランチ**で実装し、`riin` に push する
 3. **`main-統合.sh` に squash merge のエントリを足し、mistems/mistems にショーケース PR を作る** (`squash-prep` スキル、`showcase-pr` スキル)。統合はローカルで行い、GitHub 上ではマージしない
 4. **統合時のコンフリクト**は `git rerere` に解消方法を覚えさせる。rerere がすべて自動で解消したときは、スクリプトがそのまま続行する。CHANGELOG.md は毎回破棄する
-5. **互いにコンフリクトする機能**は、`riin/release/*` の統合ブランチにまとめてから squash merge する。`riin/release/*` 自体がコンフリクトしたときは、`rebuild-release-branch` スキルで元の機能ブランチから作り直す
-6. 上流が同じ課題を解決したら、そのブランチは統合から外し、`main-統合.sh` の台帳の「栄誉の殿堂」に移す
+5. **統合の最後に MISTEMS 独自の lint (`node scripts/mistems-lint.mjs`) が走る**。違反があると統合が止まり、違反を持ち込んだブランチが表示される。mistems-main では直さず、そのブランチに戻って直し、push してから統合をやり直す。ルールは `packages/frontend/eslint.mistems.config.js` に置く (開発と本番ビルドで挙動が変わる書き方など、通常の lint では見つからないもの)
+6. **互いにコンフリクトする機能**は、`riin/release/*` の統合ブランチにまとめてから squash merge する。`riin/release/*` 自体がコンフリクトしたときは、`rebuild-release-branch` スキルで元の機能ブランチから作り直す
+7. 上流が同じ課題を解決したら、そのブランチは統合から外し、`main-統合.sh` の台帳の「栄誉の殿堂」に移す
 
 ### PR の使い分け
 
@@ -153,6 +154,7 @@ MISTEMS の README (mistems-readme ブランチ、`mistems-readme` スキルで�
 | Backend e2e test | `pnpm --filter backend test:e2e` |
 | Backend federation test | `orb-federation-test` スキル (a.test と b.test を OrbStack で起動して `test:fed` を実行する) |
 | Frontend unit test | `pnpm --filter frontend test` |
+| MISTEMS 独自の lint (統合の最後に自動で実行) | `node scripts/mistems-lint.mjs` |
 | Migration 差分検査 (pending DDL) | `pnpm --filter backend check-migrations` |
 | `misskey-js` 再生成 (API 変更後必須) | `pnpm build-misskey-js-with-types` |
 | 全体ビルド | `pnpm build` |
