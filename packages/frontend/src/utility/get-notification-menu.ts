@@ -93,8 +93,9 @@ export function getNotificationMenu(notification: Misskey.entities.Notification,
 					text: i18n.ts.deleteNotificationConfirm,
 				});
 				if (canceled) return;
-				await os.apiWithDialog('notifications/delete', params);
-				opts.onDeleted?.();
+				// 失敗したときは apiWithDialog がエラーを表示するので、一覧からは取り除かずに終える
+				const ok = await os.apiWithDialog('notifications/delete', params).then(() => true, () => false);
+				if (ok) opts.onDeleted?.();
 			},
 		});
 	}
