@@ -89,6 +89,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #label><SearchLabel>{{ i18n.ts.experimentalFeatures }}</SearchLabel></template>
 
 					<div class="_gaps_m">
+						<MkSwitch v-model="useNativeLinkMenuForHashtagOnIOS">
+							<template #label>{{ i18n.ts.useNativeLinkMenuForHashtagOnIOS }}</template>
+							<template #caption>{{ i18n.ts.useNativeLinkMenuForHashtagOnIOSDescription }}</template>
+						</MkSwitch>
 						<MkSwitch v-model="skipNoteRender">
 							<template #label>Enable note render skipping</template>
 						</MkSwitch>
@@ -176,6 +180,7 @@ const storagePersisted = await getStoragePersistenceStatusRef();
 const reportError = prefer.model('reportError');
 const skipNoteRender = prefer.model('skipNoteRender');
 const devMode = prefer.model('devMode');
+const useNativeLinkMenuForHashtagOnIOS = prefer.model('experimental.useNativeLinkMenuForHashtagOnIOS');
 const stackingRouterView = prefer.model('experimental.stackingRouterView');
 const enableFolderPageView = prefer.model('experimental.enableFolderPageView');
 const enableHapticFeedback = prefer.model('experimental.enableHapticFeedback');

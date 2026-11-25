@@ -2817,6 +2817,14 @@ export interface Locale extends ILocale {
      */
     "hardWordMute": string;
     /**
+     * iOS でハッシュタグを長押ししたときに OS のリンクのメニューを出す
+     */
+    "useNativeLinkMenuForHashtagOnIOS": string;
+    /**
+     * オフのときは、パソコンで右クリックしたときと同じメニュー（ハッシュタグのミュートなど）を出します。長押しの処理が合わないときはオンにしてください。
+     */
+    "useNativeLinkMenuForHashtagOnIOSDescription": string;
+    /**
      * ミュートされたワードを表示
      */
     "showMutedWord": string;

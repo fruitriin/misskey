@@ -536,6 +536,10 @@ export const PREF_DEF = definePreferences({
 		},
 	},
 
+	// iOS でハッシュタグを長押ししたとき、MISTEMS のメニューではなく OS のリンクのメニューを出す (長押しの処理を入れる前の挙動)
+	'experimental.useNativeLinkMenuForHashtagOnIOS': {
+		default: false,
+	},
 	'experimental.stackingRouterView': {
 		default: false,
 	},

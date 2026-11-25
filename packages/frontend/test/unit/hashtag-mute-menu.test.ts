@@ -4,15 +4,18 @@
  */
 
 import { afterEach, assert, beforeEach, describe, test, vi } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/vue';
+import { ref } from 'vue';
+import { cleanup, createEvent, fireEvent, render } from '@testing-library/vue';
 import { directives } from '@/directives/index.js';
 import { components } from '@/components/index.js';
 import MkMfm from '@/components/global/MkMfm.js';
 import * as os from '@/os.js';
 import type { MenuItem } from '@/types/menu.js';
 import { i18n } from '@/i18n.js';
+import { prefer } from '@/preferences.js';
 
 const mocks = vi.hoisted(() => ({
+	ios: false,
 	me: null as null | { id: string; policies: Record<string, unknown>; mutedWords: (string | string[])[]; hardMutedWords: (string | string[])[] },
 }));
 
@@ -23,6 +26,10 @@ vi.mock('@/i.js', async (importOriginal) => {
 		get $i() { return mocks.me; },
 	};
 });
+
+vi.mock('@/utility/is-ios.js', () => ({
+	isIOS: () => mocks.ios,
+}));
 
 vi.mock('@/os.js', () => ({
 	contextMenu: vi.fn(),
@@ -113,5 +120,148 @@ describe('ハッシュタグの右クリックのメニューからミュート�
 		const items = await openMenu('#misskey');
 		assert.exists(items.find(i => i.text === i18n.ts.copyLink));
 		assert.exists(items.find(i => i.text === i18n.ts.openInWindow));
+	});
+});
+
+describe('iOS でハッシュタグを長押しすると、右クリックと同じメニューを開く', () => {
+	const contextMenu = vi.mocked(os.contextMenu);
+	const KEY = 'experimental.useNativeLinkMenuForHashtagOnIOS';
+	const useNativeLinkMenu = ref(false);
+	const contextMenuSetting = ref('app');
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		contextMenu.mockClear();
+		mocks.me = { id: 'me', policies: {}, mutedWords: [], hardMutedWords: [] };
+		mocks.ios = true;
+		useNativeLinkMenu.value = false;
+		contextMenuSetting.value = 'app';
+		(prefer.r as Record<string, unknown>)[KEY] = useNativeLinkMenu;
+		(prefer.r as Record<string, unknown>).contextMenu = contextMenuSetting;
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
+		mocks.ios = false;
+		delete (prefer.r as Record<string, unknown>)[KEY];
+		delete (prefer.r as Record<string, unknown>).contextMenu;
+	});
+
+	const renderHashtag = () => {
+		const result = render(MkMfm, { props: { text: '#misskey' }, global: { directives, components } });
+		const anchor = result.container.querySelector('a[href^="/tags/"]');
+		assert.exists(anchor);
+		return anchor!;
+	};
+
+	const touch = (x: number, y: number) => ({ touches: [{ clientX: x, clientY: y }] });
+
+	/** 指を離して、そのあとの click (ページの移動) を止めたかを返す */
+	const touchEndPrevented = async (anchor: Element): Promise<boolean> => {
+		const ev = createEvent.touchEnd(anchor, { touches: [] });
+		await fireEvent(anchor, ev);
+		return ev.defaultPrevented;
+	};
+
+	test('長押しでメニューが開き、指を離したときのページの移動を止める', async () => {
+		const anchor = renderHashtag();
+		await fireEvent.touchStart(anchor, touch(10, 10));
+		vi.advanceTimersByTime(499);
+		assert.strictEqual(contextMenu.mock.calls.length, 0);
+		vi.advanceTimersByTime(1);
+		assert.strictEqual(contextMenu.mock.calls.length, 1);
+		const items = contextMenu.mock.calls[0][0] as MenuItem[] as ButtonItem[];
+		assert.exists(items.find(i => i.text === i18n.ts.wordMute));
+
+		assert.isTrue(await touchEndPrevented(anchor));
+	});
+
+	test('メニューを開いてから指を離した少しあとまで、iOS が送る mousedown でメニューを閉じさせない', async () => {
+		const anchor = renderHashtag();
+		const onBodyMousedown = vi.fn();
+		document.body.addEventListener('mousedown', onBodyMousedown);
+		try {
+			await fireEvent.touchStart(anchor, touch(10, 10));
+			vi.advanceTimersByTime(500);
+			assert.strictEqual(contextMenu.mock.calls.length, 1);
+
+			// 指を離す前に iOS が送る mousedown
+			await fireEvent.mouseDown(anchor);
+			assert.strictEqual(onBodyMousedown.mock.calls.length, 0);
+
+			await touchEndPrevented(anchor);
+			await fireEvent.mouseDown(anchor);
+			assert.strictEqual(onBodyMousedown.mock.calls.length, 0);
+
+			// 少し待てば、ふつうに届く (メニューの外を押せば閉じる)
+			vi.advanceTimersByTime(400);
+			await fireEvent.mouseDown(document.body);
+			assert.strictEqual(onBodyMousedown.mock.calls.length, 1);
+		} finally {
+			document.body.removeEventListener('mousedown', onBodyMousedown);
+		}
+	});
+
+	test('すぐに離したら (タップ) メニューは開かず、ページの移動も止めない', async () => {
+		const anchor = renderHashtag();
+		await fireEvent.touchStart(anchor, touch(10, 10));
+		vi.advanceTimersByTime(200);
+		assert.isFalse(await touchEndPrevented(anchor));
+		vi.advanceTimersByTime(1000);
+		assert.strictEqual(contextMenu.mock.calls.length, 0);
+	});
+
+	test('指が動いたら (スクロール) メニューは開かない', async () => {
+		const anchor = renderHashtag();
+		await fireEvent.touchStart(anchor, touch(10, 10));
+		await fireEvent.touchMove(anchor, touch(10, 40));
+		vi.advanceTimersByTime(1000);
+		assert.strictEqual(contextMenu.mock.calls.length, 0);
+	});
+
+	test('実験的機能で OS のメニューに戻していれば、長押しを扱わない', async () => {
+		useNativeLinkMenu.value = true;
+		const anchor = renderHashtag();
+		await fireEvent.touchStart(anchor, touch(10, 10));
+		vi.advanceTimersByTime(1000);
+		assert.strictEqual(contextMenu.mock.calls.length, 0);
+	});
+
+	test('右クリックで OS のメニューを出す設定なら、長押しを扱わない', async () => {
+		contextMenuSetting.value = 'native';
+		const anchor = renderHashtag();
+		await fireEvent.touchStart(anchor, touch(10, 10));
+		vi.advanceTimersByTime(1000);
+		assert.strictEqual(contextMenu.mock.calls.length, 0);
+		assert.isFalse(await touchEndPrevented(anchor));
+	});
+
+	test('メニューを開いたまま 2 本目の指が触れても、指をすべて離せば mousedown を止めるのをやめる', async () => {
+		const anchor = renderHashtag();
+		const onBodyMousedown = vi.fn();
+		document.body.addEventListener('mousedown', onBodyMousedown);
+		try {
+			await fireEvent.touchStart(anchor, touch(10, 10));
+			vi.advanceTimersByTime(500);
+			assert.strictEqual(contextMenu.mock.calls.length, 1);
+
+			await fireEvent.touchStart(anchor, { touches: [{ clientX: 10, clientY: 10 }, { clientX: 50, clientY: 50 }] });
+			await fireEvent.touchEnd(anchor, { touches: [{ clientX: 10, clientY: 10 }] });
+			await fireEvent.touchEnd(anchor, { touches: [] });
+			vi.advanceTimersByTime(400);
+			await fireEvent.mouseDown(document.body);
+			assert.strictEqual(onBodyMousedown.mock.calls.length, 1);
+		} finally {
+			document.body.removeEventListener('mousedown', onBodyMousedown);
+		}
+	});
+
+	test('iOS 以外では長押しを扱わない', async () => {
+		mocks.ios = false;
+		const anchor = renderHashtag();
+		await fireEvent.touchStart(anchor, touch(10, 10));
+		vi.advanceTimersByTime(1000);
+		assert.strictEqual(contextMenu.mock.calls.length, 0);
 	});
 });
