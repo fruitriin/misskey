@@ -2099,6 +2099,8 @@ declare namespace entities {
         NotesUserListTimelineRequest,
         NotesUserListTimelineResponse,
         NotificationsCreateRequest,
+        NotificationsDeleteRequest,
+        NotificationsDeleteResponse,
         PagePushRequest,
         PagesCreateRequest,
         PagesCreateResponse,
@@ -3149,6 +3151,12 @@ type Notification_2 = components['schemas']['Notification'];
 
 // @public (undocumented)
 type NotificationsCreateRequest = operations['notifications___create']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NotificationsDeleteRequest = operations['notifications___delete']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NotificationsDeleteResponse = operations['notifications___delete']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
 export const notificationTypes: readonly ["note", "follow", "mention", "reply", "renote", "quote", "reaction", "pollEnded", "scheduledNotePosted", "scheduledNotePostFailed", "receiveFollowRequest", "followRequestAccepted", "app", "roleAssigned", "chatRoomInvitationReceived", "achievementEarned", "exportCompleted", "test", "login", "createToken"];

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { ref } from 'vue';
+import { getCurrentInstance, inject, ref } from 'vue';
 import type { Ref } from 'vue';
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
@@ -38,6 +38,7 @@ import type { DI as DIType } from '@/di.js';
 import type { ExtractInjectedType } from '@/types/misc.js';
 import type { MenuItem } from '@/types/menu.js';
 import type { WordMuteResult } from '@/utility/check-word-mute.js';
+import { notificationNoteMenuKey } from '@/utility/get-notification-menu.js';
 
 export interface UseNoteProps {
 	note: Misskey.entities.Note;
@@ -104,6 +105,8 @@ export function useNote(
 	const inChannel = options.inChannel ?? null;
 	const currentClip = options.currentClip ?? null;
 	const currentAntenna = options.currentAntenna ?? null;
+	// MISTEMS: 通知の一覧の中のノートなら、メニューの末尾に通知の項目 (通知の削除) を足す
+	const notificationNoteMenu = getCurrentInstance() != null ? inject(notificationNoteMenuKey, null) : null;
 
 	// プラグインの割り込み処理
 	let rawNote = deepClone(props.note);
@@ -335,6 +338,12 @@ export function useNote(
 		}
 	}
 
+	function withNotificationMenu(menu: MenuItem[]): MenuItem[] {
+		if (notificationNoteMenu == null || notificationNoteMenu.noteId !== props.note.id) return menu;
+		const items = notificationNoteMenu.getItems();
+		return items.length > 0 ? [...menu, { type: 'divider' }, ...items] : menu;
+	}
+
 	function onContextmenu(ev: PointerEvent): void {
 		if (props.mock) return;
 		if (ev.target && isLink(ev.target as HTMLElement)) return;
@@ -351,7 +360,7 @@ export function useNote(
 				currentClip: currentClip?.value,
 				currentAntenna: currentAntenna?.value ?? undefined,
 			});
-			os.contextMenu(menu, ev).then(focus).finally(cleanup);
+			os.contextMenu(withNotificationMenu(menu), ev).then(focus).finally(cleanup);
 		}
 	}
 
@@ -364,7 +373,7 @@ export function useNote(
 			currentClip: currentClip?.value,
 			currentAntenna: currentAntenna?.value ?? undefined,
 		});
-		os.popupMenu(menu, els.menuButton.value).then(focus).finally(cleanup);
+		os.popupMenu(withNotificationMenu(menu), els.menuButton.value).then(focus).finally(cleanup);
 	}
 
 	async function clip(): Promise<void> {

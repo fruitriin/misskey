@@ -141,6 +141,14 @@ export interface Locale extends ILocale {
      */
     "jumpToTimemachine": string;
     /**
+     * この通知を削除
+     */
+    "deleteNotification": string;
+    /**
+     * この通知を削除しますか？まとめて表示している通知は、まとめて削除します。
+     */
+    "deleteNotificationConfirm": string;
+    /**
      * 日付
      */
     "date": string;

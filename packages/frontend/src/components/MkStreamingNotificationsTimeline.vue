@@ -29,8 +29,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span style="height: 1em; width: 1px; background: var(--MI_THEME-divider);"></span>
 					<span>{{ getSeparatorInfo(paginator.items.value[i -1].createdAt, notification.createdAt)?.nextText }} <i class="ti ti-chevron-down"></i></span>
 				</div>
-				<MkNote v-if="['reply', 'quote', 'mention'].includes(notification.type) && 'note' in notification" :class="$style.content" :note="notification.note" :withHardMute="true"/>
-				<XNotification v-else :class="$style.content" :notification="notification" :withTime="true" :full="true"/>
+				<MkNotificationNoteMenuProvider v-if="['reply', 'quote', 'mention'].includes(notification.type) && 'note' in notification" :notification="notification" :noteId="notification.note.id" @deleted="paginator.removeItem(notification.id)">
+					<MkNote :class="$style.content" :note="notification.note" :withHardMute="true"/>
+				</MkNotificationNoteMenuProvider>
+				<XNotification v-else :class="$style.content" :notification="notification" :withTime="true" :full="true" @contextmenu="onNotificationContextmenu($event, notification)"/>
 			</div>
 		</component>
 		<button v-show="paginator.canFetchOlder.value" key="_more_" v-appear="prefer.s.enableInfiniteScroll ? paginator.fetchOlder : null" :disabled="paginator.fetchingOlder.value" class="_button" :class="$style.more" @click="paginator.fetchOlder">
@@ -50,6 +52,7 @@ import { useDocumentVisibility } from '@@/js/use-document-visibility.js';
 import { getScrollContainer, scrollToTop } from '@@/js/scroll.js';
 import XNotification from '@/components/MkNotification.vue';
 import MkNote from '@/components/MkNote.vue';
+import MkNotificationNoteMenuProvider from '@/components/MkNotificationNoteMenuProvider.vue';
 import { useStream } from '@/stream.js';
 import { i18n } from '@/i18n.js';
 import MkPullToRefresh from '@/components/MkPullToRefresh.vue';
@@ -57,6 +60,9 @@ import { prefer } from '@/preferences.js';
 import { store } from '@/store.js';
 import { isSeparatorNeeded, getSeparatorInfo } from '@/utility/timeline-date-separate.js';
 import { Paginator } from '@/utility/paginator.js';
+import * as os from '@/os.js';
+import { useRouter } from '@/router.js';
+import { getNotificationMenu } from '@/utility/get-notification-menu.js';
 
 const props = defineProps<{
 	excludeTypes?: typeof notificationTypes[number][] | null;
@@ -75,6 +81,22 @@ const paginator = prefer.s.useGroupedNotifications ? markRaw(new Paginator('i/no
 		excludeTypes: props.excludeTypes ?? undefined,
 	})),
 }));
+
+const router = useRouter();
+
+// MISTEMS: 通知を右クリックしたときのメニュー (通知の時刻をタイムマシンで見る・通知を削除する)。
+// リンクやアバターの上では、それぞれのメニューを出す (MkA などが先に受け取って止める)
+function onNotificationContextmenu(ev: PointerEvent, notification: Misskey.entities.Notification) {
+	if (window.getSelection()?.toString() !== '') return;
+	const items = getNotificationMenu(notification, {
+		router,
+		onDeleted: () => paginator.removeItem(notification.id),
+	});
+	if (items.length === 0) return;
+	// ページ全体の右クリックメニュー (ウィンドウで開くなど) まで伝えない
+	ev.stopPropagation();
+	os.contextMenu(items, ev);
+}
 
 const MIN_POLLING_INTERVAL = 1000 * 10;
 const POLLING_INTERVAL =

@@ -3325,6 +3325,15 @@ export type paths = {
          */
         post: operations['notifications___create'];
     };
+    '/notifications/delete': {
+        /**
+         * notifications/delete
+         * @description No description provided.
+         *
+         *     **Credential required**: *Yes* / **Permission**: *write:notifications*
+         */
+        post: operations['notifications___delete'];
+    };
     '/notifications/flush': {
         /**
          * notifications/flush
@@ -32057,6 +32066,91 @@ export interface operations {
             204: {
                 headers: {
                     [name: string]: unknown;
+                };
+            };
+            /** @description Client error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Authentication error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Forbidden error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description I'm Ai */
+            418: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+        };
+    };
+    notifications___delete: {
+        requestBody: {
+            content: {
+                'application/json': {
+                    notificationIds: string[];
+                } | {
+                    /** @description Delete the notifications that were grouped. For `reaction`, `noteId` is the reacted note. For `renote`, `noteId` is the renoted note. */
+                    group: {
+                        /** @enum {string} */
+                        type: 'reaction' | 'renote';
+                        /** Format: misskey:id */
+                        noteId: string;
+                        userIds: string[];
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description OK (with results) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        deletedCount: number;
+                    };
                 };
             };
             /** @description Client error */
