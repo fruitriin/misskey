@@ -119,10 +119,13 @@ async function search() {
 	if (computedLocalOnly.value) {
 		found = await searchByHost('.');
 	} else if (host.value === '') {
-		// サーバーを指定しないときは、ローカルのユーザーを先に並べる
-		const [localUsers, allUsers] = await Promise.all([searchByHost('.'), searchByHost('')]);
+		// サーバーを指定しないときは、ローカルのユーザーを先に並べる。片方の検索が失敗しても、もう片方の結果は出す
+		const [localRes, allRes] = await Promise.allSettled([searchByHost('.'), searchByHost('')]);
+		if (localRes.status === 'rejected' && allRes.status === 'rejected') throw localRes.reason;
+		const localUsers = localRes.status === 'fulfilled' ? localRes.value : [];
+		const allUsers = allRes.status === 'fulfilled' ? allRes.value : [];
 		const localIds = new Set(localUsers.map(u => u.id));
-		found = [...localUsers, ...allUsers.filter(u => !localIds.has(u.id))].slice(0, SEARCH_LIMIT);
+		found = [...localUsers, ...allUsers.filter(u => !localIds.has(u.id))];
 	} else {
 		found = await searchByHost(host.value);
 	}
@@ -130,13 +133,14 @@ async function search() {
 	// 入力が変わって後から始めた検索があれば、古い結果で上書きしない
 	if (seq !== searchSeq) return;
 
+	// 自分を除いてから件数をそろえる (2 本の検索で候補が多いときは、除いた分を残りで埋める)
 	users.value = found.filter((u) => {
 		if (props.includeSelf) {
 			return true;
 		} else {
 			return u.id !== $i?.id;
 		}
-	});
+	}).slice(0, SEARCH_LIMIT);
 }
 
 function ok() {
