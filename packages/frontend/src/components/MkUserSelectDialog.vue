@@ -96,24 +96,46 @@ const recentUsers = ref<Misskey.entities.UserDetailed[]>([]);
 const selected = ref<Misskey.entities.UserLite | null>(null);
 const dialogEl = useTemplateRef('dialogEl');
 
-function search() {
+const SEARCH_LIMIT = 10;
+let searchSeq = 0;
+
+function searchByHost(searchHost: string) {
+	return misskeyApi('users/search-by-username-and-host', {
+		username: username.value,
+		host: searchHost,
+		limit: SEARCH_LIMIT,
+		detail: false,
+	});
+}
+
+async function search() {
+	const seq = ++searchSeq;
 	if (username.value === '' && host.value === '') {
 		users.value = [];
 		return;
 	}
-	misskeyApi('users/search-by-username-and-host', {
-		username: username.value,
-		host: computedLocalOnly.value ? '.' : host.value,
-		limit: 10,
-		detail: false,
-	}).then(_users => {
-		users.value = _users.filter((u) => {
-			if (props.includeSelf) {
-				return true;
-			} else {
-				return u.id !== $i?.id;
-			}
-		});
+
+	let found: Misskey.entities.UserLite[];
+	if (computedLocalOnly.value) {
+		found = await searchByHost('.');
+	} else if (host.value === '') {
+		// サーバーを指定しないときは、ローカルのユーザーを先に並べる
+		const [localUsers, allUsers] = await Promise.all([searchByHost('.'), searchByHost('')]);
+		const localIds = new Set(localUsers.map(u => u.id));
+		found = [...localUsers, ...allUsers.filter(u => !localIds.has(u.id))].slice(0, SEARCH_LIMIT);
+	} else {
+		found = await searchByHost(host.value);
+	}
+
+	// 入力が変わって後から始めた検索があれば、古い結果で上書きしない
+	if (seq !== searchSeq) return;
+
+	users.value = found.filter((u) => {
+		if (props.includeSelf) {
+			return true;
+		} else {
+			return u.id !== $i?.id;
+		}
 	});
 }
 
